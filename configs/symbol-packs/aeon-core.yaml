@@ -1,0 +1,5 @@
+# Symbol pack for Aeon Trespass core game icons.
+pack_id: aeon-core
+version: "1.0.0"
+symbols: []
+# TODO: Populate with actual game symbols in EP-004.

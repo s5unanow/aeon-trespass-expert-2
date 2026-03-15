@@ -1,0 +1,16 @@
+{
+  "unit_id": "u_0012_03",
+  "doc_id": "aeon-trespass-core",
+  "page_number": 12,
+  "section_path": ["Setup", "Player Setup"],
+  "style_hint": "paragraph",
+  "glossary_subset": [
+    { "en": "Titan", "ru": "Титан", "locked": true }
+  ],
+  "text_nodes": [
+    { "inline_id": "p0012.b007.i001", "source_text": "Each player takes a Titan board." },
+    { "inline_id": "p0012.b007.i002", "source_text": "Place it in front of you." }
+  ],
+  "context_before": "Player Setup",
+  "context_after": ""
+}

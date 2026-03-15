@@ -1,0 +1,1 @@
+"""QA rules subpackage."""

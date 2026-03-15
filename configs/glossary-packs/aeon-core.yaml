@@ -1,0 +1,5 @@
+# Glossary pack for Aeon Trespass core terminology.
+pack_id: aeon-core
+version: "1.0.0"
+terms: []
+# TODO: Populate with actual game terms in EP-005.

@@ -1,0 +1,31 @@
+# Document configuration for Aeon Trespass Core Rulebook.
+doc_id: aeon-trespass-core
+slug: aeon-trespass-core
+source_pdf: sources/ATO_CORE_Rulebook_v1.1.pdf
+
+titles:
+  en: "Aeon Trespass: Core Rulebook"
+  ru: "Aeon Trespass: Основной свод правил"
+
+edition: "v1.1"
+source_locale: en
+target_locale: ru
+
+profiles:
+  rules: rulebook-default
+  models: translate-default
+  symbols: aeon-core
+  glossary: aeon-core
+  patches: aeon-trespass-core
+
+build:
+  route_base: /docs/aeon-trespass-core
+  include_in_catalog: true
+
+navigation:
+  toc_overrides: null
+
+render:
+  default_theme: light
+  figure_policy: inline
+  page_label_offset: null

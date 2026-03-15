@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["unit_id", "translations"],
+  "properties": {
+    "unit_id": { "type": "string" },
+    "translations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["inline_id", "ru_text"],
+        "properties": {
+          "inline_id": { "type": "string" },
+          "ru_text": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

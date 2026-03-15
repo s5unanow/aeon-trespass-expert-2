@@ -1,0 +1,24 @@
+# Default rule profile for rulebook processing.
+profile_id: rulebook-default
+
+heading_detection:
+  min_font_size_ratio: 1.15
+  max_heading_length: 200
+
+paragraph:
+  max_length_warning: 2000
+  max_length_error: 5000
+
+list_detection:
+  bullet_patterns:
+    - "•"
+    - "–"
+    - "-"
+    - "▶"
+
+symbol_detection:
+  min_confidence: 0.8
+
+release:
+  max_warnings: 50
+  block_on_review: false

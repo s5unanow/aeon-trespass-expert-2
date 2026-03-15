@@ -1,0 +1,16 @@
+{
+  "name": "@aeon-reader/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./typescript/src/index.ts",
+  "types": "./typescript/src/index.ts",
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "generate": "node scripts/generate-types.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.7"
+  }
+}

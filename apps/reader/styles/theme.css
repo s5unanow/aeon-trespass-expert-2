@@ -1,0 +1,20 @@
+/* Theme tokens — CSS custom properties for light/dark mode */
+:root {
+  --color-bg: #ffffff;
+  --color-fg: #1a1a1a;
+  --color-muted: #666666;
+  --color-border: #e5e5e5;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0a0a0a;
+    --color-fg: #ededed;
+    --color-muted: #999999;
+    --color-border: #333333;
+    --color-accent: #60a5fa;
+    --color-accent-hover: #93c5fd;
+  }
+}

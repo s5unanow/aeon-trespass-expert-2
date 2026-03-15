@@ -1,0 +1,18 @@
+{
+  "name": "aeon-trespass-expert",
+  "private": true,
+  "packageManager": "pnpm@10.6.5",
+  "scripts": {
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "build": "pnpm --filter reader build"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

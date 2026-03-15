@@ -1,0 +1,33 @@
+# CI workflow — runs on all PRs and pushes to main.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync
+      - run: uv run ruff check packages/pipeline/src tests/backend
+      - run: uv run ruff format --check packages/pipeline/src tests/backend
+      - run: uv run mypy packages/pipeline/src
+      - run: uv run pytest tests/backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm -r run typecheck
+      - run: pnpm --filter reader build

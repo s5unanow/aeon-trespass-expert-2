@@ -1,0 +1,5 @@
+# Page/block overrides for Aeon Trespass Core Rulebook.
+doc_id: aeon-trespass-core
+version: "1.0.0"
+patches: []
+# TODO: Add deterministic overrides as needed during normalization work.

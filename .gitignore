@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+*.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Artifacts (pipeline outputs)
+artifacts/cache/
+artifacts/runs/
+artifacts/releases/
+artifacts/state/
+
+# Source PDFs (large binary files)
+sources/
+materials/*.pdf
+
+# Generated bundle (synced from pipeline)
+apps/reader/generated/*
+!apps/reader/generated/.gitignore
+
+# IDE
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+
+# Build artifacts
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Sentry
+.sentryclirc

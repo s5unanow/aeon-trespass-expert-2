@@ -1,0 +1,7 @@
+# Document catalog — lists all documents available for processing.
+documents:
+  - aeon-trespass-core
+
+groups:
+  release-core:
+    - aeon-trespass-core
