@@ -69,6 +69,7 @@ Key principles:
 - **EP-003** (done): Source ingest and primitive extraction — DocumentManifest, ExtractedPage, raw asset extraction, golden tests
 - **EP-004** (done): Canonical IR normalization and asset/symbol resolution — PageRecord, Block/InlineNode discriminated unions, normalize_layout, resolve_assets_symbols, patch/override system
 - **EP-005** (done): Translation planning and execution — TranslationUnit/Result models, plan_translation stage, glossary placeholders, LlmGateway/GeminiProvider, validation, translate_units with retry/cache/TM
+- **EP-006** (done): Localization merge, navigation, glossary, and search — merge_localization stage, glossary linker with first_only/always/never policies, enrich_content stage with NavigationTree, SearchIndex, DocumentSummary
 
 ## Pipeline stages (15-stage order)
 

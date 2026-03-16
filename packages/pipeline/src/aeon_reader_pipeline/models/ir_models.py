@@ -16,6 +16,7 @@ class TextRun(BaseModel):
 
     kind: Literal["text"] = "text"
     text: str
+    ru_text: str | None = None
     bold: bool = False
     italic: bool = False
     monospace: bool = False
