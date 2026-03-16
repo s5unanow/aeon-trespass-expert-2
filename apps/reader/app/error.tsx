@@ -1,4 +1,6 @@
-'use client';
+"use client";
+
+import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 
 export default function Error({
   error,
@@ -7,11 +9,5 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return (
-    <main>
-      <h1>Something went wrong</h1>
-      <p>{error.message}</p>
-      <button onClick={reset}>Try again</button>
-    </main>
-  );
+  return <RouteErrorBoundary error={error} reset={reset} />;
 }
