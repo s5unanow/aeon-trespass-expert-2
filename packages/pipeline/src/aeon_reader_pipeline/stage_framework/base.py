@@ -21,7 +21,5 @@ class BaseStage(ABC):
 
     def should_skip(self, ctx: StageContext) -> bool:
         """Check if this stage can be skipped (e.g., cached output exists)."""
-        manifest = ctx.artifact_store.load_stage_manifest(
-            ctx.run_id, ctx.doc_id, self.name
-        )
+        manifest = ctx.artifact_store.load_stage_manifest(ctx.run_id, ctx.doc_id, self.name)
         return manifest is not None and manifest.status == "completed"

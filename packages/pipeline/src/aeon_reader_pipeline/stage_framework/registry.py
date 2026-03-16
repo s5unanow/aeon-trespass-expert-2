@@ -40,9 +40,7 @@ def register_stage(stage_cls: type[BaseStage]) -> type[BaseStage]:
 def get_stage(name: str) -> BaseStage:
     """Get an instance of a registered stage by name."""
     if name not in _REGISTRY:
-        raise KeyError(
-            f"Stage '{name}' is not registered. Registered: {list(_REGISTRY.keys())}"
-        )
+        raise KeyError(f"Stage '{name}' is not registered. Registered: {list(_REGISTRY.keys())}")
     return _REGISTRY[name]()
 
 

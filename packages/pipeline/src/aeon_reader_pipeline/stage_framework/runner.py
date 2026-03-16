@@ -38,9 +38,7 @@ class PipelineRunner:
 
         # Update run manifest with stage statuses
         manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
-        manifest.stages = [
-            StageStatus(stage_name=name, status="pending") for name in stages_to_run
-        ]
+        manifest.stages = [StageStatus(stage_name=name, status="pending") for name in stages_to_run]
         manifest.status = "running"
         ctx.artifact_store.save_run_manifest(manifest)
 
@@ -85,18 +83,14 @@ class PipelineRunner:
             stage.execute(ctx)
             stage_manifest.status = "completed"
             stage_manifest.completed_at = datetime.now(UTC)
-            ctx.artifact_store.save_stage_manifest(
-                ctx.run_id, ctx.doc_id, stage_manifest
-            )
+            ctx.artifact_store.save_stage_manifest(ctx.run_id, ctx.doc_id, stage_manifest)
             self._update_stage_status(ctx, stage.name, "completed")
             stage_log.info("stage.complete")
         except Exception as e:
             stage_manifest.status = "failed"
             stage_manifest.error = str(e)
             stage_manifest.completed_at = datetime.now(UTC)
-            ctx.artifact_store.save_stage_manifest(
-                ctx.run_id, ctx.doc_id, stage_manifest
-            )
+            ctx.artifact_store.save_stage_manifest(ctx.run_id, ctx.doc_id, stage_manifest)
             self._update_stage_status(ctx, stage.name, "failed")
             stage_log.error("stage.failed", error=str(e))
             raise

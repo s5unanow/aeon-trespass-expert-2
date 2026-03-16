@@ -75,9 +75,7 @@ class ArtifactStore:
         path = self.runs_root / manifest.run_id / "run_manifest.json"
         write_json(path, manifest)
 
-    def save_stage_manifest(
-        self, run_id: str, doc_id: str, manifest: StageManifest
-    ) -> None:
+    def save_stage_manifest(self, run_id: str, doc_id: str, manifest: StageManifest) -> None:
         """Save a stage manifest."""
         stage_dir = self.ensure_stage_dir(run_id, doc_id, manifest.stage_name)
         write_json(stage_dir / "stage_manifest.json", manifest)

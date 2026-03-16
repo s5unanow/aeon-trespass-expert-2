@@ -40,6 +40,4 @@ class StageContext:
     @property
     def stage_dir(self) -> Path:
         """Convenience: not valid until the runner sets the current stage."""
-        raise NotImplementedError(
-            "Use artifact_store.stage_dir() with explicit stage name"
-        )
+        raise NotImplementedError("Use artifact_store.stage_dir() with explicit stage name")

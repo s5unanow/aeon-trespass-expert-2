@@ -56,30 +56,22 @@ def load_document_config(configs_root: Path, doc_id: str) -> DocumentConfig:
 
 def load_model_profile(configs_root: Path, profile_id: str) -> ModelProfile:
     """Load a model profile."""
-    return _load_model(
-        configs_root / "model-profiles" / f"{profile_id}.yaml", ModelProfile
-    )
+    return _load_model(configs_root / "model-profiles" / f"{profile_id}.yaml", ModelProfile)
 
 
 def load_rule_profile(configs_root: Path, profile_id: str) -> RuleProfile:
     """Load a rule profile."""
-    return _load_model(
-        configs_root / "rule-profiles" / f"{profile_id}.yaml", RuleProfile
-    )
+    return _load_model(configs_root / "rule-profiles" / f"{profile_id}.yaml", RuleProfile)
 
 
 def load_symbol_pack(configs_root: Path, pack_id: str) -> SymbolPack:
     """Load a symbol pack."""
-    return _load_model(
-        configs_root / "symbol-packs" / f"{pack_id}.yaml", SymbolPack
-    )
+    return _load_model(configs_root / "symbol-packs" / f"{pack_id}.yaml", SymbolPack)
 
 
 def load_glossary_pack(configs_root: Path, pack_id: str) -> GlossaryPack:
     """Load a glossary pack."""
-    return _load_model(
-        configs_root / "glossary-packs" / f"{pack_id}.yaml", GlossaryPack
-    )
+    return _load_model(configs_root / "glossary-packs" / f"{pack_id}.yaml", GlossaryPack)
 
 
 def load_patch_set(configs_root: Path, patch_id: str) -> PatchSet:
