@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any
 
@@ -16,7 +17,11 @@ class GeminiProvider(LlmGateway):
     """Gemini provider adapter using google-genai SDK."""
 
     def __init__(self, api_key: str | None = None) -> None:
-        self._client = genai.Client(api_key=api_key) if api_key else genai.Client()
+        key = api_key or os.environ.get("GOOGLE_API_KEY")
+        if key:
+            self._client = genai.Client(api_key=key)
+        else:
+            self._client = genai.Client()
 
     def translate(
         self,

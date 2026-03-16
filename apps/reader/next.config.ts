@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // output: 'export', // Enabled once generateStaticParams returns real data (EP-009)
+  output: 'export',
   trailingSlash: true,
   images: {
     unoptimized: true,

@@ -1,9 +1,9 @@
 # Default translation model profile.
 profile_id: translate-default
 provider: gemini
-model: gemini-2.0-flash
+model: gemini-2.5-flash
 fallback_provider: gemini
-fallback_model: gemini-2.5-pro-preview-05-06
+fallback_model: gemini-2.5-flash
 temperature: 0.1
 top_p: 0.9
 max_output_tokens: 4096

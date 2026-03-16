@@ -1,5 +1,962 @@
 # Glossary pack for Aeon Trespass core terminology.
+# Locked terms get placeholder-injected before LLM calls to ensure consistency.
 pack_id: aeon-core
-version: "1.0.0"
-terms: []
-# TODO: Populate with actual game terms in EP-005.
+version: "1.1.0"
+terms:
+  # ── Brand & System ──────────────────────────────────────────────
+  - term_id: aeon-trespass-odyssey
+    en_canonical: "Aeon Trespass: Odyssey"
+    en_aliases: ["Aeon Trespass", "AT:O"]
+    ru_preferred: "Aeon Trespass: Одиссея"
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: triskelion
+    en_canonical: Triskelion
+    en_aliases: ["Triskelion system"]
+    ru_preferred: Трискелион
+    lock_translation: true
+    link_policy: always
+
+  - term_id: inverted-combat-paradigm
+    en_canonical: Inverted Combat Paradigm
+    en_aliases: []
+    ru_preferred: Инвертированная боевая парадигма
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: escalation
+    en_canonical: Escalation
+    en_aliases: ["Escalating"]
+    ru_preferred: Эскалация
+    lock_translation: true
+    link_policy: always
+
+  # ── Core Entities ───────────────────────────────────────────────
+  - term_id: titan
+    en_canonical: Titan
+    en_aliases: ["Titans"]
+    ru_preferred: Титан
+    ru_variants: ["Титаны", "Титана", "Титану", "Титаном"]
+    lock_translation: true
+    link_policy: always
+
+  - term_id: primordial
+    en_canonical: Primordial
+    en_aliases: ["Primordials"]
+    ru_preferred: Изначальный
+    ru_variants: ["Изначальные", "Изначального", "Изначальному"]
+    lock_translation: true
+    link_policy: always
+
+  - term_id: argonaut
+    en_canonical: Argonaut
+    en_aliases: ["Argonauts"]
+    ru_preferred: Аргонавт
+    ru_variants: ["Аргонавты", "Аргонавта"]
+    lock_translation: true
+    link_policy: always
+
+  - term_id: argo
+    en_canonical: Argo
+    en_aliases: []
+    ru_preferred: Арго
+    lock_translation: true
+    link_policy: always
+
+  - term_id: adversary
+    en_canonical: Adversary
+    en_aliases: ["Adversaries"]
+    ru_preferred: Противник
+    ru_variants: ["Противники"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: nymph
+    en_canonical: Nymph
+    en_aliases: ["Nymphs"]
+    ru_preferred: Нимфа
+    ru_variants: ["Нимфы"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: godform
+    en_canonical: Godform
+    en_aliases: ["Godforms"]
+    ru_preferred: Богоформа
+    ru_variants: ["Богоформы"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: party-leader
+    en_canonical: Party Leader
+    en_aliases: []
+    ru_preferred: Лидер группы
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: priority-target
+    en_canonical: Priority Target
+    en_aliases: ["Priority Targets"]
+    ru_preferred: Приоритетная цель
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Phases & Steps ──────────────────────────────────────────────
+  - term_id: cycle
+    en_canonical: Cycle
+    en_aliases: ["Cycles"]
+    ru_preferred: Цикл
+    ru_variants: ["Циклы", "Цикла"]
+    lock_translation: true
+    link_policy: always
+
+  - term_id: campaign
+    en_canonical: Campaign
+    en_aliases: ["Campaigns"]
+    ru_preferred: Кампания
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: campaign-round
+    en_canonical: Campaign Round
+    en_aliases: ["Campaign Rounds"]
+    ru_preferred: Раунд кампании
+    lock_translation: true
+    link_policy: always
+
+  - term_id: voyage-phase
+    en_canonical: Voyage Phase
+    en_aliases: []
+    ru_preferred: Фаза путешествия
+    lock_translation: true
+    link_policy: always
+
+  - term_id: adventure-phase
+    en_canonical: Adventure Phase
+    en_aliases: []
+    ru_preferred: Фаза приключений
+    lock_translation: true
+    link_policy: always
+
+  - term_id: battle-phase
+    en_canonical: Battle Phase
+    en_aliases: []
+    ru_preferred: Фаза битвы
+    lock_translation: true
+    link_policy: always
+
+  - term_id: titan-round
+    en_canonical: Titan Round
+    en_aliases: ["Titan Rounds"]
+    ru_preferred: Раунд Титана
+    lock_translation: true
+    link_policy: always
+
+  - term_id: primordial-round
+    en_canonical: Primordial Round
+    en_aliases: ["Primordial Rounds"]
+    ru_preferred: Раунд Изначального
+    lock_translation: true
+    link_policy: always
+
+  - term_id: movement-step
+    en_canonical: Movement Step
+    en_aliases: []
+    ru_preferred: Шаг движения
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: timeline-step
+    en_canonical: Timeline Step
+    en_aliases: []
+    ru_preferred: Шаг шкалы времени
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: exploration-step
+    en_canonical: Exploration Step
+    en_aliases: []
+    ru_preferred: Шаг исследования
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: expedition-step
+    en_canonical: Expedition Step
+    en_aliases: []
+    ru_preferred: Шаг экспедиции
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: encounter-step
+    en_canonical: Encounter Step
+    en_aliases: []
+    ru_preferred: Шаг столкновения
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: advancement-step
+    en_canonical: Advancement Step
+    en_aliases: []
+    ru_preferred: Шаг развития
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: story-step
+    en_canonical: Story Step
+    en_aliases: []
+    ru_preferred: Шаг истории
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: doom-step
+    en_canonical: Doom Step
+    en_aliases: []
+    ru_preferred: Шаг Рока
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: end-step
+    en_canonical: End Step
+    en_aliases: []
+    ru_preferred: Финальный шаг
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: battle-setup
+    en_canonical: Battle Setup
+    en_aliases: []
+    ru_preferred: Подготовка к битве
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: battle-aftermath
+    en_canonical: Battle Aftermath
+    en_aliases: []
+    ru_preferred: Последствия битвы
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Triskelion Stats ────────────────────────────────────────────
+  - term_id: danger
+    en_canonical: Danger
+    en_aliases: []
+    ru_preferred: Опасность
+    lock_translation: true
+    link_policy: always
+
+  - term_id: fate
+    en_canonical: Fate
+    en_aliases: []
+    ru_preferred: Судьба
+    lock_translation: true
+    link_policy: always
+
+  - term_id: rage
+    en_canonical: Rage
+    en_aliases: []
+    ru_preferred: Ярость
+    lock_translation: true
+    link_policy: always
+
+  # ── Argo Stats & Resources ─────────────────────────────────────
+  - term_id: crew
+    en_canonical: Crew
+    en_aliases: []
+    ru_preferred: Экипаж
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: hull
+    en_canonical: Hull
+    en_aliases: []
+    ru_preferred: Корпус
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: doom
+    en_canonical: Doom
+    en_aliases: []
+    ru_preferred: Рок
+    lock_translation: true
+    link_policy: always
+
+  - term_id: diplomacy
+    en_canonical: Diplomacy
+    en_aliases: ["Diplomacy Score"]
+    ru_preferred: Дипломатия
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: faction
+    en_canonical: Faction
+    en_aliases: ["Factions"]
+    ru_preferred: Фракция
+    ru_variants: ["Фракции"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: progress
+    en_canonical: Progress
+    en_aliases: []
+    ru_preferred: Прогресс
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Card Types ──────────────────────────────────────────────────
+  - term_id: ai-card
+    en_canonical: AI
+    en_aliases: ["AI card", "AI cards", "AI deck"]
+    ru_preferred: ИИ
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: bp-card
+    en_canonical: BP
+    en_aliases: ["BP card", "BP cards", "BP deck", "Body Part"]
+    ru_preferred: ЧТ
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: gear
+    en_canonical: Gear
+    en_aliases: ["Gears", "Gear card", "Gear cards"]
+    ru_preferred: Снаряжение
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: technology
+    en_canonical: Technology
+    en_aliases: ["Technologies", "Technology card"]
+    ru_preferred: Технология
+    ru_variants: ["Технологии"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: mnemos
+    en_canonical: Mnemos
+    en_aliases: ["Mnemoses", "Mnemos card"]
+    ru_preferred: Мнемос
+    ru_variants: ["Мнемосы"]
+    lock_translation: true
+    link_policy: always
+
+  - term_id: fated-mnemos
+    en_canonical: Fated Mnemos
+    en_aliases: []
+    ru_preferred: Роковой мнемос
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: condition
+    en_canonical: Condition
+    en_aliases: ["Conditions"]
+    ru_preferred: Состояние
+    ru_variants: ["Состояния"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: trauma
+    en_canonical: Trauma
+    en_aliases: ["Traumas"]
+    ru_preferred: Травма
+    ru_variants: ["Травмы"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: moiros
+    en_canonical: Moiros
+    en_aliases: ["Moiros card"]
+    ru_preferred: Мойрос
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: kratos
+    en_canonical: Kratos
+    en_aliases: ["Kratos card", "Kratos cards"]
+    ru_preferred: Кратос
+    lock_translation: true
+    link_policy: always
+
+  - term_id: exploration-card
+    en_canonical: Exploration
+    en_aliases: ["Exploration card", "Exploration cards"]
+    ru_preferred: Исследование
+    lock_translation: false
+    link_policy: first_only
+
+  - term_id: story-card
+    en_canonical: Story Card
+    en_aliases: ["Story Cards"]
+    ru_preferred: Карта истории
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: doom-card
+    en_canonical: Doom Card
+    en_aliases: ["Doom Cards"]
+    ru_preferred: Карта Рока
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: trait
+    en_canonical: Trait
+    en_aliases: ["Traits"]
+    ru_preferred: Черта
+    ru_variants: ["Черты"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: signature
+    en_canonical: Signature
+    en_aliases: ["Signatures"]
+    ru_preferred: Сигнатура
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: routine
+    en_canonical: Routine
+    en_aliases: ["Routines"]
+    ru_preferred: Рутина
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: pattern
+    en_canonical: Pattern
+    en_aliases: ["Patterns"]
+    ru_preferred: Паттерн
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Tokens & Pools ─────────────────────────────────────────────
+  - term_id: kratos-pool
+    en_canonical: Kratos Pool
+    en_aliases: []
+    ru_preferred: Пул Кратоса
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: kratos-token
+    en_canonical: Kratos Token
+    en_aliases: ["Kratos Tokens"]
+    ru_preferred: Жетон Кратоса
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: opening
+    en_canonical: Opening
+    en_aliases: ["Openings"]
+    ru_preferred: Открытие
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: break
+    en_canonical: Break
+    en_aliases: ["Breaks"]
+    ru_preferred: Пролом
+    ru_variants: ["Проломы"]
+    lock_translation: true
+    link_policy: always
+
+  - term_id: ambrosia
+    en_canonical: Ambrosia
+    en_aliases: []
+    ru_preferred: Амброзия
+    lock_translation: true
+    link_policy: always
+
+  - term_id: despair
+    en_canonical: Despair
+    en_aliases: []
+    ru_preferred: Отчаяние
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: fatigue
+    en_canonical: Fatigue
+    en_aliases: []
+    ru_preferred: Усталость
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: combo
+    en_canonical: Combo
+    en_aliases: ["Combos"]
+    ru_preferred: Комбо
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: trespass-token
+    en_canonical: Trespass
+    en_aliases: ["Trespass token"]
+    ru_preferred: Вторжение
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Dice & Rolls ───────────────────────────────────────────────
+  - term_id: attack-roll
+    en_canonical: Attack Roll
+    en_aliases: ["Attack Rolls"]
+    ru_preferred: Бросок атаки
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: evasion-roll
+    en_canonical: Evasion Roll
+    en_aliases: ["Evasion Rolls"]
+    ru_preferred: Бросок уклонения
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: power-roll
+    en_canonical: Power Roll
+    en_aliases: ["Power Rolls"]
+    ru_preferred: Бросок силы
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: armor-roll
+    en_canonical: Armor Roll
+    en_aliases: ["Armor Rolls"]
+    ru_preferred: Бросок брони
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: power
+    en_canonical: Power
+    en_aliases: []
+    ru_preferred: Сила
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: potential
+    en_canonical: Potential
+    en_aliases: []
+    ru_preferred: Потенциал
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Game Components ─────────────────────────────────────────────
+  - term_id: argo-sheet
+    en_canonical: Argo Sheet
+    en_aliases: []
+    ru_preferred: Лист Арго
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: argonaut-sheet
+    en_canonical: Argonaut Sheet
+    en_aliases: []
+    ru_preferred: Лист аргонавта
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: titan-sheet
+    en_canonical: Titan Sheet
+    en_aliases: []
+    ru_preferred: Лист Титана
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: primordial-sheet
+    en_canonical: Primordial Sheet
+    en_aliases: []
+    ru_preferred: Лист Изначального
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: battle-board
+    en_canonical: Battle Board
+    en_aliases: []
+    ru_preferred: Поле битвы
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: board-edge
+    en_canonical: Board Edge
+    en_aliases: ["Board Edges"]
+    ru_preferred: Край поля
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: timeline
+    en_canonical: Timeline
+    en_aliases: ["Timelines"]
+    ru_preferred: Шкала времени
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: storybook
+    en_canonical: Storybook
+    en_aliases: []
+    ru_preferred: Книга историй
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: terrain
+    en_canonical: Terrain
+    en_aliases: ["Terrains"]
+    ru_preferred: Местность
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Wounds & Damage ─────────────────────────────────────────────
+  - term_id: wound
+    en_canonical: Wound
+    en_aliases: ["Wounds"]
+    ru_preferred: Рана
+    ru_variants: ["Раны"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: wound-stack
+    en_canonical: Wound Stack
+    en_aliases: ["Wound Stacks"]
+    ru_preferred: Стопка ран
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: single-wound
+    en_canonical: Single Wound
+    en_aliases: []
+    ru_preferred: Одиночная рана
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: double-wound
+    en_canonical: Double Wound
+    en_aliases: []
+    ru_preferred: Двойная рана
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: critical-wound
+    en_canonical: Critical Wound
+    en_aliases: ["Critical Wounds"]
+    ru_preferred: Критическая рана
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: obol
+    en_canonical: Obol
+    en_aliases: ["Obol Draw", "Obols"]
+    ru_preferred: Обол
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Movement & Positioning ──────────────────────────────────────
+  - term_id: knockback
+    en_canonical: Knockback
+    en_aliases: ["Knockbacks"]
+    ru_preferred: Отбрасывание
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: pushback
+    en_canonical: Pushback
+    en_aliases: ["Pushbacks"]
+    ru_preferred: Отталкивание
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: knockdown
+    en_canonical: Knockdown
+    en_aliases: ["Knockdowns"]
+    ru_preferred: Опрокидывание
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: crash
+    en_canonical: Crash
+    en_aliases: ["Crashes"]
+    ru_preferred: Столкновение
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: chain-break
+    en_canonical: Chain Break
+    en_aliases: ["Chain Breaks"]
+    ru_preferred: Разрыв цепочки
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: line-of-sight
+    en_canonical: Line of Sight
+    en_aliases: ["LoS"]
+    ru_preferred: Линия видимости
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: bonus-attack
+    en_canonical: Bonus Attack
+    en_aliases: ["Bonus Attacks"]
+    ru_preferred: Бонусная атака
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: reflex
+    en_canonical: Reflex
+    en_aliases: []
+    ru_preferred: Рефлекс
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: vault
+    en_canonical: Vault
+    en_aliases: ["Vaulting"]
+    ru_preferred: Прыжок
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Terrain Traits ──────────────────────────────────────────────
+  - term_id: obstacle
+    en_canonical: Obstacle
+    en_aliases: ["Obstacles"]
+    ru_preferred: Препятствие
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: chasm
+    en_canonical: Chasm
+    en_aliases: ["Chasms"]
+    ru_preferred: Пропасть
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: destructible
+    en_canonical: Destructible
+    en_aliases: []
+    ru_preferred: Разрушаемый
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: indestructible
+    en_canonical: Indestructible
+    en_aliases: []
+    ru_preferred: Неразрушимый
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Voyage & Adventure Subsystems ───────────────────────────────
+  - term_id: inward-odyssey
+    en_canonical: Inward Odyssey
+    en_aliases: []
+    ru_preferred: Внутренняя одиссея
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: mnemos-vault
+    en_canonical: Mnemos Vault
+    en_aliases: []
+    ru_preferred: Хранилище мнемосов
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: katharsis
+    en_canonical: Katharsis
+    en_aliases: []
+    ru_preferred: Катарсис
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: dreams-of-pharos
+    en_canonical: Dreams of Pharos
+    en_aliases: []
+    ru_preferred: Сны Фароса
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: choice-matrix
+    en_canonical: Choice Matrix
+    en_aliases: []
+    ru_preferred: Матрица выбора
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: acclimation
+    en_canonical: Acclimation
+    en_aliases: []
+    ru_preferred: Акклиматизация
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: summoning
+    en_canonical: Summoning
+    en_aliases: []
+    ru_preferred: Призыв
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: awakening
+    en_canonical: Awakening
+    en_aliases: []
+    ru_preferred: Пробуждение
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: argo-armory
+    en_canonical: Argo Armory
+    en_aliases: []
+    ru_preferred: Арсенал Арго
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: rr
+    en_canonical: "R&R"
+    en_aliases: []
+    ru_preferred: "Отдых (R&R)"
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: negotiation
+    en_canonical: Negotiation
+    en_aliases: ["Negotiations"]
+    ru_preferred: Переговоры
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: divine-surge
+    en_canonical: Divine Surge
+    en_aliases: []
+    ru_preferred: Божественный всплеск
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Mnestis Theatre ─────────────────────────────────────────────
+  - term_id: mnestis-theatre
+    en_canonical: Mnestis Theatre
+    en_aliases: ["Mnestis"]
+    ru_preferred: Театр Мнестиса
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: tree-of-knowledge
+    en_canonical: Tree of Knowledge
+    en_aliases: []
+    ru_preferred: Древо знаний
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Argonaut Skills ─────────────────────────────────────────────
+  - term_id: courage
+    en_canonical: Courage
+    en_aliases: []
+    ru_preferred: Храбрость
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: cunning
+    en_canonical: Cunning
+    en_aliases: []
+    ru_preferred: Хитрость
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: endurance
+    en_canonical: Endurance
+    en_aliases: []
+    ru_preferred: Выносливость
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: fury
+    en_canonical: Fury
+    en_aliases: []
+    ru_preferred: Неистовство
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: will
+    en_canonical: Will
+    en_aliases: []
+    ru_preferred: Воля
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: wisdom
+    en_canonical: Wisdom
+    en_aliases: []
+    ru_preferred: Мудрость
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Named Primordials ───────────────────────────────────────────
+  - term_id: hekaton
+    en_canonical: Hekaton
+    en_aliases: []
+    ru_preferred: Гекатон
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: labyrinthauros
+    en_canonical: Labyrinthauros
+    en_aliases: []
+    ru_preferred: Лабиринтаврос
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: cyclonus
+    en_canonical: Cyclonus
+    en_aliases: []
+    ru_preferred: Циклонус
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Named Characters ────────────────────────────────────────────
+  - term_id: herodotus
+    en_canonical: Herodotus
+    en_aliases: []
+    ru_preferred: Геродот
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: pharos
+    en_canonical: Pharos
+    en_aliases: []
+    ru_preferred: Фарос
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Lore & Setting ─────────────────────────────────────────────
+  - term_id: hellas
+    en_canonical: Hellas
+    en_aliases: []
+    ru_preferred: Эллада
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: eschaton
+    en_canonical: Eschaton
+    en_aliases: []
+    ru_preferred: Эсхатон
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: labyrinth
+    en_canonical: Labyrinth
+    en_aliases: ["Labyrinths"]
+    ru_preferred: Лабиринт
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Special Rules ───────────────────────────────────────────────
+  - term_id: mercy-rule
+    en_canonical: Mercy Rule
+    en_aliases: []
+    ru_preferred: Правило милосердия
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: wise-providence
+    en_canonical: Wise Providence
+    en_aliases: []
+    ru_preferred: Мудрое провидение
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: tides-of-fate
+    en_canonical: Tides of Fate
+    en_aliases: []
+    ru_preferred: Приливы судьбы
+    lock_translation: true
+    link_policy: first_only

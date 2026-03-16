@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from aeon_reader_pipeline.llm.base import LlmGateway
@@ -206,41 +208,80 @@ class TranslateUnitsStage(BaseStage):
         failures: list[TranslationFailure] = []
         calls: list[TranslationCallMetadata] = []
         cached_count = 0
+        lock = threading.Lock()
+        completed_count = 0
 
-        for unit in plan.units:
-            result, failure, meta = _translate_single_unit(unit, gateway, system_prompt, ctx, tm)
+        concurrency = ctx.pipeline_config.llm_concurrency
 
-            if result is not None:
-                results.append(result)
-                ctx.artifact_store.write_artifact(
-                    ctx.run_id,
-                    ctx.doc_id,
-                    STAGE_NAME,
-                    f"results/{unit.unit_id}.json",
-                    result,
+        def _process_unit(
+            unit: TranslationUnit,
+        ) -> tuple[TranslationResult | None, TranslationFailure | None, TranslationCallMetadata | None]:
+            return _translate_single_unit(unit, gateway, system_prompt, ctx, tm)
+
+        def _collect(
+            unit: TranslationUnit,
+            result: TranslationResult | None,
+            failure: TranslationFailure | None,
+            meta: TranslationCallMetadata | None,
+        ) -> None:
+            nonlocal cached_count, completed_count
+            with lock:
+                if result is not None:
+                    results.append(result)
+                    ctx.artifact_store.write_artifact(
+                        ctx.run_id,
+                        ctx.doc_id,
+                        STAGE_NAME,
+                        f"results/{unit.unit_id}.json",
+                        result,
+                    )
+                    if result.cached:
+                        cached_count += 1
+
+                if failure is not None:
+                    failures.append(failure)
+                    ctx.artifact_store.write_artifact(
+                        ctx.run_id,
+                        ctx.doc_id,
+                        STAGE_NAME,
+                        f"failures/{unit.unit_id}.json",
+                        failure,
+                    )
+
+                if meta is not None:
+                    calls.append(meta)
+
+                completed_count += 1
+                if completed_count % 50 == 0:
+                    ctx.logger.info(
+                        "translation_progress",
+                        completed=completed_count,
+                        total=plan.total_units,
+                        succeeded=len(results),
+                        failed=len(failures),
+                    )
+
+                ctx.logger.debug(
+                    "unit_translated",
+                    unit_id=unit.unit_id,
+                    success=result is not None,
+                    cached=result.cached if result else False,
                 )
-                if result.cached:
-                    cached_count += 1
 
-            if failure is not None:
-                failures.append(failure)
-                ctx.artifact_store.write_artifact(
-                    ctx.run_id,
-                    ctx.doc_id,
-                    STAGE_NAME,
-                    f"failures/{unit.unit_id}.json",
-                    failure,
-                )
-
-            if meta is not None:
-                calls.append(meta)
-
-            ctx.logger.debug(
-                "unit_translated",
-                unit_id=unit.unit_id,
-                success=result is not None,
-                cached=result.cached if result else False,
-            )
+        if concurrency > 1:
+            ctx.logger.info("parallel_translation", workers=concurrency)
+            with ThreadPoolExecutor(max_workers=concurrency) as executor:
+                futures = {
+                    executor.submit(_process_unit, unit): unit for unit in plan.units
+                }
+                for future in as_completed(futures):
+                    unit = futures[future]
+                    result, failure, meta = future.result()
+                    _collect(unit, result, failure, meta)
+        else:
+            for unit in plan.units:
+                result, failure, meta = _process_unit(unit)
+                _collect(unit, result, failure, meta)
 
         # Write call metadata
         if calls:

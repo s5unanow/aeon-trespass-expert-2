@@ -1,7 +1,7 @@
 # Document configuration for Aeon Trespass Core Rulebook.
 doc_id: aeon-trespass-core
 slug: aeon-trespass-core
-source_pdf: sources/ATO_CORE_Rulebook_v1.1.pdf
+source_pdf: materials/ATO_CORE_Rulebook_v1.1.pdf
 
 titles:
   en: "Aeon Trespass: Core Rulebook"
