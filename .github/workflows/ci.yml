@@ -16,7 +16,7 @@ jobs:
       - run: uv sync
       - run: uv run ruff check packages/pipeline/src tests/backend
       - run: uv run ruff format --check packages/pipeline/src tests/backend
-      - run: uv run mypy packages/pipeline/src
+      - run: uv run mypy --strict packages/pipeline/src
       - run: uv run pytest tests/backend
 
   frontend:
