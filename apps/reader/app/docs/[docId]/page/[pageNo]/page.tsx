@@ -2,11 +2,31 @@
  * Reader page route — renders a single page from the bundle.
  */
 
+import { notFound } from "next/navigation";
+import {
+  docExists,
+  listDocIds,
+  loadBundleManifest,
+  loadBundlePage,
+  loadNavigation,
+  pageExists,
+} from "@/lib/bundle";
+import { DocLayout } from "@/components/DocLayout";
+import { PageView } from "@/components/PageView";
+import { PageNav } from "@/components/PageNav";
+
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  // TODO: Read from generated bundle in EP-009.
-  return [];
+  const docIds = listDocIds();
+  const params: { docId: string; pageNo: string }[] = [];
+  for (const docId of docIds) {
+    const manifest = loadBundleManifest(docId);
+    for (let p = 1; p <= manifest.page_count; p++) {
+      params.push({ docId, pageNo: String(p) });
+    }
+  }
+  return params;
 }
 
 export default async function ReaderPage({
@@ -14,10 +34,25 @@ export default async function ReaderPage({
 }: {
   params: Promise<{ docId: string; pageNo: string }>;
 }) {
+  const { docId, pageNo: pageNoStr } = await params;
+  const pageNo = parseInt(pageNoStr, 10);
+
+  if (!docExists(docId) || isNaN(pageNo) || !pageExists(docId, pageNo)) {
+    notFound();
+  }
+
+  const manifest = loadBundleManifest(docId);
+  const navigation = loadNavigation(docId);
+  const page = loadBundlePage(docId, pageNo);
+
   return (
-    <main>
-      <h1>Reader page</h1>
-      <p>Page content will be rendered here.</p>
-    </main>
+    <DocLayout manifest={manifest} navigation={navigation}>
+      <PageView page={page} />
+      <PageNav
+        docId={docId}
+        currentPage={pageNo}
+        totalPages={manifest.page_count}
+      />
+    </DocLayout>
   );
 }

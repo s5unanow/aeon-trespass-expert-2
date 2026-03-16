@@ -5,6 +5,26 @@
  * Do NOT edit manually — regenerate with `make schemas`.
  */
 
-// Generated types will be re-exported here after generation.
-// Example: export type { PageRecord, Block, BundlePage } from './generated/types';
-export {};
+export type {
+  BundleBlock,
+  BundleCalloutBlock,
+  BundleCaptionBlock,
+  BundleDividerBlock,
+  BundleFigureBlock,
+  BundleGlossaryRef,
+  BundleHeadingBlock,
+  BundleInlineNode,
+  BundleListBlock,
+  BundleListItemBlock,
+  BundlePage,
+  BundlePageAnchor,
+  BundleParagraphBlock,
+  BundleSymbolRef,
+  BundleTableBlock,
+  BundleTextRun,
+  CatalogEntry,
+  CatalogManifest,
+  NavEntry,
+  NavigationTree,
+  SiteBundleManifest,
+} from "./generated/site-bundle";

@@ -1,6 +1,21 @@
 /**
  * SymbolInline — renders game symbols as inline icons.
  */
-export default function SymbolInline() {
-  return null;
+
+interface SymbolInlineProps {
+  symbolId: string;
+  altText: string;
+}
+
+export function SymbolInline({ symbolId, altText }: SymbolInlineProps) {
+  return (
+    <span
+      className="inline-symbol"
+      data-symbol-id={symbolId}
+      role="img"
+      aria-label={altText || symbolId}
+    >
+      [{altText || symbolId}]
+    </span>
+  );
 }

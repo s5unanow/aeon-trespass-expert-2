@@ -1,6 +1,10 @@
 /**
  * GlossaryDrawer — slide-out drawer for glossary term lookup.
+ *
+ * Stub for EP-010. Currently renders nothing.
  */
-export default function GlossaryDrawer() {
+
+export function GlossaryDrawer() {
+  // TODO: Implement glossary drawer in EP-010.
   return null;
 }
