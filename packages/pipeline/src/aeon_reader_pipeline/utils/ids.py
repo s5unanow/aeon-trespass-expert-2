@@ -46,6 +46,16 @@ def page_fingerprint(blocks_text: str, page_number: int) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+def unit_id(doc_id: str, page_number: int, unit_index: int) -> str:
+    """Generate a readable translation unit ID."""
+    return f"{doc_id}:u{page_number:04d}_{unit_index:02d}"
+
+
+def inline_id(block_id_str: str, inline_index: int) -> str:
+    """Generate an inline node ID within a block."""
+    return f"{block_id_str}:i{inline_index:03d}"
+
+
 def _slugify(text: str) -> str:
     """Convert text to a URL-safe slug."""
     import re

@@ -68,6 +68,7 @@ Key principles:
 - **EP-002** (done): Pipeline runtime — models, config loading, artifact store, stage framework, runner, CLI
 - **EP-003** (done): Source ingest and primitive extraction — DocumentManifest, ExtractedPage, raw asset extraction, golden tests
 - **EP-004** (done): Canonical IR normalization and asset/symbol resolution — PageRecord, Block/InlineNode discriminated unions, normalize_layout, resolve_assets_symbols, patch/override system
+- **EP-005** (done): Translation planning and execution — TranslationUnit/Result models, plan_translation stage, glossary placeholders, LlmGateway/GeminiProvider, validation, translate_units with retry/cache/TM
 
 ## Pipeline stages (15-stage order)
 
