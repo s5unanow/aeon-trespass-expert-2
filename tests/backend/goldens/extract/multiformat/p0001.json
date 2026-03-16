@@ -1,0 +1,375 @@
+{
+  "char_count": 192,
+  "fonts_used": [
+    "Helvetica",
+    "Helvetica-Bold",
+    "Helvetica-Oblique"
+  ],
+  "height_pt": 792.0,
+  "images": [],
+  "page_number": 1,
+  "rotation": 0,
+  "text_blocks": [
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 182.68800354003906,
+        "y0": 46.31999969482422,
+        "y1": 79.36799621582031
+      },
+      "block_index": 0,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 182.68800354003906,
+            "y0": 46.31999969482422,
+            "y1": 79.36799621582031
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 182.68800354003906,
+                "y0": 46.31999969482422,
+                "y1": 79.36799621582031
+              },
+              "font": {
+                "color": 0,
+                "flags": 16,
+                "is_bold": true,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica-Bold",
+                "size": 24.0
+              },
+              "origin": [
+                72.0,
+                72.0
+              ],
+              "text": "Main Title"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 177.05599975585938,
+        "y0": 97.0199966430664,
+        "y1": 115.97599792480469
+      },
+      "block_index": 1,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 177.05599975585938,
+            "y0": 97.0199966430664,
+            "y1": 115.97599792480469
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 177.05599975585938,
+                "y0": 97.0199966430664,
+                "y1": 115.97599792480469
+              },
+              "font": {
+                "color": 0,
+                "flags": 2,
+                "is_bold": false,
+                "is_italic": true,
+                "is_monospace": false,
+                "name": "Helvetica-Oblique",
+                "size": 14.0
+              },
+              "origin": [
+                72.0,
+                112.0
+              ],
+              "text": "Subtitle text here"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 309.2149658203125,
+        "y0": 130.1750030517578,
+        "y1": 145.28900146484375
+      },
+      "block_index": 2,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 309.2149658203125,
+            "y0": 130.1750030517578,
+            "y1": 145.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 309.2149658203125,
+                "y0": 130.1750030517578,
+                "y1": 145.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                142.0
+              ],
+              "text": "Normal paragraph text that continues for a while."
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 155.7539825439453,
+        "y0": 155.1750030517578,
+        "y1": 170.28900146484375
+      },
+      "block_index": 3,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 155.7539825439453,
+            "y0": 155.1750030517578,
+            "y1": 170.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 155.7539825439453,
+                "y0": 155.1750030517578,
+                "y1": 170.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                167.0
+              ],
+              "text": "· First bullet point"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 171.6709747314453,
+        "y0": 175.1750030517578,
+        "y1": 190.28900146484375
+      },
+      "block_index": 4,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 171.6709747314453,
+            "y0": 175.1750030517578,
+            "y1": 190.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 171.6709747314453,
+                "y0": 175.1750030517578,
+                "y1": 190.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                187.0
+              ],
+              "text": "· Second bullet point"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 159.427978515625,
+        "y0": 195.1750030517578,
+        "y1": 210.28900146484375
+      },
+      "block_index": 5,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 159.427978515625,
+            "y0": 195.1750030517578,
+            "y1": 210.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 159.427978515625,
+                "y0": 195.1750030517578,
+                "y1": 210.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                207.0
+              ],
+              "text": "· Third bullet point"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 188.47999572753906,
+        "y0": 219.8800048828125,
+        "y1": 241.91200256347656
+      },
+      "block_index": 6,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 188.47999572753906,
+            "y0": 219.8800048828125,
+            "y1": 241.91200256347656
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 188.47999572753906,
+                "y0": 219.8800048828125,
+                "y1": 241.91200256347656
+              },
+              "font": {
+                "color": 0,
+                "flags": 16,
+                "is_bold": true,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica-Bold",
+                "size": 16.0
+              },
+              "origin": [
+                72.0,
+                237.0
+              ],
+              "text": "Section Header"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 266.4359436035156,
+        "y0": 250.1750030517578,
+        "y1": 265.28900146484375
+      },
+      "block_index": 7,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 266.4359436035156,
+            "y0": 250.1750030517578,
+            "y1": 265.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 266.4359436035156,
+                "y0": 250.1750030517578,
+                "y1": 265.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                262.0
+              ],
+              "text": "More body text after the section header."
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}

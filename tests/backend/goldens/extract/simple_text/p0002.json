@@ -1,0 +1,148 @@
+{
+  "char_count": 96,
+  "fonts_used": [
+    "Helvetica"
+  ],
+  "height_pt": 792.0,
+  "images": [],
+  "page_number": 2,
+  "rotation": 0,
+  "text_blocks": [
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 207.0540008544922,
+        "y0": 52.650001525878906,
+        "y1": 77.38200378417969
+      },
+      "block_index": 0,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 207.0540008544922,
+            "y0": 52.650001525878906,
+            "y1": 77.38200378417969
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 207.0540008544922,
+                "y0": 52.650001525878906,
+                "y1": 77.38200378417969
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 18.0
+              },
+              "origin": [
+                72.0,
+                72.0
+              ],
+              "text": "Chapter 2: Rules"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 251.1129608154297,
+        "y0": 98.17500305175781,
+        "y1": 113.28900146484375
+      },
+      "block_index": 1,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 251.1129608154297,
+            "y0": 98.17500305175781,
+            "y1": 113.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 251.1129608154297,
+                "y0": 98.17500305175781,
+                "y1": 113.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                110.0
+              ],
+              "text": "Rule 1: Players take turns clockwise."
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 281.7149353027344,
+        "y0": 123.17500305175781,
+        "y1": 138.28900146484375
+      },
+      "block_index": 2,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 281.7149353027344,
+            "y0": 123.17500305175781,
+            "y1": 138.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 281.7149353027344,
+                "y0": 123.17500305175781,
+                "y1": 138.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                135.0
+              ],
+              "text": "Rule 2: Each turn consists of three phases."
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}

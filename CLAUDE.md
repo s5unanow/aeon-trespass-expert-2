@@ -66,6 +66,7 @@ Key principles:
 
 - **EP-001** (done): Workspace, toolchain, scaffolding, CI, all quality gates
 - **EP-002** (done): Pipeline runtime — models, config loading, artifact store, stage framework, runner, CLI
+- **EP-003** (done): Source ingest and primitive extraction — DocumentManifest, ExtractedPage, raw asset extraction, golden tests
 
 ## Pipeline stages (15-stage order)
 

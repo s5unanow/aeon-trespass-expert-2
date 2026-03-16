@@ -1,0 +1,272 @@
+{
+  "char_count": 118,
+  "fonts_used": [
+    "Helvetica",
+    "Helvetica-Oblique"
+  ],
+  "height_pt": 792.0,
+  "images": [
+    {
+      "bbox": {
+        "x0": 86.0,
+        "x1": 286.0,
+        "y0": 120.0,
+        "y1": 280.0
+      },
+      "bpc": 8,
+      "colorspace": "ICCBased(RGB,Artifex Software sRGB ICC Profile)",
+      "content_hash": "aa46c9239096e4f5bec12b60b184f5b789f8f6930e1bd64c2227a85b48dfe780",
+      "height": 80,
+      "image_index": 0,
+      "stored_as": "aa46c9239096e4f5.png",
+      "width": 100,
+      "xref": 8
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 200.0,
+        "y0": 360.0,
+        "y1": 460.0
+      },
+      "bpc": 8,
+      "colorspace": "ICCBased(RGB,Artifex Software sRGB ICC Profile)",
+      "content_hash": "e97a7bc088078815cc2ac4726ce01307047be4cfb8303d8c69174bb0dc872283",
+      "height": 60,
+      "image_index": 1,
+      "stored_as": "e97a7bc088078815.png",
+      "width": 60,
+      "xref": 15
+    }
+  ],
+  "page_number": 1,
+  "rotation": 0,
+  "text_blocks": [
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 200.04798889160156,
+        "y0": 54.79999923706055,
+        "y1": 76.78399658203125
+      },
+      "block_index": 0,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 200.04798889160156,
+            "y0": 54.79999923706055,
+            "y1": 76.78399658203125
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 200.04798889160156,
+                "y0": 54.79999923706055,
+                "y1": 76.78399658203125
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 16.0
+              },
+              "origin": [
+                72.0,
+                72.0
+              ],
+              "text": "Page with Figures"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 159.41697692871094,
+        "y0": 88.17500305175781,
+        "y1": 103.28900146484375
+      },
+      "block_index": 1,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 159.41697692871094,
+            "y0": 88.17500305175781,
+            "y1": 103.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 159.41697692871094,
+                "y0": 88.17500305175781,
+                "y1": 103.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                100.0
+              ],
+              "text": "Below is Figure 1:"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 177.0299835205078,
+        "y0": 289.29998779296875,
+        "y1": 302.8399963378906
+      },
+      "block_index": 2,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 177.0299835205078,
+            "y0": 289.29998779296875,
+            "y1": 302.8399963378906
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 177.0299835205078,
+                "y0": 289.29998779296875,
+                "y1": 302.8399963378906
+              },
+              "font": {
+                "color": 0,
+                "flags": 2,
+                "is_bold": false,
+                "is_italic": true,
+                "is_monospace": false,
+                "name": "Helvetica-Oblique",
+                "size": 10.0
+              },
+              "origin": [
+                72.0,
+                300.0
+              ],
+              "text": "Figure 1: Color diagram"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 243.81993103027344,
+        "y0": 318.17498779296875,
+        "y1": 333.28900146484375
+      },
+      "block_index": 3,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 243.81993103027344,
+            "y0": 318.17498779296875,
+            "y1": 333.28900146484375
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 243.81993103027344,
+                "y0": 318.17498779296875,
+                "y1": 333.28900146484375
+              },
+              "font": {
+                "color": 0,
+                "flags": 0,
+                "is_bold": false,
+                "is_italic": false,
+                "is_monospace": false,
+                "name": "Helvetica",
+                "size": 11.0
+              },
+              "origin": [
+                72.0,
+                330.0
+              ],
+              "text": "Continuation of text after the figure."
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    },
+    {
+      "bbox": {
+        "x0": 72.0,
+        "x1": 175.37997436523438,
+        "y0": 469.29998779296875,
+        "y1": 482.8399963378906
+      },
+      "block_index": 4,
+      "block_type": "text",
+      "lines": [
+        {
+          "bbox": {
+            "x0": 72.0,
+            "x1": 175.37997436523438,
+            "y0": 469.29998779296875,
+            "y1": 482.8399963378906
+          },
+          "spans": [
+            {
+              "bbox": {
+                "x0": 72.0,
+                "x1": 175.37997436523438,
+                "y0": 469.29998779296875,
+                "y1": 482.8399963378906
+              },
+              "font": {
+                "color": 0,
+                "flags": 2,
+                "is_bold": false,
+                "is_italic": true,
+                "is_monospace": false,
+                "name": "Helvetica-Oblique",
+                "size": 10.0
+              },
+              "origin": [
+                72.0,
+                480.0
+              ],
+              "text": "Figure 2: Green square"
+            }
+          ],
+          "writing_direction": "ltr"
+        }
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}

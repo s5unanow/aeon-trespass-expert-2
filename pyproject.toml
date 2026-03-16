@@ -46,6 +46,14 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
+module = "pymupdf.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aeon_reader_pipeline.stages.*"
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
 
