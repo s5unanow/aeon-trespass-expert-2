@@ -92,11 +92,11 @@ def _create_multiformat_pdf() -> None:
         fontname=_FONT,
     )
     y += 25
-    page.insert_text((72, y), "• First bullet point", fontsize=11, fontname=_FONT)
+    page.insert_text((72, y), "- First bullet point", fontsize=11, fontname=_FONT)
     y += 20
-    page.insert_text((72, y), "• Second bullet point", fontsize=11, fontname=_FONT)
+    page.insert_text((72, y), "- Second bullet point", fontsize=11, fontname=_FONT)
     y += 20
-    page.insert_text((72, y), "• Third bullet point", fontsize=11, fontname=_FONT)
+    page.insert_text((72, y), "- Third bullet point", fontsize=11, fontname=_FONT)
     y += 30
     page.insert_text((72, y), "Section Header", fontsize=16, fontname=_FONT_BOLD)
     y += 25
