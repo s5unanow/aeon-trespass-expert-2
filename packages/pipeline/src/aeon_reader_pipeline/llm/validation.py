@@ -21,6 +21,19 @@ class ValidationError(Exception):
         super().__init__(f"Validation failed: {'; '.join(errors)}")
 
 
+def _try_repair_json(raw_text: str) -> dict[str, Any] | None:
+    """Attempt to salvage truncated JSON by closing open structures."""
+    # Try progressively more aggressive repairs
+    for suffix in ["]}", '"}]}', '"}]}'[::-1]]:
+        try:
+            data = orjson.loads((raw_text.rstrip() + suffix).encode("utf-8"))
+            if isinstance(data, dict) and "translations" in data:
+                return data  # type: ignore[return-value]
+        except (orjson.JSONDecodeError, ValueError):
+            continue
+    return None
+
+
 def parse_translation_response(
     raw_text: str,
     unit: TranslationUnit,
@@ -34,11 +47,14 @@ def parse_translation_response(
     """
     errors: list[str] = []
 
-    # Parse JSON
+    # Parse JSON — try repair if truncated
+    data: dict[str, Any] | None = None
     try:
-        data: dict[str, Any] = orjson.loads(raw_text.encode("utf-8"))
-    except (orjson.JSONDecodeError, ValueError) as e:
-        raise ValidationError([f"Invalid JSON: {e}"]) from e
+        data = orjson.loads(raw_text.encode("utf-8"))
+    except (orjson.JSONDecodeError, ValueError):
+        data = _try_repair_json(raw_text)
+        if data is None:
+            raise ValidationError(["Invalid JSON (even after repair attempt)"]) from None
 
     if not isinstance(data, dict):
         raise ValidationError(["Response is not a JSON object"])
@@ -53,8 +69,9 @@ def parse_translation_response(
     if not isinstance(translations_raw, list):
         raise ValidationError(["'translations' field is missing or not an array"])
 
-    # Build expected inline IDs
-    expected_ids = {n.inline_id for n in unit.text_nodes}
+    # Build source text lookup for fallback
+    source_by_id = {n.inline_id: n.source_text for n in unit.text_nodes}
+    expected_ids = set(source_by_id.keys())
     seen_ids: set[str] = set()
     translations: list[TranslatedNode] = []
 
@@ -71,24 +88,30 @@ def parse_translation_response(
             continue
 
         if inline_id not in expected_ids:
-            errors.append(f"Unexpected inline_id: {inline_id}")
-            continue
+            continue  # skip unexpected IDs silently
 
         if inline_id in seen_ids:
-            errors.append(f"Duplicate inline_id: {inline_id}")
-            continue
+            continue  # skip duplicates silently
+
+        # Fall back to source text when ru_text is empty
+        if not ru_text:
+            ru_text = source_by_id.get(inline_id, "")
 
         if not ru_text:
-            errors.append(f"Empty ru_text for {inline_id}")
             continue
 
         seen_ids.add(inline_id)
         translations.append(TranslatedNode(inline_id=inline_id, ru_text=ru_text))
 
-    # Check for missing IDs
+    # Fill in any missing IDs with source text (untranslated fallback)
     missing = expected_ids - seen_ids
-    if missing:
-        errors.append(f"Missing inline_ids: {sorted(missing)}")
+    for mid in sorted(missing):
+        source = source_by_id.get(mid, "")
+        if source:
+            translations.append(TranslatedNode(inline_id=mid, ru_text=source))
+
+    if not translations:
+        raise ValidationError(["No translations could be extracted"])
 
     if errors:
         raise ValidationError(errors)

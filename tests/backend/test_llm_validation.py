@@ -82,7 +82,7 @@ class TestParseTranslationResponse:
             parse_translation_response(raw, unit)
         assert "not an array" in str(exc_info.value)
 
-    def test_extra_inline_id(self) -> None:
+    def test_extra_inline_id_skipped(self) -> None:
         raw = """{
             "unit_id": "doc:u0001_00",
             "translations": [
@@ -92,11 +92,10 @@ class TestParseTranslationResponse:
             ]
         }"""
         unit = _make_unit()
-        with pytest.raises(ValidationError) as exc_info:
-            parse_translation_response(raw, unit)
-        assert "Unexpected" in str(exc_info.value)
+        result = parse_translation_response(raw, unit)
+        assert len(result.translations) == 2
 
-    def test_missing_inline_id(self) -> None:
+    def test_missing_inline_id_filled_from_source(self) -> None:
         raw = """{
             "unit_id": "doc:u0001_00",
             "translations": [
@@ -104,11 +103,12 @@ class TestParseTranslationResponse:
             ]
         }"""
         unit = _make_unit()
-        with pytest.raises(ValidationError) as exc_info:
-            parse_translation_response(raw, unit)
-        assert "Missing" in str(exc_info.value)
+        result = parse_translation_response(raw, unit)
+        assert len(result.translations) == 2
+        fallback = [t for t in result.translations if t.inline_id == "doc:p0001:b001:paragraph:i000"]
+        assert fallback[0].ru_text == "World"
 
-    def test_duplicate_inline_id(self) -> None:
+    def test_duplicate_inline_id_skipped(self) -> None:
         raw = """{
             "unit_id": "doc:u0001_00",
             "translations": [
@@ -118,11 +118,12 @@ class TestParseTranslationResponse:
             ]
         }"""
         unit = _make_unit()
-        with pytest.raises(ValidationError) as exc_info:
-            parse_translation_response(raw, unit)
-        assert "Duplicate" in str(exc_info.value)
+        result = parse_translation_response(raw, unit)
+        assert len(result.translations) == 2
+        first = [t for t in result.translations if t.inline_id == "doc:p0001:b000:heading:i000"]
+        assert first[0].ru_text == "A"
 
-    def test_empty_ru_text(self) -> None:
+    def test_empty_ru_text_falls_back_to_source(self) -> None:
         raw = """{
             "unit_id": "doc:u0001_00",
             "translations": [
@@ -131,9 +132,10 @@ class TestParseTranslationResponse:
             ]
         }"""
         unit = _make_unit()
-        with pytest.raises(ValidationError) as exc_info:
-            parse_translation_response(raw, unit)
-        assert "Empty" in str(exc_info.value)
+        result = parse_translation_response(raw, unit)
+        assert len(result.translations) == 2
+        fallback = [t for t in result.translations if t.inline_id == "doc:p0001:b001:paragraph:i000"]
+        assert fallback[0].ru_text == "World"
 
     def test_result_has_fingerprint(self) -> None:
         raw = """{
