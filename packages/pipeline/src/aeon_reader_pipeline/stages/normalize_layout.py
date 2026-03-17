@@ -83,22 +83,53 @@ def _block_is_bold(block: TextBlock) -> bool:
     return total_chars > 0 and bold_chars / total_chars > 0.5
 
 
+def _font_family(name: str) -> str:
+    """Extract base font family, ignoring weight/style suffixes."""
+    # "Adonis-Bold-SC700" -> "Adonis", "Adonis-Regular" -> "Adonis"
+    return name.split("-")[0] if "-" in name else name
+
+
 def _make_text_runs(block: TextBlock) -> list[InlineNode]:
-    """Convert a TextBlock's spans into TextRun inline nodes."""
+    """Convert a TextBlock's spans into TextRun inline nodes.
+
+    Merges adjacent spans that share the same font family and formatting
+    but differ in size (common with small-caps styling in PDFs where the
+    first letter is full-size and the rest is smaller).
+    """
     runs: list[InlineNode] = []
     for line in block.lines:
         for span in line.spans:
             text = normalize_text(span.text)
             if not text:
                 continue
+            font = span.font
+            # Try to merge with previous run if same family + formatting
+            if runs:
+                prev = runs[-1]
+                assert isinstance(prev, TextRun)
+                if (
+                    _font_family(prev.font_name) == _font_family(font.name)
+                    and prev.bold == font.is_bold
+                    and prev.italic == font.is_italic
+                    and prev.monospace == font.is_monospace
+                ):
+                    runs[-1] = TextRun(
+                        text=prev.text + text,
+                        bold=prev.bold,
+                        italic=prev.italic,
+                        monospace=prev.monospace,
+                        font_name=prev.font_name,
+                        font_size=max(prev.font_size, font.size),
+                    )
+                    continue
             runs.append(
                 TextRun(
                     text=text,
-                    bold=span.font.is_bold,
-                    italic=span.font.is_italic,
-                    monospace=span.font.is_monospace,
-                    font_name=span.font.name,
-                    font_size=span.font.size,
+                    bold=font.is_bold,
+                    italic=font.is_italic,
+                    monospace=font.is_monospace,
+                    font_name=font.name,
+                    font_size=font.size,
                 )
             )
     return runs

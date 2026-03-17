@@ -18,7 +18,7 @@ function TocEntry({ entry, docId }: { entry: NavEntry; docId: string }) {
         href={`${pageRoute(docId, entry.page_number)}#${entry.anchor_id}`}
         className="toc-link"
       >
-        {entry.label_en}
+        {entry.label_ru || entry.label_en}
       </Link>
       {entry.children.length > 0 && (
         <ul className="toc-children">

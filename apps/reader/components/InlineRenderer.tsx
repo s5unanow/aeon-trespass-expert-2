@@ -42,12 +42,35 @@ interface InlineListProps {
   nodes: BundleInlineNode[];
 }
 
+/** Get the display text of a node (for spacing logic). */
+function nodeText(node: BundleInlineNode): string {
+  if (node.kind === "text") return node.ru_text ?? node.text;
+  if (node.kind === "glossary_ref") return node.surface_form;
+  return "";
+}
+
 export function InlineList({ nodes }: InlineListProps) {
   return (
     <>
-      {nodes.map((node, i) => (
-        <InlineRenderer key={i} node={node} />
-      ))}
+      {nodes.map((node, i) => {
+        // Insert space between adjacent nodes when neither boundary has whitespace
+        let spacer: React.ReactNode = null;
+        if (i > 0) {
+          const prevText = nodeText(nodes[i - 1]);
+          const curText = nodeText(node);
+          const prevEnds = /\s$/.test(prevText);
+          const curStarts = /^\s/.test(curText);
+          if (!prevEnds && !curStarts && prevText && curText) {
+            spacer = " ";
+          }
+        }
+        return (
+          <span key={i}>
+            {spacer}
+            <InlineRenderer node={node} />
+          </span>
+        );
+      })}
     </>
   );
 }
