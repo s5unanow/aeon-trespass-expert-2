@@ -43,6 +43,16 @@ def strip_bullet(text: str, bullet_patterns: list[str]) -> tuple[str, str]:
     return "", text
 
 
+def is_noise_block(text: str) -> bool:
+    """Heuristic: is this text noise (page number, digit fragment, stray char)?"""
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if stripped.isdigit():
+        return True
+    return len(stripped) < 3 and not stripped.isalpha()
+
+
 def is_likely_heading(
     text: str,
     font_size: float,
@@ -52,11 +62,16 @@ def is_likely_heading(
     max_length: int = 200,
 ) -> bool:
     """Heuristic: is this text likely a heading based on font size ratio?"""
-    if not text.strip():
+    stripped = text.strip()
+    if not stripped:
         return False
     if len(text) > max_length:
         return False
     if body_font_size <= 0:
+        return False
+    if stripped.isdigit():
+        return False
+    if len(stripped) < 3:
         return False
     return font_size / body_font_size >= min_ratio
 

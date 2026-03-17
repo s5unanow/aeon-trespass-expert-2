@@ -56,11 +56,32 @@ def _merge_inline_translations(
     translation_map: dict[str, str],
     block_id: str,
 ) -> list[InlineNode]:
-    """Inject ru_text into TextRun nodes that have translations."""
+    """Inject ru_text into TextRun nodes that have translations.
+
+    Supports merged mode: when plan_translation emitted a single merged
+    TextNode (inline_id ending in :i000) for the whole block, we replace
+    all TextRun nodes with a single TextRun containing the full translation.
+    """
+    # Check for merged translation (only :i000 exists for this block)
+    merged_id = f"{block_id}:i000"
+    merged_ru = translation_map.get(merged_id)
+
+    has_individual = any(
+        f"{block_id}:i{idx:03d}" in translation_map for idx in range(1, len(content))
+    )
+
+    if merged_ru is not None and not has_individual:
+        # Merged mode: combine all source text and apply single translation
+        source_parts = [
+            node.text for node in content if isinstance(node, TextRun) and node.text.strip()
+        ]
+        full_source = " ".join(source_parts)
+        return [TextRun(text=full_source, ru_text=merged_ru)]
+
+    # Individual mode: original per-node matching
     merged: list[InlineNode] = []
     for idx, node in enumerate(content):
         if isinstance(node, TextRun):
-            # Try to find translation by the inline_id pattern
             iid = f"{block_id}:i{idx:03d}"
             ru_text = translation_map.get(iid)
             if ru_text is not None:

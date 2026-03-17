@@ -71,24 +71,34 @@ def _style_hint_for_block(block: Block) -> str:
 
 
 def _collect_text_nodes(block: Block, block_id_str: str) -> list[TextNode]:
-    """Extract TextNode entries from a block's inline content."""
-    nodes: list[TextNode] = []
+    """Extract TextNode entries from a block's inline content.
+
+    Merges all TextRun nodes within a content block into a single TextNode
+    so the LLM translates complete sentences rather than fragments.
+    List items are kept separate (each item is its own sentence).
+    """
     if isinstance(block, ListBlock):
+        nodes: list[TextNode] = []
         for item in block.items:
-            for idx, node in enumerate(item.content):
-                if isinstance(node, TextRun) and node.text.strip():
-                    iid = inline_id(item.block_id, idx)
-                    nodes.append(TextNode(inline_id=iid, source_text=node.text))
+            texts = [
+                node.text
+                for node in item.content
+                if isinstance(node, TextRun) and node.text.strip()
+            ]
+            if texts:
+                iid = inline_id(item.block_id, 0)
+                nodes.append(TextNode(inline_id=iid, source_text=" ".join(texts)))
         return nodes
 
     if not isinstance(block, _ContentBlock):
-        return nodes
+        return []
 
-    for idx, node in enumerate(block.content):
-        if isinstance(node, TextRun) and node.text.strip():
-            iid = inline_id(block_id_str, idx)
-            nodes.append(TextNode(inline_id=iid, source_text=node.text))
-    return nodes
+    texts = [node.text for node in block.content if isinstance(node, TextRun) and node.text.strip()]
+    if not texts:
+        return []
+
+    iid = inline_id(block_id_str, 0)
+    return [TextNode(inline_id=iid, source_text=" ".join(texts))]
 
 
 def _find_relevant_glossary(

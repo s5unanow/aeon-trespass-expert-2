@@ -123,9 +123,10 @@ class TestPlanTranslationUnit:
             content=[TextRun(text="Hello world"), TextRun(text="Second run")],
         )
         nodes = _collect_text_nodes(block, bid)
-        assert len(nodes) == 2
+        # All TextRuns in a block are merged into one TextNode
+        assert len(nodes) == 1
         assert nodes[0].inline_id == inline_id(bid, 0)
-        assert nodes[0].source_text == "Hello world"
+        assert nodes[0].source_text == "Hello world Second run"
 
     def test_collect_text_nodes_from_list(self) -> None:
         from aeon_reader_pipeline.models.ir_models import ListItemBlock

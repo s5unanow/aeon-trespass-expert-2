@@ -30,6 +30,7 @@ from aeon_reader_pipeline.utils.ids import (
 from aeon_reader_pipeline.utils.normalization import (
     detect_body_font_size,
     is_likely_heading,
+    is_noise_block,
     normalize_text,
     strip_bullet,
 )
@@ -190,6 +191,8 @@ def _classify_blocks(
         text = _block_text(text_block)
         if not text:
             continue
+        if is_noise_block(text):
+            continue
 
         font_size = _block_font_size(text_block)
         idx = text_block.block_index
@@ -262,6 +265,42 @@ def _classify_blocks(
     return blocks
 
 
+def _merge_small_paragraphs(blocks: list[Block]) -> list[Block]:
+    """Merge consecutive short paragraph blocks into their neighbor.
+
+    Reduces fragmentation from table-layout extraction where single words
+    or short phrases become separate paragraph blocks.
+    """
+    if len(blocks) < 2:
+        return blocks
+
+    merged: list[Block] = []
+    i = 0
+    while i < len(blocks):
+        block = blocks[i]
+        # Only merge paragraph blocks
+        if not isinstance(block, ParagraphBlock):
+            merged.append(block)
+            i += 1
+            continue
+
+        block_text = "".join(n.text for n in block.content if isinstance(n, TextRun))
+        # If short and next block is also a paragraph, merge into it
+        if len(block_text.strip()) < 10 and i + 1 < len(blocks):
+            next_block = blocks[i + 1]
+            if isinstance(next_block, ParagraphBlock):
+                # Prepend current content + space separator into next block
+                separator = [TextRun(text=" ")] if block.content else []
+                combined = list(block.content) + separator + list(next_block.content)
+                blocks[i + 1] = next_block.model_copy(update={"content": combined})
+                i += 1
+                continue
+
+        merged.append(block)
+        i += 1
+    return merged
+
+
 def _build_anchors(blocks: list[Block]) -> list[PageAnchor]:
     """Extract anchors from heading blocks."""
     anchors: list[PageAnchor] = []
@@ -317,6 +356,7 @@ class NormalizeLayoutStage(BaseStage):
             )
 
             blocks = _classify_blocks(extracted, ctx)
+            blocks = _merge_small_paragraphs(blocks)
             anchors = _build_anchors(blocks)
             fp = page_fingerprint(_blocks_text_for_fingerprint(blocks), page_num)
 
