@@ -25,9 +25,19 @@ def normalize_unicode(text: str) -> str:
     return text
 
 
+def strip_decorative_markers(text: str) -> str:
+    """Strip PDF decorative markers ({, }, *) used in shadow/outline effects."""
+    # Pattern: {Word*Word*Word} or similar decorative wrapping
+    if "{" in text and "}" in text:
+        text = text.replace("{", " ").replace("}", " ").replace("*", " ")
+    return text
+
+
 def normalize_text(text: str) -> str:
-    """Full text normalization: unicode + whitespace."""
-    return normalize_whitespace(normalize_unicode(text))
+    """Full text normalization: unicode + whitespace + decorative cleanup."""
+    text = normalize_unicode(text)
+    text = strip_decorative_markers(text)
+    return normalize_whitespace(text)
 
 
 def strip_bullet(text: str, bullet_patterns: list[str]) -> tuple[str, str]:
@@ -41,6 +51,14 @@ def strip_bullet(text: str, bullet_patterns: list[str]) -> tuple[str, str]:
             rest = stripped[len(bullet) :].lstrip()
             return bullet, rest
     return "", text
+
+
+def strip_page_number_prefix(text: str) -> str:
+    """Strip a leading page number from text like '3 Introduction' or '3Introduction'."""
+    m = re.match(r"^(\d{1,3})\s*([A-Z])", text)
+    if m:
+        return text[m.start(2) :]
+    return text
 
 
 def is_noise_block(text: str) -> bool:

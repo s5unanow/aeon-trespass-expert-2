@@ -33,6 +33,7 @@ from aeon_reader_pipeline.utils.normalization import (
     is_noise_block,
     normalize_text,
     strip_bullet,
+    strip_page_number_prefix,
 )
 
 STAGE_NAME = "normalize_layout"
@@ -49,13 +50,45 @@ def _collect_font_sizes(page: ExtractedPage) -> list[float]:
     return sizes
 
 
+def _dedup_overlapping_lines(lines: list[str]) -> list[str]:
+    """Remove overlapping line prefixes from PDF cascade/shadow text.
+
+    Detects when line N starts with the suffix of line N-1 and keeps
+    only the non-overlapping portion.
+    """
+    if len(lines) < 2:
+        return lines
+    result = [lines[0]]
+    for line in lines[1:]:
+        prev = result[-1]
+        # Check if line starts with a suffix of prev
+        best_overlap = 0
+        for k in range(1, min(len(prev), len(line)) + 1):
+            if prev.endswith(line[:k]):
+                best_overlap = k
+        if best_overlap > 2:
+            # Keep only the non-overlapping part
+            new_part = line[best_overlap:].strip()
+            if new_part:
+                result[-1] = prev + " " + new_part
+        else:
+            result.append(line)
+    return result
+
+
 def _block_text(block: TextBlock) -> str:
     """Get full normalized text of a text block."""
     parts: list[str] = []
     for line in block.lines:
         line_text = "".join(span.text for span in line.spans)
-        parts.append(normalize_text(line_text))
-    return " ".join(parts)
+        normalized = normalize_text(line_text)
+        if normalized:
+            parts.append(normalized)
+    parts = _dedup_overlapping_lines(parts)
+    # Apply decorative marker stripping on the joined result
+    # (markers like { } * may span across lines)
+    joined = " ".join(parts)
+    return normalize_text(joined)
 
 
 def _block_font_size(block: TextBlock) -> float:
@@ -191,6 +224,9 @@ def _classify_blocks(
         text = _block_text(text_block)
         if not text:
             continue
+        # Skip page headers (e.g. "3 Introduction" or "3Introduction")
+        if strip_page_number_prefix(text) != text:
+            continue
         if is_noise_block(text):
             continue
 
@@ -265,11 +301,29 @@ def _classify_blocks(
     return blocks
 
 
-def _merge_small_paragraphs(blocks: list[Block]) -> list[Block]:
-    """Merge consecutive short paragraph blocks into their neighbor.
+def _should_merge_into_next(text: str) -> bool:
+    """Check if this paragraph text looks like a continuation fragment."""
+    stripped = text.strip()
+    if not stripped:
+        return True
+    # Short fragments
+    if len(stripped) < 10:
+        return True
+    # Ends with hyphen (word break across lines)
+    if stripped.endswith("-"):
+        return True
+    # Starts with lowercase (continuation of previous sentence)
+    if stripped[0].islower():
+        return True
+    # Doesn't end with sentence-ending punctuation
+    return stripped[-1] not in ".!?:;)\"'"
 
-    Reduces fragmentation from table-layout extraction where single words
-    or short phrases become separate paragraph blocks.
+
+def _merge_small_paragraphs(blocks: list[Block]) -> list[Block]:
+    """Merge consecutive paragraph fragments into coherent blocks.
+
+    Detects continuation patterns: short text, trailing hyphens,
+    lowercase starts, and missing sentence-ending punctuation.
     """
     if len(blocks) < 2:
         return blocks
@@ -278,18 +332,16 @@ def _merge_small_paragraphs(blocks: list[Block]) -> list[Block]:
     i = 0
     while i < len(blocks):
         block = blocks[i]
-        # Only merge paragraph blocks
         if not isinstance(block, ParagraphBlock):
             merged.append(block)
             i += 1
             continue
 
         block_text = "".join(n.text for n in block.content if isinstance(n, TextRun))
-        # If short and next block is also a paragraph, merge into it
-        if len(block_text.strip()) < 10 and i + 1 < len(blocks):
+
+        if _should_merge_into_next(block_text) and i + 1 < len(blocks):
             next_block = blocks[i + 1]
             if isinstance(next_block, ParagraphBlock):
-                # Prepend current content + space separator into next block
                 separator = [TextRun(text=" ")] if block.content else []
                 combined = list(block.content) + separator + list(next_block.content)
                 blocks[i + 1] = next_block.model_copy(update={"content": combined})
@@ -299,6 +351,65 @@ def _merge_small_paragraphs(blocks: list[Block]) -> list[Block]:
         merged.append(block)
         i += 1
     return merged
+
+
+def _dedup_repeated_words(text: str) -> str:
+    """Remove consecutive repeated word sequences from text.
+
+    Handles PDF shadow/outline effects: 'Do not Do not open open' → 'Do not open'
+    Tries phrase lengths from longest to shortest.
+    """
+    words = text.split()
+    if len(words) < 2:
+        return text
+    result: list[str] = []
+    i = 0
+    while i < len(words):
+        # Try to match repeated sequences of decreasing length
+        matched = False
+        for seq_len in range(min(4, (len(words) - i) // 2), 0, -1):
+            seq = words[i : i + seq_len]
+            nxt = words[i + seq_len : i + seq_len * 2]
+            if seq == nxt:
+                result.extend(seq)
+                i += seq_len * 2
+                matched = True
+                break
+        if not matched:
+            result.append(words[i])
+            i += 1
+    return " ".join(result)
+
+
+def _clean_block_content(blocks: list[Block]) -> list[Block]:
+    """Post-process block content to fix issues spanning multiple text runs.
+
+    Consolidates all TextRuns in each block into a single run with
+    cleaned text — handles decorative markers, overlapping text, etc.
+    """
+    _content_kinds = (HeadingBlock, ParagraphBlock, CaptionBlock)
+    result: list[Block] = []
+    for block in blocks:
+        if isinstance(block, _content_kinds):
+            runs = [n for n in block.content if isinstance(n, TextRun)]
+            if runs:
+                full_text = " ".join(r.text for r in runs)
+                cleaned = normalize_text(full_text)
+                # Deduplicate repeated words in headings (PDF shadow effects)
+                if isinstance(block, HeadingBlock):
+                    cleaned = _dedup_repeated_words(cleaned)
+                if cleaned:
+                    merged_run = TextRun(
+                        text=cleaned,
+                        bold=runs[0].bold,
+                        italic=runs[0].italic,
+                        monospace=runs[0].monospace,
+                        font_name=runs[0].font_name,
+                        font_size=runs[0].font_size,
+                    )
+                    block = block.model_copy(update={"content": [merged_run]})
+        result.append(block)
+    return result
 
 
 def _build_anchors(blocks: list[Block]) -> list[PageAnchor]:
@@ -357,6 +468,7 @@ class NormalizeLayoutStage(BaseStage):
 
             blocks = _classify_blocks(extracted, ctx)
             blocks = _merge_small_paragraphs(blocks)
+            blocks = _clean_block_content(blocks)
             anchors = _build_anchors(blocks)
             fp = page_fingerprint(_blocks_text_for_fingerprint(blocks), page_num)
 

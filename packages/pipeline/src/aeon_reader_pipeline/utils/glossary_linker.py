@@ -106,6 +106,11 @@ def _split_text_run(
     if not text.strip():
         return [run]
 
+    # Don't split runs that already have a merged translation — the Russian
+    # text covers the full block and splitting would duplicate it.
+    if run.ru_text:
+        return [run]
+
     # Find all matches across all matchers
     matches: list[tuple[int, int, GlossaryTermEntry, str]] = []
     for matcher in matchers:

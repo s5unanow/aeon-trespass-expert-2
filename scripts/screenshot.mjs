@@ -7,7 +7,7 @@
 import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 
-const BASE = "http://localhost:3000/docs/aeon-trespass-core/page";
+const BASE = "http://localhost:3002/docs/aeon-trespass-core/page";
 const OUT_DIR = "artifacts/screenshots";
 const DEFAULT_PAGES = [1, 3, 10, 35, 50, 70];
 
