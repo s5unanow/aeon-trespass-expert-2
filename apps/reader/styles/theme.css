@@ -1,20 +1,39 @@
-/* Theme tokens — CSS custom properties for light/dark mode */
+/* Theme tokens — Aeon Trespass dark theme */
 :root {
-  --color-bg: #ffffff;
-  --color-fg: #1a1a1a;
-  --color-muted: #666666;
-  --color-border: #e5e5e5;
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
+  --color-bg: #f8f6f1;
+  --color-bg-surface: #ffffff;
+  --color-fg: #2c2420;
+  --color-fg-heading: #1a1410;
+  --color-muted: #8a7e72;
+  --color-border: #e0d8cc;
+  --color-accent: #8b5e34;
+  --color-accent-hover: #a67340;
+  --color-accent-subtle: #f0e8dc;
+  --color-sidebar-bg: #2c2420;
+  --color-sidebar-fg: #d4c8b8;
+  --color-sidebar-muted: #8a7e72;
+  --color-sidebar-active: #e8c8a0;
+  --color-sidebar-border: #3d332c;
+  --font-body: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
+  --font-heading: system-ui, -apple-system, sans-serif;
+  --content-max-width: 52rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0a0a0a;
-    --color-fg: #ededed;
-    --color-muted: #999999;
-    --color-border: #333333;
-    --color-accent: #60a5fa;
-    --color-accent-hover: #93c5fd;
+    --color-bg: #1a1410;
+    --color-bg-surface: #241e18;
+    --color-fg: #d4c8b8;
+    --color-fg-heading: #ede4d8;
+    --color-muted: #8a7e72;
+    --color-border: #3d332c;
+    --color-accent: #d4a060;
+    --color-accent-hover: #e8c080;
+    --color-accent-subtle: #2c2420;
+    --color-sidebar-bg: #140f0a;
+    --color-sidebar-fg: #c4b8a8;
+    --color-sidebar-muted: #7a6e62;
+    --color-sidebar-active: #d4a060;
+    --color-sidebar-border: #2c2420;
   }
 }
