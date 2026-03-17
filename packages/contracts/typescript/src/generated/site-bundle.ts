@@ -30,6 +30,7 @@ export interface BundleGlossaryRef {
   kind: "glossary_ref";
   term_id: string;
   surface_form: string;
+  ru_surface_form: string;
 }
 
 export type BundleInlineNode = BundleTextRun | BundleSymbolRef | BundleGlossaryRef;

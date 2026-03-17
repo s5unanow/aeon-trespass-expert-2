@@ -40,6 +40,7 @@ class BundleGlossaryRef(BaseModel):
     kind: Literal["glossary_ref"] = "glossary_ref"
     term_id: str
     surface_form: str
+    ru_surface_form: str = ""
 
 
 def _bundle_inline_discriminator(v: Any) -> str:

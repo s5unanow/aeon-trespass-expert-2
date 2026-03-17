@@ -7,6 +7,8 @@ manifest under 11_export/site_bundle/<doc_id>/.
 
 from __future__ import annotations
 
+import shutil
+
 from aeon_reader_pipeline.models.ir_models import (
     CalloutBlock,
     CaptionBlock,
@@ -28,6 +30,7 @@ from aeon_reader_pipeline.models.qa_models import QASummary
 from aeon_reader_pipeline.models.site_bundle_models import (
     BuildArtifact,
     BuildArtifacts,
+    BundleAssetEntry,
     BundleCalloutBlock,
     BundleCaptionBlock,
     BundleDividerBlock,
@@ -55,6 +58,9 @@ from aeon_reader_pipeline.stages.enrich_content import (
 
 STAGE_NAME = "export_site_bundle"
 STAGE_VERSION = "1.0.0"
+
+# Set during export to prefix asset paths
+_export_doc_id: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +90,7 @@ def _convert_inline(node: _InlineSource) -> BundleTextRun | BundleSymbolRef | Bu
     return BundleGlossaryRef(
         term_id=node.term_id,
         surface_form=node.surface_form,
+        ru_surface_form=node.ru_surface_form,
     )
 
 
@@ -149,7 +156,7 @@ def _convert_block(
     if isinstance(block, FigureBlock):
         return BundleFigureBlock(
             block_id=block.block_id,
-            asset_ref=block.asset_ref,
+            asset_ref=f"/assets/{_export_doc_id}/{block.asset_ref}" if block.asset_ref else "",
             alt_text=block.alt_text,
             caption_block_id=block.caption_block_id,
         )
@@ -210,6 +217,9 @@ class ExportSiteBundleStage(BaseStage):
     description = "Export site bundle for reader consumption"
 
     def execute(self, ctx: StageContext) -> None:
+        global _export_doc_id
+        _export_doc_id = ctx.doc_id
+
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -248,6 +258,50 @@ class ExportSiteBundleStage(BaseStage):
                     size_bytes=path.stat().st_size,
                 )
             )
+
+        # Copy image assets from extract stage to bundle
+        asset_entries: list[BundleAssetEntry] = []
+        extract_assets_dir = (
+            ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "extract_primitives")
+            / "assets"
+            / "raw"
+        )
+        if extract_assets_dir.is_dir():
+            bundle_assets_dir = (
+                ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, STAGE_NAME)
+                / "site_bundle"
+                / ctx.doc_id
+                / "assets"
+            )
+            bundle_assets_dir.mkdir(parents=True, exist_ok=True)
+            for asset_file in sorted(extract_assets_dir.iterdir()):
+                if asset_file.is_file() and asset_file.suffix in (
+                    ".png",
+                    ".jpeg",
+                    ".jpg",
+                    ".gif",
+                    ".svg",
+                    ".webp",
+                ):
+                    dest = bundle_assets_dir / asset_file.name
+                    shutil.copy2(asset_file, dest)
+                    content_type = f"image/{asset_file.suffix.lstrip('.')}".replace("jpg", "jpeg")
+                    asset_entries.append(
+                        BundleAssetEntry(
+                            asset_ref=asset_file.name,
+                            path=f"assets/{asset_file.name}",
+                            content_type=content_type,
+                            size_bytes=dest.stat().st_size,
+                        )
+                    )
+                    artifacts.append(
+                        BuildArtifact(
+                            path=f"assets/{asset_file.name}",
+                            artifact_type="image_asset",
+                            size_bytes=dest.stat().st_size,
+                        )
+                    )
+            ctx.logger.info("assets_copied", count=len(asset_entries), dest=str(bundle_assets_dir))
 
         # Copy navigation
         has_navigation = False
@@ -342,6 +396,7 @@ class ExportSiteBundleStage(BaseStage):
             has_navigation=has_navigation,
             has_search=has_search,
             has_glossary=False,
+            assets=asset_entries,
             qa_accepted=qa_accepted,
             stage_version=STAGE_VERSION,
         )

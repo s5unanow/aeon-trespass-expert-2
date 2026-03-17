@@ -30,7 +30,7 @@ export function InlineRenderer({ node }: InlineRendererProps) {
           data-term-id={node.term_id}
           title={node.surface_form}
         >
-          {node.surface_form}
+          {node.ru_surface_form || node.surface_form}
         </span>
       );
     default:

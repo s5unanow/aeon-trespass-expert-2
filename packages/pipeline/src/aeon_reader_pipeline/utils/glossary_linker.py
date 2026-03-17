@@ -142,7 +142,13 @@ def _split_text_run(
             result.append(run.model_copy(update={"text": text[pos:start]}))
 
         if should_link:
-            result.append(GlossaryRef(term_id=term.term_id, surface_form=surface))
+            result.append(
+                GlossaryRef(
+                    term_id=term.term_id,
+                    surface_form=surface,
+                    ru_surface_form=term.ru_preferred,
+                )
+            )
             linked_once.add(term.term_id)
         else:
             result.append(run.model_copy(update={"text": surface}))
