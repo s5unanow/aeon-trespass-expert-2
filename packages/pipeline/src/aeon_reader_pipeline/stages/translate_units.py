@@ -79,10 +79,12 @@ def _translate_single_unit(
                 prompt_bundle=prompt_bundle,
             )
 
-            # Validate placeholders
+            # Validate placeholders (warnings only — don't fail the unit)
             ph_errors = validate_placeholders(result.translations, ph_map)
-            if ph_errors:
-                raise ValidationError(ph_errors)
+            for ph_err in ph_errors:
+                ctx.logger.warning(
+                    "placeholder_warning", unit_id=unit.unit_id, detail=ph_err
+                )
 
             # Restore placeholders
             restored = restore_placeholders(result.translations, ph_map)

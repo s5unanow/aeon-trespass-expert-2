@@ -6,5 +6,5 @@ fallback_provider: gemini
 fallback_model: gemini-2.5-flash
 temperature: 0.1
 top_p: 0.9
-max_output_tokens: 4096
+max_output_tokens: 8192
 prompt_bundle: translate-v1
