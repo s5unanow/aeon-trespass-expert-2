@@ -30,6 +30,7 @@ materials/*.pdf
 # Generated bundle (synced from pipeline)
 apps/reader/generated/*
 !apps/reader/generated/.gitignore
+apps/reader/public/assets/
 
 # IDE
 .idea/
