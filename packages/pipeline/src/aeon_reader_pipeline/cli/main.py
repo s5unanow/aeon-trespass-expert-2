@@ -50,6 +50,7 @@ def run(
     cache_mode: str = typer.Option("read_write", help="Cache mode"),
     strict: bool = typer.Option(False, help="Enable strict mode"),
     mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
+    cli: bool = typer.Option(False, help="Use Gemini CLI instead of SDK (no API key needed)"),
 ) -> None:
     """Execute a pipeline run."""
     _import_stages()
@@ -120,9 +121,7 @@ def run(
                     for n in data["text_nodes"]
                 ]
                 return LlmResponse(
-                    text=_json.dumps(
-                        {"unit_id": data["unit_id"], "translations": translations}
-                    ),
+                    text=_json.dumps({"unit_id": data["unit_id"], "translations": translations}),
                     provider="mock",
                     model="mock",
                 )
@@ -132,6 +131,12 @@ def run(
 
         TranslateUnitsStage._gateway = _MockGateway()  # type: ignore[assignment]
         typer.echo("Using mock translation gateway.")
+    elif cli:
+        from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
+
+        TranslateUnitsStage._gateway = GeminiCliGateway()  # type: ignore[assignment]
+        pipeline_config = pipeline_config.model_copy(update={"llm_concurrency": 1})
+        typer.echo("Using Gemini CLI gateway (concurrency=1).")
     else:
         from aeon_reader_pipeline.llm.gemini import GeminiProvider
 

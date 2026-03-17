@@ -16,7 +16,11 @@ logger = structlog.get_logger()
 
 
 class GeminiCliGateway(LlmGateway):
-    """LLM gateway that delegates to the Gemini CLI (authenticated via OAuth)."""
+    """LLM gateway that delegates to the Gemini CLI.
+
+    Uses the model from ModelProfile, with automatic fallback to
+    fallback_model on failure.
+    """
 
     def __init__(self, cli_path: str = "gemini") -> None:
         self._cli = cli_path
@@ -28,53 +32,85 @@ class GeminiCliGateway(LlmGateway):
         model_profile: ModelProfile,
     ) -> LlmResponse:
         """Send a translation request via the Gemini CLI."""
+        model = model_profile.model
+        result = self._call_cli(system_prompt, user_prompt, model)
+
+        # Fallback on failure
+        if result is None and model_profile.fallback_model:
+            fallback = model_profile.fallback_model
+            logger.warning("gemini_cli_fallback", primary=model, fallback=fallback)
+            result = self._call_cli(system_prompt, user_prompt, fallback)
+
+        if result is None:
+            raise RuntimeError("Gemini CLI failed on both primary and fallback model")
+
+        return result
+
+    def _call_cli(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        model: str,
+    ) -> LlmResponse | None:
+        """Execute a single CLI call. Returns None on failure."""
         combined_prompt = (
             f"{system_prompt}\n\n"
-            "IMPORTANT: Return ONLY valid JSON. No markdown, no code fences, no explanation.\n\n"
+            "IMPORTANT: Return ONLY valid JSON. No markdown, no code fences.\n\n"
             f"{user_prompt}"
         )
 
         start = time.monotonic()
-        result = subprocess.run(
-            [self._cli, "-p", combined_prompt, "-o", "text"],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
+        try:
+            proc = subprocess.run(
+                [self._cli, "-m", model, "-p", combined_prompt, "-o", "text"],
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+        except subprocess.TimeoutExpired:
+            logger.warning("gemini_cli_timeout", model=model)
+            return None
+
         latency_ms = int((time.monotonic() - start) * 1000)
 
-        if result.returncode != 0:
-            raise RuntimeError(f"Gemini CLI failed (exit {result.returncode}): {result.stderr[:500]}")
+        if proc.returncode != 0:
+            logger.warning(
+                "gemini_cli_error",
+                model=model,
+                exit_code=proc.returncode,
+                stderr=proc.stderr[:300],
+            )
+            return None
 
-        raw_output = result.stdout.strip()
+        text = self._clean_output(proc.stdout)
 
-        # Strip "Loaded cached credentials." prefix and any other preamble
-        lines = raw_output.split("\n")
-        cleaned_lines = [
-            line
-            for line in lines
-            if not line.startswith("Loaded cached credentials")
-            and not line.startswith("Using ")
-        ]
-        text = "\n".join(cleaned_lines).strip()
-
-        # Strip markdown code fences if present
-        text = re.sub(r"^```(?:json)?\s*\n?", "", text)
-        text = re.sub(r"\n?```\s*$", "", text)
-        text = text.strip()
-
-        # Validate it's parseable JSON
+        # Validate JSON
         try:
             json.loads(text)
         except json.JSONDecodeError:
-            logger.warning("gemini_cli_non_json_response", raw=text[:200])
+            logger.warning("gemini_cli_non_json", model=model, raw=text[:200])
+            return None
 
         return LlmResponse(
             text=text,
             latency_ms=latency_ms,
             provider="gemini-cli",
-            model="gemini-cli",
+            model=model,
         )
+
+    @staticmethod
+    def _clean_output(raw: str) -> str:
+        """Strip CLI preamble, markdown fences, and whitespace."""
+        lines = raw.split("\n")
+        cleaned = [
+            line
+            for line in lines
+            if not line.startswith("Loaded cached credentials") and not line.startswith("Using ")
+        ]
+        text = "\n".join(cleaned).strip()
+        text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+        text = re.sub(r"\n?```\s*$", "", text)
+        return text.strip()
 
     def provider_name(self) -> str:
         return "gemini-cli"
