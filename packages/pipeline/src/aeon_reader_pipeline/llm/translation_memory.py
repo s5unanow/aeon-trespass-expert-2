@@ -30,11 +30,12 @@ def _is_cacheable(unit: TranslationUnit, result: TranslationResult) -> bool:
 
     source_by_id = {n.inline_id: n.source_text for n in unit.text_nodes}
 
-    # Count how many translations actually differ from source text
+    # Count how many translations actually differ from source text.
+    # Only consider nodes whose inline_id exists in the unit — ignore ghosts.
     translated_count = 0
     for node in result.translations:
-        source = source_by_id.get(node.inline_id, "")
-        if node.ru_text and node.ru_text != source:
+        source = source_by_id.get(node.inline_id)
+        if source is not None and node.ru_text and node.ru_text != source:
             translated_count += 1
 
     return translated_count > 0
@@ -73,10 +74,13 @@ class TranslationMemory:
             return
 
         if not _is_cacheable(unit, result):
+            reason = (
+                "empty_translations" if not result.translations else "no_meaningful_translations"
+            )
             logger.warning(
                 "tm_store_skipped",
                 unit_id=unit.unit_id,
-                reason="no_meaningful_translations",
+                reason=reason,
                 translation_count=len(result.translations),
             )
             return
