@@ -42,6 +42,7 @@ review/
 !.claude/settings.json
 !.claude/hooks/
 !.claude/prompts/
+!.claude/skills/
 *.swp
 *.swo
 
