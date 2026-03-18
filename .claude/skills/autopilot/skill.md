@@ -87,7 +87,7 @@ Follow the `babysit-prs` skill:
 
 ## Config
 
-On first run, create `.claude/skills/autopilot/data/config.json` if it doesn't exist:
+Defaults are in `.claude/skills/autopilot/data/config.json`. Edit to customize:
 ```json
 {
   "ask_before_next_issue": true,

@@ -23,7 +23,8 @@
   ```
 
 ## Screenshot Pages
-- Default pages captured: 1, 3, 10, 35, 50, 70
+- Default screenshot pages (screenshot.mjs): 1, 3, 10, 35, 50, 70
+- Default assertion pages (assert-pages.mjs): 1, 3, 10, 35
 - These are chosen to cover: cover page, table of contents, early content, mid-content, late content
 - URL pattern: `http://localhost:3002/docs/aeon-trespass-core/page`
 

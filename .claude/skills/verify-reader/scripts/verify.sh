@@ -4,7 +4,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && cd .. && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 PORT=3002
 
 cd "$PROJECT_ROOT"
@@ -23,10 +23,7 @@ echo "[2/4] Starting local server on port $PORT..."
 npx serve apps/reader/out -l "$PORT" &>/dev/null &
 SERVER_PID=$!
 
-# Give server time to start
-sleep 2
-
-# Ensure cleanup on exit
+# Ensure cleanup on exit (register immediately after capturing PID)
 cleanup() {
   if kill -0 "$SERVER_PID" 2>/dev/null; then
     kill "$SERVER_PID" 2>/dev/null || true
@@ -34,6 +31,9 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
+
+# Give server time to start
+sleep 2
 
 # Check server is up
 if ! curl -s -o /dev/null -w "%{http_code}" "http://localhost:$PORT/" | grep -q "200"; then

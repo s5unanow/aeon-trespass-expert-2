@@ -29,7 +29,7 @@ for stage_dir in "$RUN_DIR"/*/; do
   # Check if stage manifest exists
   manifest="$stage_dir/stage_manifest.json"
   if [ -f "$manifest" ]; then
-    status=$(python3 -c "import json; print(json.load(open('$manifest'))['status'])" 2>/dev/null || echo "unknown")
+    status=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['status'])" "$manifest" 2>/dev/null || echo "unknown")
   else
     status="no manifest"
   fi
@@ -47,7 +47,7 @@ if [ -d "$BUNDLE_DIR" ]; then
   # Validate JSON files in bundle
   invalid=0
   while IFS= read -r -d '' f; do
-    if ! python3 -c "import json; json.load(open('$f'))" 2>/dev/null; then
+    if ! python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
       echo "  INVALID JSON: $f"
       invalid=$((invalid + 1))
     fi
