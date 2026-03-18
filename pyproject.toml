@@ -12,6 +12,7 @@ dev = [
     "types-PyYAML",
     "aeon-reader-pipeline",
     "import-linter>=2.0,<3",
+    "pytest-cov>=7.0.0",
 ]
 
 [tool.uv.workspace]
@@ -105,4 +106,17 @@ forbidden_modules = [
 testpaths = ["tests/backend"]
 python_files = "test_*.py"
 python_functions = "test_*"
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --cov=aeon_reader_pipeline --cov-fail-under=60"
+
+[tool.coverage.run]
+source = ["packages/pipeline/src/aeon_reader_pipeline"]
+omit = ["*/cli/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__",
+]
