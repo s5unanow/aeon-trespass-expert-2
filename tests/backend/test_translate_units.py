@@ -353,3 +353,108 @@ class TestTranslationMemory:
         )
         tm.store(unit, result)
         assert tm.has("fp123") is True
+
+    def test_store_rejects_all_fallback_translations(self, tmp_path: Path) -> None:
+        """Results where every translation equals source text should not be cached."""
+        from aeon_reader_pipeline.models.translation_models import TextNode, TranslatedNode
+
+        tm = TranslationMemory(tmp_path / "tm_cache")
+
+        unit = TranslationUnit(
+            unit_id="u1",
+            doc_id="doc",
+            page_number=1,
+            text_nodes=[
+                TextNode(inline_id="i1", source_text="Hello"),
+                TextNode(inline_id="i2", source_text="World"),
+            ],
+            source_fingerprint="fp_fallback",
+        )
+        # All translations are just the source text echoed back
+        result = TranslationResult(
+            unit_id="u1",
+            translations=[
+                TranslatedNode(inline_id="i1", ru_text="Hello"),
+                TranslatedNode(inline_id="i2", ru_text="World"),
+            ],
+            source_fingerprint="fp_fallback",
+        )
+
+        tm.store(unit, result)
+        assert tm.has("fp_fallback") is False
+        assert tm.lookup(unit) is None
+
+    def test_store_rejects_empty_translations(self, tmp_path: Path) -> None:
+        """Results with no translations should not be cached."""
+        from aeon_reader_pipeline.models.translation_models import TextNode
+
+        tm = TranslationMemory(tmp_path / "tm_cache")
+
+        unit = TranslationUnit(
+            unit_id="u1",
+            doc_id="doc",
+            page_number=1,
+            text_nodes=[TextNode(inline_id="i1", source_text="Hello")],
+            source_fingerprint="fp_empty",
+        )
+        result = TranslationResult(
+            unit_id="u1",
+            translations=[],
+            source_fingerprint="fp_empty",
+        )
+
+        tm.store(unit, result)
+        assert tm.has("fp_empty") is False
+
+    def test_store_accepts_partial_translations(self, tmp_path: Path) -> None:
+        """Results where at least one node is genuinely translated should be cached."""
+        from aeon_reader_pipeline.models.translation_models import TextNode, TranslatedNode
+
+        tm = TranslationMemory(tmp_path / "tm_cache")
+
+        unit = TranslationUnit(
+            unit_id="u1",
+            doc_id="doc",
+            page_number=1,
+            text_nodes=[
+                TextNode(inline_id="i1", source_text="Hello"),
+                TextNode(inline_id="i2", source_text="World"),
+            ],
+            source_fingerprint="fp_partial",
+        )
+        # One translated, one fallback
+        result = TranslationResult(
+            unit_id="u1",
+            translations=[
+                TranslatedNode(inline_id="i1", ru_text="Привет"),
+                TranslatedNode(inline_id="i2", ru_text="World"),
+            ],
+            source_fingerprint="fp_partial",
+        )
+
+        tm.store(unit, result)
+        assert tm.has("fp_partial") is True
+
+    def test_store_skips_without_fingerprint(self, tmp_path: Path) -> None:
+        """Units without source_fingerprint should not be cached."""
+        from aeon_reader_pipeline.models.translation_models import TextNode, TranslatedNode
+
+        tm = TranslationMemory(tmp_path / "tm_cache")
+
+        unit = TranslationUnit(
+            unit_id="u1",
+            doc_id="doc",
+            page_number=1,
+            text_nodes=[TextNode(inline_id="i1", source_text="Hello")],
+            source_fingerprint="",
+        )
+        result = TranslationResult(
+            unit_id="u1",
+            translations=[
+                TranslatedNode(inline_id="i1", ru_text="Привет"),
+            ],
+        )
+
+        tm.store(unit, result)
+        # No fingerprint → nothing stored
+        assert not list(tmp_path.glob("tm_cache/*.json"))
