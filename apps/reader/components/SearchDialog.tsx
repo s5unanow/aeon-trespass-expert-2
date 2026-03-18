@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { search, type PagefindResult } from "@/lib/pagefind";
+import { trapFocus } from "@/lib/a11y";
 
 interface SearchDialogProps {
   open: boolean;
@@ -19,10 +20,13 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [results, setResults] = useState<PagefindResult[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     if (open) {
       inputRef.current?.focus();
+      const dialog = dialogRef.current;
+      if (dialog) return trapFocus(dialog);
     } else {
       setQuery("");
       setResults([]);
@@ -56,6 +60,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   return (
     <div className="search-overlay" onClick={onClose} role="presentation">
       <dialog
+        ref={dialogRef}
         className="search-dialog"
         open
         onClick={(e) => e.stopPropagation()}
@@ -75,7 +80,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
             &times;
           </button>
         </div>
-        <div className="search-results" role="listbox">
+        <div className="search-results" role="list" aria-label="Search results">
           {loading && <p className="search-loading">Searching...</p>}
           {!loading && query && results.length === 0 && (
             <p className="search-empty">No results found.</p>
@@ -85,8 +90,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
               key={i}
               href={result.url}
               className="search-result"
-              role="option"
-              aria-selected={false}
+              role="listitem"
             >
               <span
                 className="search-excerpt"
