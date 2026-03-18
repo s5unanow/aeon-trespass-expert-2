@@ -73,6 +73,9 @@ class ModelProfile(BaseModel):
     top_p: float = 0.9
     max_output_tokens: int = 4096
     prompt_bundle: str = "translate-v1"
+    max_retries: int = 3
+    retry_base_delay: float = 1.0
+    retry_max_delay: float = 60.0
 
 
 class HeadingDetection(BaseModel):

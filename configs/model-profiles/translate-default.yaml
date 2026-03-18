@@ -8,3 +8,6 @@ temperature: 0.1
 top_p: 0.9
 max_output_tokens: 8192
 prompt_bundle: translate-v1
+max_retries: 3
+retry_base_delay: 1.0
+retry_max_delay: 60.0
