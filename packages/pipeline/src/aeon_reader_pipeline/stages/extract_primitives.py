@@ -130,13 +130,19 @@ def _extract_images(
     page: pymupdf.Page,
     doc: pymupdf.Document,
     stage_dir: Path,
-) -> list[RawImageInfo]:
-    """Extract raw images from a page, save to assets directory."""
+    page_number: int = 0,
+    ctx: StageContext | None = None,
+) -> tuple[list[RawImageInfo], int]:
+    """Extract raw images from a page, save to assets directory.
+
+    Returns (images, failure_count).
+    """
     images: list[RawImageInfo] = []
     image_list = page.get_images(full=True)
+    failures = 0
 
     if not image_list:
-        return images
+        return images, failures
 
     assets_dir = stage_dir / "assets" / "raw"
     assets_dir.mkdir(parents=True, exist_ok=True)
@@ -145,7 +151,17 @@ def _extract_images(
         xref = img_info[0]
         try:
             base_image = doc.extract_image(xref)
-        except Exception:
+        except Exception as exc:
+            failures += 1
+            if ctx is not None:
+                ctx.logger.warning(
+                    "image_extraction_failed",
+                    page=page_number,
+                    image_index=img_idx,
+                    xref=xref,
+                    error=str(exc),
+                    error_type=type(exc).__name__,
+                )
             continue
 
         if not base_image or not base_image.get("image"):
@@ -189,7 +205,7 @@ def _extract_images(
             )
         )
 
-    return images
+    return images, failures
 
 
 def _page_filename(page_number: int) -> str:
@@ -228,13 +244,21 @@ class ExtractPrimitivesStage(BaseStage):
         stage_dir = ctx.artifact_store.ensure_stage_dir(ctx.run_id, ctx.doc_id, STAGE_NAME)
 
         doc = pymupdf.open(str(source_path))
+        total_image_failures = 0
         try:
             for page_idx in range(len(doc)):
                 page = doc[page_idx]
                 page_number = page_idx + 1
 
                 text_blocks, fonts_used, char_count = _extract_text_blocks(page)
-                images = _extract_images(page, doc, stage_dir)
+                images, img_failures = _extract_images(
+                    page,
+                    doc,
+                    stage_dir,
+                    page_number=page_number,
+                    ctx=ctx,
+                )
+                total_image_failures += img_failures
 
                 rect = page.rect
                 extracted = ExtractedPage(
@@ -271,4 +295,5 @@ class ExtractPrimitivesStage(BaseStage):
         ctx.logger.info(
             "extraction_complete",
             pages=manifest.page_count,
+            image_extraction_failures=total_image_failures,
         )
