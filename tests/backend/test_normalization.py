@@ -6,6 +6,7 @@ from aeon_reader_pipeline.utils.normalization import (
     detect_body_font_size,
     is_likely_heading,
     is_noise_block,
+    is_standalone_label,
     normalize_text,
     normalize_unicode,
     normalize_whitespace,
@@ -70,6 +71,49 @@ class TestStripBullet:
         bullet, text = strip_bullet("  • Item", bullets)
         assert bullet == "•"
         assert text == "Item"
+
+
+class TestIsStandaloneLabel:
+    """Tests for standalone label detection."""
+
+    # Single capitalized words — game UI labels
+    def test_single_word_capitalized(self) -> None:
+        assert is_standalone_label("Contents") is True
+        assert is_standalone_label("Credits") is True
+        assert is_standalone_label("Skills") is True
+        assert is_standalone_label("Abilities") is True
+        assert is_standalone_label("Map") is True
+
+    # All-uppercase — section headers / game terms
+    def test_all_uppercase(self) -> None:
+        assert is_standalone_label("IMPRISONMENT") is True
+        assert is_standalone_label("RHETORIC") is True
+        assert is_standalone_label("MAP") is True
+
+    # Title-case phrases — game UI labels
+    def test_title_case_phrase(self) -> None:
+        assert is_standalone_label("Argonaut Sheet") is True
+        assert is_standalone_label("Adventure Tracks") is True
+        assert is_standalone_label("Knowledge Strangers") is True
+        assert is_standalone_label("Summon Limit") is True
+
+    # Title-case with punctuation
+    def test_title_case_with_commas(self) -> None:
+        assert is_standalone_label("Boons, Afflictions, Notes") is True
+
+    # Should NOT be standalone labels
+    def test_lowercase_continuation(self) -> None:
+        assert is_standalone_label("the end") is False
+        assert is_standalone_label("or more text") is False
+
+    def test_sentence_fragment(self) -> None:
+        assert is_standalone_label("He said something") is False
+        assert is_standalone_label("In this section we discuss") is False
+
+    def test_empty_and_non_alpha(self) -> None:
+        assert is_standalone_label("") is False
+        assert is_standalone_label("123") is False
+        assert is_standalone_label("  ") is False
 
 
 class TestIsLikelyHeading:

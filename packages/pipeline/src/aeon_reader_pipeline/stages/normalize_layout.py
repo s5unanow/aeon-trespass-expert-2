@@ -31,6 +31,7 @@ from aeon_reader_pipeline.utils.normalization import (
     detect_body_font_size,
     is_likely_heading,
     is_noise_block,
+    is_standalone_label,
     is_toc_entry,
     normalize_text,
     strip_bullet,
@@ -333,6 +334,10 @@ def _should_merge_into_next(text: str) -> bool:
     stripped = text.strip()
     if not stripped:
         return True
+    # Standalone labels (title-case, all-caps, single capitalized word)
+    # should never be merged — they are UI terms or section headers.
+    if is_standalone_label(stripped):
+        return False
     # Short fragments
     if len(stripped) < 10:
         return True

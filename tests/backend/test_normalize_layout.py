@@ -24,6 +24,7 @@ from aeon_reader_pipeline.models.ir_models import (
     ListBlock,
     PageRecord,
     ParagraphBlock,
+    TextRun,
 )
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.stage_framework.context import StageContext
@@ -261,6 +262,69 @@ class TestNormalizeLayout:
             paragraphs = [b for b in record.blocks if isinstance(b, ParagraphBlock)]
             assert len(headings) >= 1, f"Page {pn} should have a heading"
             assert len(paragraphs) >= 1, f"Page {pn} should have paragraphs"
+
+    def test_short_labels_not_merged(self, tmp_path: Path) -> None:
+        """Short UI labels like 'Contents' and 'Skills' must stay as separate blocks."""
+        pdf = tmp_path / "source.pdf"
+        doc = pymupdf.open()
+        page = doc.new_page(width=612, height=792)
+        # Heading at larger font
+        page.insert_text((72, 72), "Chapter One", fontsize=20, fontname="hebo")
+        # Short UI labels at body font — these must NOT be merged
+        page.insert_text((72, 120), "Contents", fontsize=11, fontname="helv")
+        page.insert_text((72, 145), "Body paragraph that follows.", fontsize=11, fontname="helv")
+        page.insert_text((72, 175), "Skills", fontsize=11, fontname="helv")
+        page.insert_text((72, 200), "Another body paragraph here.", fontsize=11, fontname="helv")
+        doc.save(str(pdf))
+        doc.close()
+
+        ctx = _make_context(tmp_path, pdf)
+        _run_through_normalize(ctx)
+
+        record = ctx.artifact_store.read_artifact(
+            ctx.run_id, ctx.doc_id, "normalize_layout", "pages/p0001.json", PageRecord
+        )
+        # Extract all paragraph texts
+        para_texts = []
+        for b in record.blocks:
+            if isinstance(b, ParagraphBlock):
+                text = " ".join(n.text for n in b.content if isinstance(n, TextRun))
+                para_texts.append(text)
+
+        # "Contents" and "Skills" must each be their own paragraph, not merged
+        assert any(t == "Contents" for t in para_texts), (
+            f"'Contents' should be a standalone paragraph, got: {para_texts}"
+        )
+        assert any(t == "Skills" for t in para_texts), (
+            f"'Skills' should be a standalone paragraph, got: {para_texts}"
+        )
+
+    def test_allcaps_labels_not_merged(self, tmp_path: Path) -> None:
+        """All-caps game terms like 'RHETORIC' must stay as separate blocks."""
+        pdf = tmp_path / "source.pdf"
+        doc = pymupdf.open()
+        page = doc.new_page(width=612, height=792)
+        page.insert_text((72, 72), "Game Mechanics", fontsize=20, fontname="hebo")
+        page.insert_text((72, 120), "IMPRISONMENT", fontsize=11, fontname="helv")
+        page.insert_text((72, 145), "A player may be imprisoned.", fontsize=11, fontname="helv")
+        doc.save(str(pdf))
+        doc.close()
+
+        ctx = _make_context(tmp_path, pdf)
+        _run_through_normalize(ctx)
+
+        record = ctx.artifact_store.read_artifact(
+            ctx.run_id, ctx.doc_id, "normalize_layout", "pages/p0001.json", PageRecord
+        )
+        para_texts = []
+        for b in record.blocks:
+            if isinstance(b, ParagraphBlock):
+                text = " ".join(n.text for n in b.content if isinstance(n, TextRun))
+                para_texts.append(text)
+
+        assert any(t == "IMPRISONMENT" for t in para_texts), (
+            f"'IMPRISONMENT' should be a standalone paragraph, got: {para_texts}"
+        )
 
     def test_fixture_multiformat(self, tmp_path: Path) -> None:
         """Normalize the multiformat fixture PDF."""
