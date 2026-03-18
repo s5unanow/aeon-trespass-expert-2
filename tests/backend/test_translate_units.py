@@ -214,6 +214,21 @@ class TestTranslateUnits:
         assert summary.failed > 0
         assert summary.completed == 0
 
+    def test_bad_json_records_errors(self, tmp_path: Path) -> None:
+        """Validation errors from bad JSON must be recorded in the error collector."""
+        pdf = tmp_path / "source.pdf"
+        _create_simple_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        _run_through_plan(ctx)
+
+        stage = TranslateUnitsStage()
+        stage.set_gateway(MockGateway(bad_json=True))
+        stage.execute(ctx)
+
+        collected = ctx.errors.collect()
+        assert len(collected) > 0, "Validation errors must be recorded in the error collector"
+        assert any(e.error_type == "validation_error" for e in collected)
+
     def test_handles_bad_json(self, tmp_path: Path) -> None:
         pdf = tmp_path / "source.pdf"
         _create_simple_pdf(pdf)

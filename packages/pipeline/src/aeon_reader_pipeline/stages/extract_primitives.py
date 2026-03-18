@@ -131,7 +131,8 @@ def _extract_images(
     doc: pymupdf.Document,
     stage_dir: Path,
     page_number: int = 0,
-    ctx: StageContext | None = None,
+    *,
+    ctx: StageContext,
 ) -> tuple[list[RawImageInfo], int]:
     """Extract raw images from a page, save to assets directory.
 
@@ -153,22 +154,21 @@ def _extract_images(
             base_image = doc.extract_image(xref)
         except Exception as exc:
             failures += 1
-            if ctx is not None:
-                ctx.logger.warning(
-                    "image_extraction_failed",
-                    page=page_number,
-                    image_index=img_idx,
-                    xref=xref,
-                    error=str(exc),
-                    error_type=type(exc).__name__,
-                )
-                ctx.errors.record(
-                    error_type=type(exc).__name__,
-                    message=str(exc),
-                    page=page_number,
-                    image_index=img_idx,
-                    xref=xref,
-                )
+            ctx.logger.warning(
+                "image_extraction_failed",
+                page=page_number,
+                image_index=img_idx,
+                xref=xref,
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            ctx.errors.record(
+                error_type=type(exc).__name__,
+                message=str(exc),
+                page=page_number,
+                image_index=img_idx,
+                xref=xref,
+            )
             continue
 
         if not base_image or not base_image.get("image"):

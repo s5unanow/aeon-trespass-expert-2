@@ -117,6 +117,12 @@ def _translate_single_unit(
                 errors=e.errors,
             )
             if attempt == MAX_RETRIES:
+                ctx.errors.record(
+                    error_type="validation_error",
+                    message=str(e),
+                    unit_id=unit.unit_id,
+                    attempt=attempt,
+                )
                 failure = TranslationFailure(
                     unit_id=unit.unit_id,
                     error_type="validation_error",

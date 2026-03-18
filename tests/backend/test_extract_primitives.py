@@ -284,6 +284,8 @@ class TestImageExtractionFailureLogging:
 
     def test_mixed_success_and_failure(self, tmp_path: Path) -> None:
         """Some images succeed, some fail — failures are counted."""
+        from unittest.mock import MagicMock
+
         from aeon_reader_pipeline.stages.extract_primitives import _extract_images
 
         # Create page with two images
@@ -294,9 +296,10 @@ class TestImageExtractionFailureLogging:
         page.insert_image(pymupdf.Rect(60, 10, 100, 50), pixmap=pix)
 
         stage_dir = tmp_path / "stage"
+        ctx_mock = MagicMock()
 
         # No mocking — both should succeed with valid images
-        images, failures = _extract_images(page, doc, stage_dir, page_number=1)
+        images, failures = _extract_images(page, doc, stage_dir, page_number=1, ctx=ctx_mock)
 
         assert failures == 0
         assert len(images) >= 1  # deduped by content hash, so at least 1
