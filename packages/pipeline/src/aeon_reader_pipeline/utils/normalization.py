@@ -113,6 +113,41 @@ def is_noise_block(text: str) -> bool:
     return len(stripped) >= 4 and len(set(stripped.lower())) == 1
 
 
+_MAX_LABEL_WORDS = 6
+
+
+def is_standalone_label(text: str) -> bool:
+    """Heuristic: is this text a standalone label that should not be merged?
+
+    Detects UI labels, section headers, and game terms that appear as
+    standalone text blocks: title-case phrases, all-caps terms, and
+    single capitalized words (e.g. "Contents", "RHETORIC", "Adventure Tracks").
+
+    Capped at ``_MAX_LABEL_WORDS`` words to avoid matching long title-case
+    sentences.
+    """
+    stripped = text.strip()
+    if not stripped or not stripped[0].isalpha():
+        return False
+
+    words = stripped.split()
+    if len(words) > _MAX_LABEL_WORDS:
+        return False
+
+    # All-uppercase text: "IMPRISONMENT", "RHETORIC", "MAP"
+    if stripped.isupper():
+        return True
+
+    # Single capitalized word: "Contents", "Skills", "Map"
+    if len(words) == 1 and stripped[0].isupper():
+        return True
+
+    # Title-case phrase: every alphabetic word starts uppercase
+    # Handles punctuation like "Boons, Afflictions, Notes"
+    alpha_words = [w.strip(",.;:!?") for w in words if w.strip(",.;:!?") and w[0].isalpha()]
+    return len(alpha_words) >= 2 and all(w[0].isupper() for w in alpha_words)
+
+
 def is_likely_heading(
     text: str,
     font_size: float,

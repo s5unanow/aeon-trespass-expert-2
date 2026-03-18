@@ -25,6 +25,7 @@ from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
 from aeon_reader_pipeline.utils.ids import content_fingerprint, inline_id, unit_id
+from aeon_reader_pipeline.utils.normalization import is_standalone_label
 
 # Block types that have a `content` field with InlineNode items
 _ContentBlock = HeadingBlock | ParagraphBlock | CaptionBlock | CalloutBlock
@@ -225,6 +226,19 @@ def _plan_page(  # noqa: C901, PLR0915
 
         # Lists get their own unit
         if isinstance(block, ListBlock):
+            _flush_unit(
+                _style_hint_for_block(pending_blocks[0][1]) if pending_blocks else "paragraph",
+                _get_section_path(record, pending_blocks[0][0]) if pending_blocks else [],
+            )
+            pending_nodes = nodes
+            pending_block_ids = [block.block_id]
+            pending_blocks = [(block_idx, block)]
+            _flush_unit(style, section)
+            continue
+
+        # Standalone labels get their own unit (UI terms, section headers)
+        block_text = " ".join(n.source_text for n in nodes)
+        if is_standalone_label(block_text):
             _flush_unit(
                 _style_hint_for_block(pending_blocks[0][1]) if pending_blocks else "paragraph",
                 _get_section_path(record, pending_blocks[0][0]) if pending_blocks else [],

@@ -217,6 +217,37 @@ class TestPlanTranslationUnit:
         units = _plan_page(record, "test-doc", pack)
         assert len(units) == 0
 
+    def test_short_label_gets_own_unit(self) -> None:
+        """Short UI labels like 'Contents' must produce their own translation unit."""
+        record = PageRecord(
+            page_number=1,
+            doc_id="test-doc",
+            width_pt=612,
+            height_pt=792,
+            blocks=[
+                HeadingBlock(
+                    block_id="test-doc:p0001:b000:heading",
+                    level=1,
+                    content=[TextRun(text="Chapter One")],
+                ),
+                ParagraphBlock(
+                    block_id="test-doc:p0001:b001:paragraph",
+                    content=[TextRun(text="Contents")],
+                ),
+                ParagraphBlock(
+                    block_id="test-doc:p0001:b002:paragraph",
+                    content=[TextRun(text="Body paragraph that follows.")],
+                ),
+            ],
+        )
+        pack = GlossaryPack(pack_id="test", version="1.0.0")
+        units = _plan_page(record, "test-doc", pack)
+        # "Contents" should NOT be merged into the body paragraph
+        unit_texts = [" ".join(n.source_text for n in u.text_nodes) for u in units]
+        assert any(t == "Contents" for t in unit_texts), (
+            f"'Contents' should be its own unit, got: {unit_texts}"
+        )
+
     def test_plan_page_creates_units(self) -> None:
         record = PageRecord(
             page_number=1,
