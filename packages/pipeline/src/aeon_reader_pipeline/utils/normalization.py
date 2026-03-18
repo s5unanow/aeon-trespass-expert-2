@@ -66,14 +66,60 @@ def is_toc_entry(text: str) -> bool:
     return "...." in text or "\u2026" in text
 
 
+# Card/reference codes: 2 uppercase letters + 4 digits (e.g. AB0086, AJ0177)
+_CARD_CODE_RE = re.compile(r"^[A-Z]{2}\d{4}$")
+# Grid coordinates: repeating letter+digit pairs (e.g. A1A2A3A4B1B2B3B4)
+_GRID_COORD_RE = re.compile(r"^(?:[A-Za-z]+\d+){3,}$")
+# Mangled Roman numerals: 8+ chars of only I, V, X (e.g. IIIIIIVVVIVIIVIIIIX)
+_MANGLED_ROMAN_RE = re.compile(r"^[IVXivx]{8,}$")
+# Garbled text: high ratio of non-alphanumeric/non-space characters
+_CODE_FRAGMENT_RE = re.compile(r"^[A-Z]\d{3}\s")
+
+
 def is_noise_block(text: str) -> bool:
-    """Heuristic: is this text noise (page number, digit fragment, stray char)?"""
+    """Heuristic: is this text block extraction noise?
+
+    Catches: page numbers, digit fragments, card codes, grid coordinates,
+    mangled Roman numerals, garbled text, and truncated fragments.
+    """
     stripped = text.strip()
     if not stripped:
         return True
+
+    # Pure digits (page numbers)
     if stripped.isdigit():
         return True
-    return len(stripped) < 3 and not stripped.isalpha()
+
+    # Very short fragments (1-2 chars) that aren't single real words
+    if len(stripped) <= 2:
+        return True
+
+    # Card/reference codes: AB0086, AJ0177, AM0308
+    if _CARD_CODE_RE.match(stripped):
+        return True
+
+    # Grid coordinates: A1A2A3A4B1B2B3B4
+    if _GRID_COORD_RE.match(stripped):
+        return True
+
+    # Mangled Roman numerals: IIIIIIVVVIVIIVIIIIX
+    if _MANGLED_ROMAN_RE.match(stripped):
+        return True
+
+    # Garbled text: high non-alphanumeric ratio
+    alnum_count = sum(1 for c in stripped if c.isalnum())
+    if len(stripped) >= 4 and alnum_count / len(stripped) < 0.5:
+        return True
+
+    # Code fragment sequences: "M012 5467 M022 9 123 M002"
+    if _CODE_FRAGMENT_RE.match(stripped) and len(stripped) > 10:
+        tokens = stripped.split()
+        digit_tokens = sum(1 for t in tokens if t.isdigit() or _CARD_CODE_RE.match(t))
+        if digit_tokens / len(tokens) > 0.5:
+            return True
+
+    # Repeating single character: xxxx, NNNN
+    return len(stripped) >= 4 and len(set(stripped.lower())) == 1
 
 
 def is_likely_heading(
