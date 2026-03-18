@@ -11,6 +11,7 @@ dev = [
     "ruff>=0.9,<1",
     "types-PyYAML",
     "aeon-reader-pipeline",
+    "import-linter>=2.0,<3",
 ]
 
 [tool.uv.workspace]
@@ -33,7 +34,19 @@ select = [
     "B",    # flake8-bugbear
     "SIM",  # flake8-simplify
     "RUF",  # ruff-specific
+    "C901", # McCabe complexity
+    "PLR0912", # too many branches
+    "PLR0913", # too many arguments
+    "PLR0915", # too many statements
 ]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
+[tool.ruff.lint.pylint]
+max-args = 7
+max-branches = 12
+max-statements = 50
 
 [tool.ruff.lint.isort]
 known-first-party = ["aeon_reader_pipeline"]
@@ -56,6 +69,37 @@ disallow_untyped_calls = false
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+[tool.importlinter]
+root_packages = ["aeon_reader_pipeline"]
+
+[[tool.importlinter.contracts]]
+name = "Models must not import stages or CLI"
+type = "forbidden"
+source_modules = ["aeon_reader_pipeline.models"]
+forbidden_modules = ["aeon_reader_pipeline.stages", "aeon_reader_pipeline.cli"]
+
+[[tool.importlinter.contracts]]
+name = "LLM layer must not import stages"
+type = "forbidden"
+source_modules = ["aeon_reader_pipeline.llm"]
+forbidden_modules = ["aeon_reader_pipeline.stages", "aeon_reader_pipeline.cli"]
+
+[[tool.importlinter.contracts]]
+name = "Stage framework must not import concrete stages"
+type = "forbidden"
+source_modules = ["aeon_reader_pipeline.stage_framework"]
+forbidden_modules = ["aeon_reader_pipeline.stages"]
+
+[[tool.importlinter.contracts]]
+name = "Utils must not import stages, LLM, or CLI"
+type = "forbidden"
+source_modules = ["aeon_reader_pipeline.utils"]
+forbidden_modules = [
+    "aeon_reader_pipeline.stages",
+    "aeon_reader_pipeline.llm",
+    "aeon_reader_pipeline.cli",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/backend"]

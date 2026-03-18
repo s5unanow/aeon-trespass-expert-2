@@ -32,10 +32,16 @@ apps/reader/generated/*
 !apps/reader/generated/.gitignore
 apps/reader/public/assets/
 
+# Review artifacts (populated ad-hoc, not source)
+review/
+
 # IDE
 .idea/
 .vscode/
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/prompts/
 *.swp
 *.swo
 
