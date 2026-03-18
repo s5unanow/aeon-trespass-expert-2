@@ -1,0 +1,5 @@
+{
+  "ask_before_next_issue": true,
+  "max_ci_failures_before_stop": 3,
+  "run_pipeline_verification": "auto"
+}
