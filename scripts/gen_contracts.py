@@ -11,6 +11,7 @@ interfaces to packages/contracts/typescript/src/generated/.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -318,9 +319,9 @@ def _atomic_write_json(path: Path, data: Any) -> None:
 
 def _atomic_write_text(path: Path, content: str) -> None:
     """Write text atomically via temp file + rename."""
-    tmp = Path(
-        tempfile.mkstemp(dir=path.parent, suffix=".tmp")[1],
-    )
+    fd, tmp_str = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    os.close(fd)
+    tmp = Path(tmp_str)
     try:
         tmp.write_text(content, encoding="utf-8")
         tmp.rename(path)
@@ -347,6 +348,7 @@ def main() -> None:
     )
     if result.returncode != 0:
         print("ERROR: Generated TypeScript failed type check:", file=sys.stderr)
+        print(result.stdout, file=sys.stderr)
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
 
