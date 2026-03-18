@@ -31,6 +31,7 @@ from aeon_reader_pipeline.utils.normalization import (
     detect_body_font_size,
     is_likely_heading,
     is_noise_block,
+    is_toc_entry,
     normalize_text,
     strip_bullet,
     strip_page_number_prefix,
@@ -266,13 +267,18 @@ def _classify_blocks(
             continue
 
         # Check for heading
-        if is_likely_heading(
-            text,
-            font_size,
-            body_size,
-            min_ratio=min_ratio,
-            max_length=max_heading_len,
-        ) or (_block_is_bold(text_block) and len(text) < max_heading_len and font_size > body_size):
+        if not is_toc_entry(text) and (
+            is_likely_heading(
+                text,
+                font_size,
+                body_size,
+                min_ratio=min_ratio,
+                max_length=max_heading_len,
+            )
+            or (
+                _block_is_bold(text_block) and len(text) < max_heading_len and font_size > body_size
+            )
+        ):
             level = 1 if font_size >= body_size * 1.5 else 2
             bid = block_id(doc_id, page_num, idx, "heading")
             aid = anchor_id(doc_id, page_num, text)

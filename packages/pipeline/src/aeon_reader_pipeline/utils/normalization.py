@@ -61,6 +61,11 @@ def strip_page_number_prefix(text: str) -> str:
     return text
 
 
+def is_toc_entry(text: str) -> bool:
+    """Check if text is a table-of-contents entry with dot leaders."""
+    return "...." in text or "\u2026" in text
+
+
 def is_noise_block(text: str) -> bool:
     """Heuristic: is this text noise (page number, digit fragment, stray char)?"""
     stripped = text.strip()

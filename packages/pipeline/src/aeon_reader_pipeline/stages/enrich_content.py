@@ -106,6 +106,11 @@ def _extract_text(block: HeadingBlock, locale: str = "en") -> str:
     return " ".join(parts)
 
 
+def _is_toc_heading(text: str) -> bool:
+    """Check if a heading looks like a table-of-contents entry (has dot leaders)."""
+    return "...." in text or "…" in text
+
+
 def _build_navigation(
     pages: list[PageRecord],
     doc_id: str,
@@ -118,6 +123,9 @@ def _build_navigation(
             if isinstance(block, HeadingBlock) and block.anchor:
                 label_en = _extract_text(block, "en")
                 label_ru = _extract_text(block, "ru")
+                # Skip TOC-style entries with dot leaders
+                if _is_toc_heading(label_en) or _is_toc_heading(label_ru):
+                    continue
                 entry = NavEntry(
                     anchor_id=block.anchor,
                     block_id=block.block_id,
