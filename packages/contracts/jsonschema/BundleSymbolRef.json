@@ -1,0 +1,25 @@
+{
+  "description": "Public symbol reference for the reader.",
+  "properties": {
+    "kind": {
+      "const": "symbol",
+      "default": "symbol",
+      "title": "Kind",
+      "type": "string"
+    },
+    "symbol_id": {
+      "title": "Symbol Id",
+      "type": "string"
+    },
+    "alt_text": {
+      "default": "",
+      "title": "Alt Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "symbol_id"
+  ],
+  "title": "BundleSymbolRef",
+  "type": "object"
+}

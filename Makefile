@@ -33,6 +33,8 @@ schemas: ## Regenerate contracts from Pydantic models
 check-generated: schemas ## Verify generated files are up to date
 	@git diff --exit-code packages/contracts/ || \
 		(echo "ERROR: Generated contracts are out of date. Run 'make schemas'." && exit 1)
+	@test -z "$$(git ls-files --others --exclude-standard packages/contracts/)" || \
+		(echo "ERROR: Untracked contract files found. Commit them or run 'make schemas'." && exit 1)
 
 site-dev: ## Start reader dev server
 	pnpm --filter reader dev

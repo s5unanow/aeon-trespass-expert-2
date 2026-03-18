@@ -1,0 +1,182 @@
+{
+  "$defs": {
+    "BundleGlossaryRef": {
+      "description": "Public glossary reference for the reader.",
+      "properties": {
+        "kind": {
+          "const": "glossary_ref",
+          "default": "glossary_ref",
+          "title": "Kind",
+          "type": "string"
+        },
+        "term_id": {
+          "title": "Term Id",
+          "type": "string"
+        },
+        "surface_form": {
+          "title": "Surface Form",
+          "type": "string"
+        },
+        "ru_surface_form": {
+          "default": "",
+          "title": "Ru Surface Form",
+          "type": "string"
+        }
+      },
+      "required": [
+        "term_id",
+        "surface_form"
+      ],
+      "title": "BundleGlossaryRef",
+      "type": "object"
+    },
+    "BundleListItemBlock": {
+      "description": "Public list item block.",
+      "properties": {
+        "kind": {
+          "const": "list_item",
+          "default": "list_item",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "bullet": {
+          "default": "",
+          "title": "Bullet",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BundleTextRun"
+              },
+              {
+                "$ref": "#/$defs/BundleSymbolRef"
+              },
+              {
+                "$ref": "#/$defs/BundleGlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleListItemBlock",
+      "type": "object"
+    },
+    "BundleSymbolRef": {
+      "description": "Public symbol reference for the reader.",
+      "properties": {
+        "kind": {
+          "const": "symbol",
+          "default": "symbol",
+          "title": "Kind",
+          "type": "string"
+        },
+        "symbol_id": {
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "alt_text": {
+          "default": "",
+          "title": "Alt Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "symbol_id"
+      ],
+      "title": "BundleSymbolRef",
+      "type": "object"
+    },
+    "BundleTextRun": {
+      "description": "Public text run for the reader.",
+      "properties": {
+        "kind": {
+          "const": "text",
+          "default": "text",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "ru_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ru Text"
+        },
+        "bold": {
+          "default": false,
+          "title": "Bold",
+          "type": "boolean"
+        },
+        "italic": {
+          "default": false,
+          "title": "Italic",
+          "type": "boolean"
+        },
+        "monospace": {
+          "default": false,
+          "title": "Monospace",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "BundleTextRun",
+      "type": "object"
+    }
+  },
+  "description": "Public list container block.",
+  "properties": {
+    "kind": {
+      "const": "list",
+      "default": "list",
+      "title": "Kind",
+      "type": "string"
+    },
+    "block_id": {
+      "title": "Block Id",
+      "type": "string"
+    },
+    "list_type": {
+      "default": "unordered",
+      "enum": [
+        "unordered",
+        "ordered"
+      ],
+      "title": "List Type",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/BundleListItemBlock"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "block_id"
+  ],
+  "title": "BundleListBlock",
+  "type": "object"
+}

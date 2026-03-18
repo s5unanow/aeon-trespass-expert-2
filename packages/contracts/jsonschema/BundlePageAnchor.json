@@ -1,0 +1,24 @@
+{
+  "description": "Public named anchor on a page.",
+  "properties": {
+    "anchor_id": {
+      "title": "Anchor Id",
+      "type": "string"
+    },
+    "block_id": {
+      "title": "Block Id",
+      "type": "string"
+    },
+    "label": {
+      "default": "",
+      "title": "Label",
+      "type": "string"
+    }
+  },
+  "required": [
+    "anchor_id",
+    "block_id"
+  ],
+  "title": "BundlePageAnchor",
+  "type": "object"
+}

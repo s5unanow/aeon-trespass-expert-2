@@ -1,0 +1,29 @@
+{
+  "description": "Single asset in the bundle.",
+  "properties": {
+    "asset_ref": {
+      "title": "Asset Ref",
+      "type": "string"
+    },
+    "path": {
+      "title": "Path",
+      "type": "string"
+    },
+    "content_type": {
+      "default": "",
+      "title": "Content Type",
+      "type": "string"
+    },
+    "size_bytes": {
+      "default": 0,
+      "title": "Size Bytes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "asset_ref",
+    "path"
+  ],
+  "title": "BundleAssetEntry",
+  "type": "object"
+}

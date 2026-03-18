@@ -1,0 +1,30 @@
+{
+  "description": "Public glossary reference for the reader.",
+  "properties": {
+    "kind": {
+      "const": "glossary_ref",
+      "default": "glossary_ref",
+      "title": "Kind",
+      "type": "string"
+    },
+    "term_id": {
+      "title": "Term Id",
+      "type": "string"
+    },
+    "surface_form": {
+      "title": "Surface Form",
+      "type": "string"
+    },
+    "ru_surface_form": {
+      "default": "",
+      "title": "Ru Surface Form",
+      "type": "string"
+    }
+  },
+  "required": [
+    "term_id",
+    "surface_form"
+  ],
+  "title": "BundleGlossaryRef",
+  "type": "object"
+}

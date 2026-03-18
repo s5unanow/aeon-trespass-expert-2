@@ -1,0 +1,47 @@
+{
+  "description": "Public text run for the reader.",
+  "properties": {
+    "kind": {
+      "const": "text",
+      "default": "text",
+      "title": "Kind",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "ru_text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ru Text"
+    },
+    "bold": {
+      "default": false,
+      "title": "Bold",
+      "type": "boolean"
+    },
+    "italic": {
+      "default": false,
+      "title": "Italic",
+      "type": "boolean"
+    },
+    "monospace": {
+      "default": false,
+      "title": "Monospace",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "text"
+  ],
+  "title": "BundleTextRun",
+  "type": "object"
+}
