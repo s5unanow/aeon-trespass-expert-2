@@ -6,6 +6,7 @@ A unit is a cache hit if and only if its source_fingerprint matches.
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import structlog
@@ -42,11 +43,16 @@ def _is_cacheable(unit: TranslationUnit, result: TranslationResult) -> bool:
 
 
 class TranslationMemory:
-    """Exact-match translation cache keyed by source fingerprint."""
+    """Exact-match translation cache keyed by source fingerprint.
+
+    Thread-safe: all read/write operations are serialized through a lock
+    so the TM can be shared across a ThreadPoolExecutor.
+    """
 
     def __init__(self, cache_dir: Path) -> None:
         self._cache_dir = cache_dir
         self._cache_dir.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
 
     def lookup(self, unit: TranslationUnit) -> TranslationResult | None:
         """Look up a cached result by source fingerprint.
@@ -56,12 +62,14 @@ class TranslationMemory:
         if not unit.source_fingerprint:
             return None
 
-        path = self._path_for(unit.source_fingerprint)
-        if not path.exists():
-            return None
+        with self._lock:
+            path = self._path_for(unit.source_fingerprint)
+            if not path.exists():
+                return None
 
-        result = read_json(path, TranslationResult)
-        # Mark as cached
+            result = read_json(path, TranslationResult)
+
+        # Mark as cached (outside lock — no I/O)
         return result.model_copy(update={"cached": True})
 
     def store(self, unit: TranslationUnit, result: TranslationResult) -> None:
@@ -69,6 +77,9 @@ class TranslationMemory:
 
         Skips storage if the result has no meaningful translations
         (e.g. all entries are just source-text fallbacks).
+
+        If another thread already wrote for this fingerprint, the write
+        is skipped (first-writer-wins).
         """
         if not unit.source_fingerprint:
             return
@@ -85,12 +96,17 @@ class TranslationMemory:
             )
             return
 
-        path = self._path_for(unit.source_fingerprint)
-        write_json(path, result)
+        with self._lock:
+            path = self._path_for(unit.source_fingerprint)
+            # First-writer-wins: skip if another thread already stored
+            if path.exists():
+                return
+            write_json(path, result)
 
     def has(self, fingerprint: str) -> bool:
         """Check if a fingerprint exists in the cache."""
-        return self._path_for(fingerprint).exists()
+        with self._lock:
+            return self._path_for(fingerprint).exists()
 
     def _path_for(self, fingerprint: str) -> Path:
         return self._cache_dir / f"{fingerprint}.json"
