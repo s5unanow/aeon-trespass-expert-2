@@ -46,6 +46,11 @@ review/
 *.swp
 *.swo
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
 # Build artifacts
 *.tsbuildinfo
 
