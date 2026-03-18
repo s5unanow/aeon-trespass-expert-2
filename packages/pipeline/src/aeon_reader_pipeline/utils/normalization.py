@@ -72,8 +72,6 @@ _CARD_CODE_RE = re.compile(r"^[A-Z]{2}\d{4}$")
 _GRID_COORD_RE = re.compile(r"^(?:[A-Za-z]+\d+){3,}$")
 # Mangled Roman numerals: 8+ chars of only I, V, X (e.g. IIIIIIVVVIVIIVIIIIX)
 _MANGLED_ROMAN_RE = re.compile(r"^[IVXivx]{8,}$")
-# Garbled text: high ratio of non-alphanumeric/non-space characters
-_CODE_FRAGMENT_RE = re.compile(r"^[A-Z]\d{3}\s")
 
 
 def is_noise_block(text: str) -> bool:
@@ -106,17 +104,10 @@ def is_noise_block(text: str) -> bool:
     if _MANGLED_ROMAN_RE.match(stripped):
         return True
 
-    # Garbled text: high non-alphanumeric ratio
+    # High non-alphanumeric ratio (garbled/symbol noise)
     alnum_count = sum(1 for c in stripped if c.isalnum())
     if len(stripped) >= 4 and alnum_count / len(stripped) < 0.5:
         return True
-
-    # Code fragment sequences: "M012 5467 M022 9 123 M002"
-    if _CODE_FRAGMENT_RE.match(stripped) and len(stripped) > 10:
-        tokens = stripped.split()
-        digit_tokens = sum(1 for t in tokens if t.isdigit() or _CARD_CODE_RE.match(t))
-        if digit_tokens / len(tokens) > 0.5:
-            return True
 
     # Repeating single character: xxxx, NNNN
     return len(stripped) >= 4 and len(set(stripped.lower())) == 1
