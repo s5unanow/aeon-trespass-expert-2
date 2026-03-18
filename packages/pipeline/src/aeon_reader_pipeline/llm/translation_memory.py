@@ -8,11 +8,36 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import structlog
+
 from aeon_reader_pipeline.io.json_io import read_json, write_json
 from aeon_reader_pipeline.models.translation_models import (
     TranslationResult,
     TranslationUnit,
 )
+
+logger = structlog.get_logger()
+
+
+def _is_cacheable(unit: TranslationUnit, result: TranslationResult) -> bool:
+    """Check whether a translation result is worth caching.
+
+    Rejects results that are empty or consist entirely of untranslated
+    source-text fallbacks — caching those would poison future lookups.
+    """
+    if not result.translations:
+        return False
+
+    source_by_id = {n.inline_id: n.source_text for n in unit.text_nodes}
+
+    # Count how many translations actually differ from source text
+    translated_count = 0
+    for node in result.translations:
+        source = source_by_id.get(node.inline_id, "")
+        if node.ru_text and node.ru_text != source:
+            translated_count += 1
+
+    return translated_count > 0
 
 
 class TranslationMemory:
@@ -39,9 +64,23 @@ class TranslationMemory:
         return result.model_copy(update={"cached": True})
 
     def store(self, unit: TranslationUnit, result: TranslationResult) -> None:
-        """Store a translation result for future reuse."""
+        """Store a translation result for future reuse.
+
+        Skips storage if the result has no meaningful translations
+        (e.g. all entries are just source-text fallbacks).
+        """
         if not unit.source_fingerprint:
             return
+
+        if not _is_cacheable(unit, result):
+            logger.warning(
+                "tm_store_skipped",
+                unit_id=unit.unit_id,
+                reason="no_meaningful_translations",
+                translation_count=len(result.translations),
+            )
+            return
+
         path = self._path_for(unit.source_fingerprint)
         write_json(path, result)
 
