@@ -115,6 +115,10 @@ class TestIsStandaloneLabel:
         assert is_standalone_label("123") is False
         assert is_standalone_label("  ") is False
 
+    def test_long_title_case_not_label(self) -> None:
+        # Sentences that happen to be title-case should not match
+        assert is_standalone_label("Place The Titan On The Board And Move It") is False
+
 
 class TestIsLikelyHeading:
     def test_larger_font_is_heading(self):
