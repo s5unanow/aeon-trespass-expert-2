@@ -82,9 +82,7 @@ def _translate_single_unit(
             # Validate placeholders (warnings only — don't fail the unit)
             ph_errors = validate_placeholders(result.translations, ph_map)
             for ph_err in ph_errors:
-                ctx.logger.warning(
-                    "placeholder_warning", unit_id=unit.unit_id, detail=ph_err
-                )
+                ctx.logger.warning("placeholder_warning", unit_id=unit.unit_id, detail=ph_err)
 
             # Restore placeholders
             restored = restore_placeholders(result.translations, ph_map)
@@ -171,7 +169,7 @@ class TranslateUnitsStage(BaseStage):
         """Inject an LLM gateway (used for testing)."""
         self._gateway = gateway
 
-    def execute(self, ctx: StageContext) -> None:
+    def execute(self, ctx: StageContext) -> None:  # noqa: C901, PLR0915
         plan = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -215,9 +213,13 @@ class TranslateUnitsStage(BaseStage):
 
         concurrency = ctx.pipeline_config.llm_concurrency
 
-        def _process_unit(
-            unit: TranslationUnit,
-        ) -> tuple[TranslationResult | None, TranslationFailure | None, TranslationCallMetadata | None]:
+        _UnitOutcome = tuple[
+            TranslationResult | None,
+            TranslationFailure | None,
+            TranslationCallMetadata | None,
+        ]
+
+        def _process_unit(unit: TranslationUnit) -> _UnitOutcome:
             return _translate_single_unit(unit, gateway, system_prompt, ctx, tm)
 
         def _collect(
@@ -273,9 +275,7 @@ class TranslateUnitsStage(BaseStage):
         if concurrency > 1:
             ctx.logger.info("parallel_translation", workers=concurrency)
             with ThreadPoolExecutor(max_workers=concurrency) as executor:
-                futures = {
-                    executor.submit(_process_unit, unit): unit for unit in plan.units
-                }
+                futures = {executor.submit(_process_unit, unit): unit for unit in plan.units}
                 for future in as_completed(futures):
                     unit = futures[future]
                     result, failure, meta = future.result()

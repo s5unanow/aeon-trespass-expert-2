@@ -42,7 +42,10 @@ class TestBundlePage:
             height_pt=792,
             blocks=[
                 BundleHeadingBlock(block_id="h1", level=1, content=[BundleTextRun(text="Title")]),
-                BundleParagraphBlock(block_id="p1", content=[BundleTextRun(text="Body", ru_text="[RU]")]),
+                BundleParagraphBlock(
+                    block_id="p1",
+                    content=[BundleTextRun(text="Body", ru_text="[RU]")],
+                ),
             ],
         )
         assert len(page.blocks) == 2

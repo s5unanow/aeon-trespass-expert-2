@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from aeon_reader_pipeline.models.ir_models import PageRecord, TextRun
-from aeon_reader_pipeline.models.qa_models import QAIssue, QASummary
-from aeon_reader_pipeline.qa.engine import QAEngine, QARule
+from aeon_reader_pipeline.models.ir_models import PageRecord
+from aeon_reader_pipeline.models.qa_models import QAIssue
+from aeon_reader_pipeline.qa.engine import QAEngine
 from aeon_reader_pipeline.stages.enrich_content import NavigationTree
 
 
@@ -24,9 +24,7 @@ class StubRule:
         return self._issues
 
 
-def _make_issue(
-    severity: str = "warning", rule_id: str = "test.rule"
-) -> QAIssue:
+def _make_issue(severity: str = "warning", rule_id: str = "test.rule") -> QAIssue:
     return QAIssue(
         rule_id=rule_id,
         severity=severity,  # type: ignore[arg-type]

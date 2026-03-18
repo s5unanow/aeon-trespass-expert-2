@@ -22,9 +22,7 @@ class TestSyncBundle:
             / "test-doc"
         )
         source.mkdir(parents=True)
-        (source / "bundle_manifest.json").write_text(
-            json.dumps({"doc_id": "test-doc"})
-        )
+        (source / "bundle_manifest.json").write_text(json.dumps({"doc_id": "test-doc"}))
         pages = source / "pages"
         pages.mkdir()
         (pages / "p0001.json").write_text(json.dumps({"page_number": 1}))
@@ -66,18 +64,10 @@ class TestSyncBundle:
         artifacts_root = tmp_path / "artifacts"
         for doc_id in ["doc-a", "doc-b"]:
             source = (
-                artifacts_root
-                / "runs"
-                / "run-001"
-                / doc_id
-                / "11_export"
-                / "site_bundle"
-                / doc_id
+                artifacts_root / "runs" / "run-001" / doc_id / "11_export" / "site_bundle" / doc_id
             )
             source.mkdir(parents=True)
-            (source / "bundle_manifest.json").write_text(
-                json.dumps({"doc_id": doc_id})
-            )
+            (source / "bundle_manifest.json").write_text(json.dumps({"doc_id": doc_id}))
 
         target = tmp_path / "generated"
         synced = sync_bundle(artifacts_root, "run-001", ["doc-a", "doc-b"], target)

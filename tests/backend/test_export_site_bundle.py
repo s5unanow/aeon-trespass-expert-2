@@ -74,9 +74,7 @@ def _make_context(tmp_path: Path, source_pdf_path: Path) -> StageContext:
     configs_root.mkdir(exist_ok=True)
     prompts = configs_root.parent / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
-    (prompts / "system.j2").write_text(
-        "Translate from {{ source_locale }} to {{ target_locale }}."
-    )
+    (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
 
     store = ArtifactStore(tmp_path / "artifacts")
@@ -93,9 +91,7 @@ def _make_context(tmp_path: Path, source_pdf_path: Path) -> StageContext:
             titles=DocumentTitles(en="Test Doc", ru="\u0422\u0435\u0441\u0442"),
             source_locale="en",
             target_locale="ru",
-            profiles=DocumentProfiles(
-                rules="test", models="test", symbols="test", glossary="test"
-            ),
+            profiles=DocumentProfiles(rules="test", models="test", symbols="test", glossary="test"),
             build=DocumentBuild(route_base="/docs/test-doc"),
         ),
         rule_profile=RuleProfile(profile_id="test"),
@@ -155,7 +151,9 @@ class TestConvertPageToBundle:
                 ),
                 ParagraphBlock(
                     block_id="p1",
-                    content=[TextRun(text="Body", ru_text="[RU]", font_name="Times", font_size=11.0)],
+                    content=[
+                        TextRun(text="Body", ru_text="[RU]", font_name="Times", font_size=11.0),
+                    ],
                     source_block_index=1,
                 ),
             ],

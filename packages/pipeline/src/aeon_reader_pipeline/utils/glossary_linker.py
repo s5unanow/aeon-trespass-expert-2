@@ -96,7 +96,7 @@ def _link_in_content(
     return result
 
 
-def _split_text_run(
+def _split_text_run(  # noqa: C901, PLR0912
     run: TextRun,
     matchers: list[_TermMatcher],
     linked_once: set[str],

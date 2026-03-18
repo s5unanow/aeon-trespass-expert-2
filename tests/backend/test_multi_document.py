@@ -51,9 +51,7 @@ class MockGateway(LlmGateway):
             for n in data["text_nodes"]
         ]
         return LlmResponse(
-            text=json.dumps(
-                {"unit_id": data["unit_id"], "translations": translations}
-            ),
+            text=json.dumps({"unit_id": data["unit_id"], "translations": translations}),
             provider="mock",
             model="mock",
         )
@@ -83,9 +81,7 @@ def _make_context(
     configs_root.mkdir(exist_ok=True)
     prompts = configs_root.parent / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
-    (prompts / "system.j2").write_text(
-        "Translate from {{ source_locale }} to {{ target_locale }}."
-    )
+    (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
 
     return StageContext(
@@ -99,9 +95,7 @@ def _make_context(
             titles=DocumentTitles(en=title_en, ru=title_ru),
             source_locale="en",
             target_locale="ru",
-            profiles=DocumentProfiles(
-                rules="test", models="test", symbols="test", glossary="test"
-            ),
+            profiles=DocumentProfiles(rules="test", models="test", symbols="test", glossary="test"),
             build=DocumentBuild(route_base=f"/docs/{doc_id}"),
         ),
         rule_profile=RuleProfile(profile_id="test"),
@@ -145,7 +139,12 @@ class TestMultiDocument:
         pdf1 = tmp_path / "core.pdf"
         _create_pdf(pdf1, "Core Rulebook")
         ctx1 = _make_context(
-            tmp_path, store, pdf1, "doc-core", "Core Rulebook", "\u041e\u0441\u043d\u043e\u0432\u043d\u044b\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u0430"
+            tmp_path,
+            store,
+            pdf1,
+            "doc-core",
+            "Core Rulebook",
+            "Основные правила",
         )
         _run_through_export(ctx1)
 
@@ -153,7 +152,12 @@ class TestMultiDocument:
         pdf2 = tmp_path / "odyssey.pdf"
         _create_pdf(pdf2, "Odyssey Expansion")
         ctx2 = _make_context(
-            tmp_path, store, pdf2, "doc-odyssey", "Odyssey Expansion", "\u041e\u0434\u0438\u0441\u0441\u0435\u044f"
+            tmp_path,
+            store,
+            pdf2,
+            "doc-odyssey",
+            "Odyssey Expansion",
+            "\u041e\u0434\u0438\u0441\u0441\u0435\u044f",
         )
         _run_through_export(ctx2)
 

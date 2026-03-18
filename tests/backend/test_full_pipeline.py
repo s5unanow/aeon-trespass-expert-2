@@ -68,9 +68,7 @@ class MockGateway(LlmGateway):
             for n in data["text_nodes"]
         ]
         return LlmResponse(
-            text=json.dumps(
-                {"unit_id": data["unit_id"], "translations": translations}
-            ),
+            text=json.dumps({"unit_id": data["unit_id"], "translations": translations}),
             provider="mock",
             model="mock",
         )
@@ -96,12 +94,8 @@ def _create_fixture_pdf(path: Path) -> None:
     # Page 2 — heading + list-like content
     page = doc.new_page(width=612, height=792)
     page.insert_text((72, 72), "Chapter Two: Combat", fontsize=20, fontname="hebo")
-    page.insert_text(
-        (72, 120), "Combat proceeds in rounds.", fontsize=11, fontname="helv"
-    )
-    page.insert_text(
-        (72, 150), "Roll dice to determine initiative.", fontsize=11, fontname="helv"
-    )
+    page.insert_text((72, 120), "Combat proceeds in rounds.", fontsize=11, fontname="helv")
+    page.insert_text((72, 150), "Roll dice to determine initiative.", fontsize=11, fontname="helv")
 
     toc = [[1, "Chapter One: Setup", 1], [1, "Chapter Two: Combat", 2]]
     doc.set_toc(toc)
@@ -115,9 +109,7 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
     configs_root.mkdir(exist_ok=True)
     prompts = configs_root.parent / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
-    (prompts / "system.j2").write_text(
-        "Translate from {{ source_locale }} to {{ target_locale }}."
-    )
+    (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
 
     store = ArtifactStore(tmp_path / "artifacts")
@@ -131,12 +123,12 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
             doc_id="fixture-doc",
             slug="fixture-doc",
             source_pdf=str(pdf_path),
-            titles=DocumentTitles(en="Fixture Rulebook", ru="\u0424\u0438\u043a\u0441\u0442\u0443\u0440\u0430"),
+            titles=DocumentTitles(
+                en="Fixture Rulebook", ru="\u0424\u0438\u043a\u0441\u0442\u0443\u0440\u0430"
+            ),
             source_locale="en",
             target_locale="ru",
-            profiles=DocumentProfiles(
-                rules="test", models="test", symbols="test", glossary="test"
-            ),
+            profiles=DocumentProfiles(rules="test", models="test", symbols="test", glossary="test"),
             build=DocumentBuild(route_base="/docs/fixture-doc"),
         ),
         rule_profile=RuleProfile(profile_id="test"),
@@ -157,7 +149,7 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
 class TestFullPipeline:
     """Run all 15 stages and validate key artifacts at each boundary."""
 
-    def test_full_pipeline_produces_release(self, tmp_path: Path) -> None:
+    def test_full_pipeline_produces_release(self, tmp_path: Path) -> None:  # noqa: PLR0915
         pdf = tmp_path / "fixture.pdf"
         _create_fixture_pdf(pdf)
         ctx = _make_context(tmp_path, pdf)
