@@ -21,14 +21,14 @@ def _hash_prompt_bundle(configs_root: Path, bundle_id: str) -> str | None:
     Bundle ID like ``translate-v1`` maps to ``prompts/translate/v1/``.
     Returns None if the directory does not exist.
     """
-    suffix = bundle_id.replace("translate-", "")
+    suffix = bundle_id.removeprefix("translate-")
     prompts_dir = configs_root.parent / "prompts" / "translate" / suffix
     if not prompts_dir.is_dir():
         return None
     h = hashlib.sha256()
-    for f in sorted(prompts_dir.rglob("*")):
+    for f in sorted(prompts_dir.rglob("*"), key=lambda p: p.as_posix()):
         if f.is_file():
-            h.update(f.name.encode())
+            h.update(f.relative_to(prompts_dir).as_posix().encode())
             h.update(f.read_bytes())
     return h.hexdigest()
 
