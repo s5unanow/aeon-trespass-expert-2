@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from google.genai import errors as genai_errors
+from pydantic import ValidationError as PydanticValidationError
 
 from aeon_reader_pipeline.llm.gemini import (
     GeminiProvider,
@@ -61,6 +62,10 @@ class TestIsRetryable:
     def test_os_error_retryable(self) -> None:
         assert _is_retryable(OSError("network unreachable")) is True
 
+    def test_server_error_502_retryable(self) -> None:
+        exc = genai_errors.ServerError(502, {"error": "bad gateway"})
+        assert _is_retryable(exc) is True
+
     def test_value_error_not_retryable(self) -> None:
         assert _is_retryable(ValueError("bad value")) is False
 
@@ -87,6 +92,12 @@ class TestBackoffDelay:
 
 
 # ─── GeminiProvider.translate retry integration ──────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Prevent actual sleeping during retry tests."""
+    monkeypatch.setattr("aeon_reader_pipeline.llm.gemini.time.sleep", lambda _: None)
 
 
 class TestGeminiRetry:
@@ -224,3 +235,24 @@ class TestGeminiRetry:
 
         assert result.text == '{"translations": []}'
         assert provider._client.models.generate_content.call_count == 3
+
+
+# ─── ModelProfile validation ─────────────────────────────────────────────
+
+
+class TestModelProfileRetryValidation:
+    def test_max_retries_must_be_at_least_1(self) -> None:
+        with pytest.raises(PydanticValidationError):
+            _make_profile(max_retries=0)
+
+    def test_negative_max_retries_rejected(self) -> None:
+        with pytest.raises(PydanticValidationError):
+            _make_profile(max_retries=-1)
+
+    def test_negative_base_delay_rejected(self) -> None:
+        with pytest.raises(PydanticValidationError):
+            _make_profile(retry_base_delay=-0.5)
+
+    def test_negative_max_delay_rejected(self) -> None:
+        with pytest.raises(PydanticValidationError):
+            _make_profile(retry_max_delay=-1.0)

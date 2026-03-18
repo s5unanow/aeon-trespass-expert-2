@@ -29,7 +29,7 @@ def _is_retryable(exc: Exception) -> bool:
 
 
 def _backoff_delay(attempt: int, base: float, maximum: float) -> float:
-    """Exponential backoff with full jitter: uniform(0, min(max, base * 2^attempt))."""
+    """Exponential backoff with full jitter: uniform(0, min(max, base * 2^(attempt-1)))."""
     delay = min(maximum, base * (2 ** (attempt - 1)))
     return random.uniform(0, delay)
 
