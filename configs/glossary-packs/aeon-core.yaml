@@ -1,7 +1,7 @@
 # Glossary pack for Aeon Trespass core terminology.
 # Locked terms get placeholder-injected before LLM calls to ensure consistency.
 pack_id: aeon-core
-version: "1.1.0"
+version: "1.2.0"
 terms:
   # ── Brand & System ──────────────────────────────────────────────
   - term_id: aeon-trespass-odyssey
@@ -914,6 +914,61 @@ terms:
     en_canonical: Pharos
     en_aliases: []
     ru_preferred: Фарос
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Named Creatures & Encounters ──────────────────────────────
+  - term_id: icarian-harpy
+    en_canonical: Icarian Harpy
+    en_aliases: ["Icarian Harpies"]
+    ru_preferred: Икарийская Гарпия
+    ru_variants: ["Икарийские Гарпии", "Икарийской Гарпии"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: sun-descendant
+    en_canonical: Sun Descendant
+    en_aliases: ["Sun Descendants"]
+    ru_preferred: Потомок Солнца
+    ru_variants: ["Потомки Солнца", "Потомка Солнца"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: hermesian-pursuer
+    en_canonical: Hermesian Pursuer
+    en_aliases: ["Hermesian Pursuers"]
+    ru_preferred: Гермесов Преследователь
+    ru_variants: ["Гермесовы Преследователи", "Гермесова Преследователя"]
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: the-burden
+    en_canonical: The Burden
+    en_aliases: ["Burden"]
+    ru_preferred: Бремя
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Adventure Tracks ─────────────────────────────────────────
+  - term_id: pygmalion-track
+    en_canonical: Pygmalion Track
+    en_aliases: []
+    ru_preferred: Трек Пигмалиона
+    lock_translation: true
+    link_policy: first_only
+
+  # ── Named Artifacts ──────────────────────────────────────────
+  - term_id: excavated-tear
+    en_canonical: Excavated Tear
+    en_aliases: ["ExcavatedTear"]
+    ru_preferred: Извлечённая Слеза
+    lock_translation: true
+    link_policy: first_only
+
+  - term_id: accursed-tear
+    en_canonical: Accursed Tear
+    en_aliases: ["AccursedTear"]
+    ru_preferred: Проклятая Слеза
     lock_translation: true
     link_policy: first_only
 
