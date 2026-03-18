@@ -231,6 +231,24 @@ class SiteBundleManifest(BaseModel):
     stage_version: str = "1.0.0"
 
 
+class BundleGlossaryEntry(BaseModel):
+    """Public glossary entry for the reader drawer."""
+
+    term_id: str
+    en_canonical: str
+    ru_preferred: str
+    definition_ru: str = ""
+    definition_en: str | None = None
+
+
+class BundleGlossary(BaseModel):
+    """Glossary data exported for the reader."""
+
+    doc_id: str
+    entries: list[BundleGlossaryEntry] = Field(default_factory=list)
+    total_entries: int = 0
+
+
 class CatalogEntry(BaseModel):
     """Single document entry in the reader catalog."""
 

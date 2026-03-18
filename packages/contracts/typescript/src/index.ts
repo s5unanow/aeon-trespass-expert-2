@@ -11,6 +11,8 @@ export type {
   BundleCaptionBlock,
   BundleDividerBlock,
   BundleFigureBlock,
+  BundleGlossary,
+  BundleGlossaryEntry,
   BundleGlossaryRef,
   BundleHeadingBlock,
   BundleInlineNode,

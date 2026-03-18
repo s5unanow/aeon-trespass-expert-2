@@ -162,6 +162,24 @@ export interface SiteBundleManifest {
 }
 
 // ---------------------------------------------------------------------------
+// Glossary
+// ---------------------------------------------------------------------------
+
+export interface BundleGlossaryEntry {
+  term_id: string;
+  en_canonical: string;
+  ru_preferred: string;
+  definition_ru: string;
+  definition_en: string | null;
+}
+
+export interface BundleGlossary {
+  doc_id: string;
+  entries: BundleGlossaryEntry[];
+  total_entries: number;
+}
+
+// ---------------------------------------------------------------------------
 // Navigation
 // ---------------------------------------------------------------------------
 
