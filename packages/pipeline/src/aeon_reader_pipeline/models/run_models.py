@@ -52,6 +52,14 @@ class WorkUnitStatus(BaseModel):
     cache_hit: bool = False
 
 
+class StageErrorRecord(BaseModel):
+    """Single error recorded during stage execution."""
+
+    error_type: str
+    message: str
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
 class StageManifest(BaseModel):
     """Stage-level status and work unit tracking."""
 
@@ -65,6 +73,7 @@ class StageManifest(BaseModel):
     output_hashes: dict[str, str] = Field(default_factory=dict)
     metrics: dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
+    errors: list[StageErrorRecord] = Field(default_factory=list)
 
 
 class ResolvedDocPlan(BaseModel):

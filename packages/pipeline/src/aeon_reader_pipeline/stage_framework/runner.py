@@ -81,12 +81,22 @@ class PipelineRunner:
 
         try:
             stage.execute(ctx)
+            collected = ctx.errors.collect()
+            stage_manifest.errors = collected
             stage_manifest.status = "completed"
             stage_manifest.completed_at = datetime.now(UTC)
             ctx.artifact_store.save_stage_manifest(ctx.run_id, ctx.doc_id, stage_manifest)
             self._update_stage_status(ctx, stage.name, "completed")
-            stage_log.info("stage.complete")
+            if collected:
+                stage_log.info(
+                    "stage.complete",
+                    non_fatal_errors=len(collected),
+                )
+            else:
+                stage_log.info("stage.complete")
         except Exception as e:
+            collected = ctx.errors.collect()
+            stage_manifest.errors = collected
             stage_manifest.status = "failed"
             stage_manifest.error = str(e)
             stage_manifest.completed_at = datetime.now(UTC)

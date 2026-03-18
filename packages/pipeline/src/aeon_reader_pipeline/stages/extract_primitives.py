@@ -162,6 +162,13 @@ def _extract_images(
                     error=str(exc),
                     error_type=type(exc).__name__,
                 )
+                ctx.errors.record(
+                    error_type=type(exc).__name__,
+                    message=str(exc),
+                    page=page_number,
+                    image_index=img_idx,
+                    xref=xref,
+                )
             continue
 
         if not base_image or not base_image.get("image"):
