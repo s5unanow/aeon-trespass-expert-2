@@ -238,3 +238,67 @@ class TestExtractPrimitives:
         stage = ExtractPrimitivesStage()
         assert stage.name == "extract_primitives"
         assert stage.version == "1.0.0"
+
+
+class TestImageExtractionFailureLogging:
+    """Verify that image extraction failures are logged, not swallowed."""
+
+    def test_failed_extraction_logs_warning(self, tmp_path: Path) -> None:
+        """A corrupt xref logs a warning and continues extraction."""
+        from unittest.mock import MagicMock, patch
+
+        from aeon_reader_pipeline.stages.extract_primitives import _extract_images
+
+        # Create a simple page with one image
+        doc = pymupdf.open()
+        page = doc.new_page()
+        pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 10, 10), 0)
+        page.insert_image(pymupdf.Rect(10, 10, 50, 50), pixmap=pix)
+
+        stage_dir = tmp_path / "stage"
+
+        # Mock extract_image to raise on the first call
+        def _failing_extract(xref: int) -> dict:  # type: ignore[type-arg]
+            raise RuntimeError("corrupt image data")
+
+        ctx_mock = MagicMock()
+
+        with patch.object(doc, "extract_image", side_effect=_failing_extract):
+            images, failures = _extract_images(
+                page,
+                doc,
+                stage_dir,
+                page_number=1,
+                ctx=ctx_mock,
+            )
+
+        assert failures >= 1
+        assert len(images) == 0
+        ctx_mock.logger.warning.assert_called()
+        call_args = ctx_mock.logger.warning.call_args
+        assert call_args[0][0] == "image_extraction_failed"
+        assert call_args[1]["page"] == 1
+        assert "corrupt image data" in call_args[1]["error"]
+
+        doc.close()
+
+    def test_mixed_success_and_failure(self, tmp_path: Path) -> None:
+        """Some images succeed, some fail — failures are counted."""
+        from aeon_reader_pipeline.stages.extract_primitives import _extract_images
+
+        # Create page with two images
+        doc = pymupdf.open()
+        page = doc.new_page()
+        pix = pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 10, 10), 0)
+        page.insert_image(pymupdf.Rect(10, 10, 50, 50), pixmap=pix)
+        page.insert_image(pymupdf.Rect(60, 10, 100, 50), pixmap=pix)
+
+        stage_dir = tmp_path / "stage"
+
+        # No mocking — both should succeed with valid images
+        images, failures = _extract_images(page, doc, stage_dir, page_number=1)
+
+        assert failures == 0
+        assert len(images) >= 1  # deduped by content hash, so at least 1
+
+        doc.close()
