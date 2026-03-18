@@ -1,13 +1,22 @@
 #!/usr/bin/env node
 /**
- * Generate TypeScript types from JSON Schema files.
- * JSON Schema is generated from Pydantic models by the Python pipeline.
+ * Generate TypeScript types from Pydantic models.
+ *
+ * This is a convenience wrapper — the actual generation is done by
+ * the Python script `scripts/gen_contracts.py` which produces both
+ * JSON Schema and TypeScript in a single pass.
  *
  * Usage: node scripts/generate-types.mjs
- *
- * TODO: Implement json-schema-to-typescript generation in EP-002.
+ *    or: make schemas  (recommended)
  */
 
-console.log('Contract type generation: not yet implemented.');
-console.log('Run `uv run python scripts/gen_contracts.py` to generate JSON Schema first.');
-process.exit(0);
+import { execSync } from "child_process";
+
+try {
+  execSync("uv run python scripts/gen_contracts.py", {
+    cwd: new URL("../../..", import.meta.url).pathname,
+    stdio: "inherit",
+  });
+} catch {
+  process.exit(1);
+}

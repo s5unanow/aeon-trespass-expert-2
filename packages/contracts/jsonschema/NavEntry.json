@@ -1,0 +1,51 @@
+{
+  "$defs": {
+    "NavEntry": {
+      "description": "Single entry in the navigation tree.",
+      "properties": {
+        "anchor_id": {
+          "title": "Anchor Id",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "label_en": {
+          "title": "Label En",
+          "type": "string"
+        },
+        "label_ru": {
+          "default": "",
+          "title": "Label Ru",
+          "type": "string"
+        },
+        "level": {
+          "default": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "children": {
+          "items": {
+            "$ref": "#/$defs/NavEntry"
+          },
+          "title": "Children",
+          "type": "array"
+        }
+      },
+      "required": [
+        "anchor_id",
+        "block_id",
+        "label_en",
+        "page_number"
+      ],
+      "title": "NavEntry",
+      "type": "object"
+    }
+  },
+  "$ref": "#/$defs/NavEntry"
+}

@@ -1,0 +1,42 @@
+{
+  "description": "Public figure block.",
+  "properties": {
+    "kind": {
+      "const": "figure",
+      "default": "figure",
+      "title": "Kind",
+      "type": "string"
+    },
+    "block_id": {
+      "title": "Block Id",
+      "type": "string"
+    },
+    "asset_ref": {
+      "default": "",
+      "title": "Asset Ref",
+      "type": "string"
+    },
+    "alt_text": {
+      "default": "",
+      "title": "Alt Text",
+      "type": "string"
+    },
+    "caption_block_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Caption Block Id"
+    }
+  },
+  "required": [
+    "block_id"
+  ],
+  "title": "BundleFigureBlock",
+  "type": "object"
+}

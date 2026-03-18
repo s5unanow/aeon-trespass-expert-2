@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "CatalogEntry": {
+      "description": "Single document entry in the reader catalog.",
+      "properties": {
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "title_en": {
+          "title": "Title En",
+          "type": "string"
+        },
+        "title_ru": {
+          "default": "",
+          "title": "Title Ru",
+          "type": "string"
+        },
+        "route_base": {
+          "default": "",
+          "title": "Route Base",
+          "type": "string"
+        },
+        "page_count": {
+          "default": 0,
+          "title": "Page Count",
+          "type": "integer"
+        },
+        "translation_coverage": {
+          "default": 0.0,
+          "title": "Translation Coverage",
+          "type": "number"
+        }
+      },
+      "required": [
+        "doc_id",
+        "slug",
+        "title_en"
+      ],
+      "title": "CatalogEntry",
+      "type": "object"
+    }
+  },
+  "description": "Multi-document catalog manifest for the reader root.",
+  "properties": {
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/CatalogEntry"
+      },
+      "title": "Documents",
+      "type": "array"
+    },
+    "total_documents": {
+      "default": 0,
+      "title": "Total Documents",
+      "type": "integer"
+    }
+  },
+  "title": "CatalogManifest",
+  "type": "object"
+}

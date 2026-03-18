@@ -1,0 +1,117 @@
+{
+  "$defs": {
+    "BundleAssetEntry": {
+      "description": "Single asset in the bundle.",
+      "properties": {
+        "asset_ref": {
+          "title": "Asset Ref",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "content_type": {
+          "default": "",
+          "title": "Content Type",
+          "type": "string"
+        },
+        "size_bytes": {
+          "default": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "asset_ref",
+        "path"
+      ],
+      "title": "BundleAssetEntry",
+      "type": "object"
+    }
+  },
+  "description": "Root manifest for an exported site bundle.\n\nLives at 11_export/site_bundle/<doc_id>/bundle_manifest.json",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "page_count": {
+      "title": "Page Count",
+      "type": "integer"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "title_ru": {
+      "default": "",
+      "title": "Title Ru",
+      "type": "string"
+    },
+    "route_base": {
+      "default": "",
+      "title": "Route Base",
+      "type": "string"
+    },
+    "source_locale": {
+      "default": "en",
+      "title": "Source Locale",
+      "type": "string"
+    },
+    "target_locale": {
+      "default": "ru",
+      "title": "Target Locale",
+      "type": "string"
+    },
+    "translation_coverage": {
+      "default": 0.0,
+      "title": "Translation Coverage",
+      "type": "number"
+    },
+    "has_navigation": {
+      "default": false,
+      "title": "Has Navigation",
+      "type": "boolean"
+    },
+    "has_search": {
+      "default": false,
+      "title": "Has Search",
+      "type": "boolean"
+    },
+    "has_glossary": {
+      "default": false,
+      "title": "Has Glossary",
+      "type": "boolean"
+    },
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/BundleAssetEntry"
+      },
+      "title": "Assets",
+      "type": "array"
+    },
+    "qa_accepted": {
+      "default": true,
+      "title": "Qa Accepted",
+      "type": "boolean"
+    },
+    "stage_version": {
+      "default": "1.0.0",
+      "title": "Stage Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "doc_id",
+    "run_id",
+    "page_count",
+    "title_en"
+  ],
+  "title": "SiteBundleManifest",
+  "type": "object"
+}

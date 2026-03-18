@@ -1,0 +1,554 @@
+{
+  "$defs": {
+    "BundleCalloutBlock": {
+      "description": "Public callout block.",
+      "properties": {
+        "kind": {
+          "const": "callout",
+          "default": "callout",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "callout_type": {
+          "default": "note",
+          "title": "Callout Type",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BundleTextRun"
+              },
+              {
+                "$ref": "#/$defs/BundleSymbolRef"
+              },
+              {
+                "$ref": "#/$defs/BundleGlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleCalloutBlock",
+      "type": "object"
+    },
+    "BundleCaptionBlock": {
+      "description": "Public caption block.",
+      "properties": {
+        "kind": {
+          "const": "caption",
+          "default": "caption",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BundleTextRun"
+              },
+              {
+                "$ref": "#/$defs/BundleSymbolRef"
+              },
+              {
+                "$ref": "#/$defs/BundleGlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "parent_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Block Id"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleCaptionBlock",
+      "type": "object"
+    },
+    "BundleDividerBlock": {
+      "description": "Public divider block.",
+      "properties": {
+        "kind": {
+          "const": "divider",
+          "default": "divider",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleDividerBlock",
+      "type": "object"
+    },
+    "BundleFigureBlock": {
+      "description": "Public figure block.",
+      "properties": {
+        "kind": {
+          "const": "figure",
+          "default": "figure",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "asset_ref": {
+          "default": "",
+          "title": "Asset Ref",
+          "type": "string"
+        },
+        "alt_text": {
+          "default": "",
+          "title": "Alt Text",
+          "type": "string"
+        },
+        "caption_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption Block Id"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleFigureBlock",
+      "type": "object"
+    },
+    "BundleGlossaryRef": {
+      "description": "Public glossary reference for the reader.",
+      "properties": {
+        "kind": {
+          "const": "glossary_ref",
+          "default": "glossary_ref",
+          "title": "Kind",
+          "type": "string"
+        },
+        "term_id": {
+          "title": "Term Id",
+          "type": "string"
+        },
+        "surface_form": {
+          "title": "Surface Form",
+          "type": "string"
+        },
+        "ru_surface_form": {
+          "default": "",
+          "title": "Ru Surface Form",
+          "type": "string"
+        }
+      },
+      "required": [
+        "term_id",
+        "surface_form"
+      ],
+      "title": "BundleGlossaryRef",
+      "type": "object"
+    },
+    "BundleHeadingBlock": {
+      "description": "Public heading block.",
+      "properties": {
+        "kind": {
+          "const": "heading",
+          "default": "heading",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "level": {
+          "default": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BundleTextRun"
+              },
+              {
+                "$ref": "#/$defs/BundleSymbolRef"
+              },
+              {
+                "$ref": "#/$defs/BundleGlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "anchor": {
+          "default": "",
+          "title": "Anchor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleHeadingBlock",
+      "type": "object"
+    },
+    "BundleListBlock": {
+      "description": "Public list container block.",
+      "properties": {
+        "kind": {
+          "const": "list",
+          "default": "list",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "list_type": {
+          "default": "unordered",
+          "enum": [
+            "unordered",
+            "ordered"
+          ],
+          "title": "List Type",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/BundleListItemBlock"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleListBlock",
+      "type": "object"
+    },
+    "BundleListItemBlock": {
+      "description": "Public list item block.",
+      "properties": {
+        "kind": {
+          "const": "list_item",
+          "default": "list_item",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "bullet": {
+          "default": "",
+          "title": "Bullet",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BundleTextRun"
+              },
+              {
+                "$ref": "#/$defs/BundleSymbolRef"
+              },
+              {
+                "$ref": "#/$defs/BundleGlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleListItemBlock",
+      "type": "object"
+    },
+    "BundlePageAnchor": {
+      "description": "Public named anchor on a page.",
+      "properties": {
+        "anchor_id": {
+          "title": "Anchor Id",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor_id",
+        "block_id"
+      ],
+      "title": "BundlePageAnchor",
+      "type": "object"
+    },
+    "BundleParagraphBlock": {
+      "description": "Public paragraph block.",
+      "properties": {
+        "kind": {
+          "const": "paragraph",
+          "default": "paragraph",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BundleTextRun"
+              },
+              {
+                "$ref": "#/$defs/BundleSymbolRef"
+              },
+              {
+                "$ref": "#/$defs/BundleGlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleParagraphBlock",
+      "type": "object"
+    },
+    "BundleSymbolRef": {
+      "description": "Public symbol reference for the reader.",
+      "properties": {
+        "kind": {
+          "const": "symbol",
+          "default": "symbol",
+          "title": "Kind",
+          "type": "string"
+        },
+        "symbol_id": {
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "alt_text": {
+          "default": "",
+          "title": "Alt Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "symbol_id"
+      ],
+      "title": "BundleSymbolRef",
+      "type": "object"
+    },
+    "BundleTableBlock": {
+      "description": "Public table block.",
+      "properties": {
+        "kind": {
+          "const": "table",
+          "default": "table",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "rows": {
+          "default": 0,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "default": 0,
+          "title": "Cols",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "BundleTableBlock",
+      "type": "object"
+    },
+    "BundleTextRun": {
+      "description": "Public text run for the reader.",
+      "properties": {
+        "kind": {
+          "const": "text",
+          "default": "text",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "ru_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ru Text"
+        },
+        "bold": {
+          "default": false,
+          "title": "Bold",
+          "type": "boolean"
+        },
+        "italic": {
+          "default": false,
+          "title": "Italic",
+          "type": "boolean"
+        },
+        "monospace": {
+          "default": false,
+          "title": "Monospace",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "BundleTextRun",
+      "type": "object"
+    }
+  },
+  "description": "Public reader-facing page payload.\n\nThis is the transport boundary between pipeline and frontend.\nIt mirrors PageRecord but strips internal-only fields:\n- source_pdf_sha256, fingerprint (provenance)\n- source_block_index on all blocks (extraction tracking)\n- font_name, font_size on text runs (extraction metadata)",
+  "properties": {
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "width_pt": {
+      "title": "Width Pt",
+      "type": "number"
+    },
+    "height_pt": {
+      "title": "Height Pt",
+      "type": "number"
+    },
+    "render_mode": {
+      "default": "semantic",
+      "enum": [
+        "semantic",
+        "hybrid",
+        "facsimile"
+      ],
+      "title": "Render Mode",
+      "type": "string"
+    },
+    "blocks": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/BundleHeadingBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleParagraphBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleListBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleListItemBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleFigureBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleCaptionBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleTableBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleCalloutBlock"
+          },
+          {
+            "$ref": "#/$defs/BundleDividerBlock"
+          }
+        ]
+      },
+      "title": "Blocks",
+      "type": "array"
+    },
+    "anchors": {
+      "items": {
+        "$ref": "#/$defs/BundlePageAnchor"
+      },
+      "title": "Anchors",
+      "type": "array"
+    }
+  },
+  "required": [
+    "page_number",
+    "doc_id",
+    "width_pt",
+    "height_pt"
+  ],
+  "title": "BundlePage",
+  "type": "object"
+}

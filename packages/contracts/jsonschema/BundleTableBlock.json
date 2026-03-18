@@ -1,0 +1,30 @@
+{
+  "description": "Public table block.",
+  "properties": {
+    "kind": {
+      "const": "table",
+      "default": "table",
+      "title": "Kind",
+      "type": "string"
+    },
+    "block_id": {
+      "title": "Block Id",
+      "type": "string"
+    },
+    "rows": {
+      "default": 0,
+      "title": "Rows",
+      "type": "integer"
+    },
+    "cols": {
+      "default": 0,
+      "title": "Cols",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "block_id"
+  ],
+  "title": "BundleTableBlock",
+  "type": "object"
+}
