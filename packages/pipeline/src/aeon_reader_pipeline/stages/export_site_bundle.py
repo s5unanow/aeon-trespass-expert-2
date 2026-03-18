@@ -35,6 +35,8 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     BundleCaptionBlock,
     BundleDividerBlock,
     BundleFigureBlock,
+    BundleGlossary,
+    BundleGlossaryEntry,
     BundleGlossaryRef,
     BundleHeadingBlock,
     BundleListBlock,
@@ -201,6 +203,49 @@ def convert_page_to_bundle(record: PageRecord) -> BundlePage:
         blocks=[_convert_block(b) for b in record.blocks],
         anchors=[_convert_anchor(a) for a in record.anchors],
     )
+
+
+def _export_glossary(
+    ctx: StageContext,
+    artifacts: list[BuildArtifact],
+) -> bool:
+    """Export glossary terms scoped to this document. Returns has_glossary."""
+    glossary_terms = ctx.glossary_pack.terms if ctx.glossary_pack else []
+    if not glossary_terms:
+        return False
+    doc_scope_terms = [t for t in glossary_terms if "*" in t.doc_scope or ctx.doc_id in t.doc_scope]
+    if not doc_scope_terms:
+        return False
+    glossary = BundleGlossary(
+        doc_id=ctx.doc_id,
+        entries=[
+            BundleGlossaryEntry(
+                term_id=t.term_id,
+                en_canonical=t.en_canonical,
+                ru_preferred=t.ru_preferred,
+                definition_ru=t.definition_ru,
+                definition_en=t.definition_en,
+            )
+            for t in doc_scope_terms
+        ],
+        total_entries=len(doc_scope_terms),
+    )
+    glossary_path = ctx.artifact_store.write_artifact(
+        ctx.run_id,
+        ctx.doc_id,
+        STAGE_NAME,
+        f"site_bundle/{ctx.doc_id}/glossary.json",
+        glossary,
+    )
+    artifacts.append(
+        BuildArtifact(
+            path="glossary.json",
+            artifact_type="glossary",
+            size_bytes=glossary_path.stat().st_size,
+        )
+    )
+    ctx.logger.info("glossary_exported", term_count=len(doc_scope_terms))
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -395,7 +440,7 @@ class ExportSiteBundleStage(BaseStage):
             translation_coverage=doc_summary.translation_coverage,
             has_navigation=has_navigation,
             has_search=has_search,
-            has_glossary=False,
+            has_glossary=_export_glossary(ctx, artifacts),
             assets=asset_entries,
             qa_accepted=qa_accepted,
             stage_version=STAGE_VERSION,

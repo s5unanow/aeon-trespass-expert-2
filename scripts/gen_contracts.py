@@ -29,6 +29,8 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     BundleCaptionBlock,
     BundleDividerBlock,
     BundleFigureBlock,
+    BundleGlossary,
+    BundleGlossaryEntry,
     BundleGlossaryRef,
     BundleHeadingBlock,
     BundleListBlock,
@@ -74,6 +76,9 @@ EXPORT_MODELS: list[type[BaseModel]] = [
     # Manifest types
     BundleAssetEntry,
     SiteBundleManifest,
+    # Glossary
+    BundleGlossaryEntry,
+    BundleGlossary,
     # Navigation
     NavEntry,
     NavigationTree,
@@ -281,6 +286,15 @@ def generate_typescript() -> None:
     sections.append("// " + "-" * 75)
     sections.append("")
     for model in [BundleAssetEntry, SiteBundleManifest]:
+        sections.append(_generate_interface(model))
+        sections.append("")
+
+    # Group: Glossary
+    sections.append("// " + "-" * 75)
+    sections.append("// Glossary")
+    sections.append("// " + "-" * 75)
+    sections.append("")
+    for model in [BundleGlossaryEntry, BundleGlossary]:
         sections.append(_generate_interface(model))
         sections.append("")
 

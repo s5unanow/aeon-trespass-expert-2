@@ -8,6 +8,7 @@
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 import type {
+  BundleGlossary,
   BundlePage,
   CatalogManifest,
   NavigationTree,
@@ -55,6 +56,15 @@ export function loadNavigation(docId: string): NavigationTree | null {
   const path = join(GENERATED_ROOT, docId, "navigation.json");
   if (!existsSync(path)) return null;
   return readJson<NavigationTree>(path);
+}
+
+/**
+ * Load glossary entries for a document.
+ */
+export function loadGlossary(docId: string): BundleGlossary | null {
+  const path = join(GENERATED_ROOT, docId, "glossary.json");
+  if (!existsSync(path)) return null;
+  return readJson<BundleGlossary>(path);
 }
 
 /**

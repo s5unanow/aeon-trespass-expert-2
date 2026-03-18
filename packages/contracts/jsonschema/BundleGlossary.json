@@ -1,0 +1,69 @@
+{
+  "$defs": {
+    "BundleGlossaryEntry": {
+      "description": "Public glossary entry for the reader drawer.",
+      "properties": {
+        "term_id": {
+          "title": "Term Id",
+          "type": "string"
+        },
+        "en_canonical": {
+          "title": "En Canonical",
+          "type": "string"
+        },
+        "ru_preferred": {
+          "title": "Ru Preferred",
+          "type": "string"
+        },
+        "definition_ru": {
+          "default": "",
+          "title": "Definition Ru",
+          "type": "string"
+        },
+        "definition_en": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition En"
+        }
+      },
+      "required": [
+        "term_id",
+        "en_canonical",
+        "ru_preferred"
+      ],
+      "title": "BundleGlossaryEntry",
+      "type": "object"
+    }
+  },
+  "description": "Glossary data exported for the reader.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/BundleGlossaryEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+    },
+    "total_entries": {
+      "default": 0,
+      "title": "Total Entries",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "doc_id"
+  ],
+  "title": "BundleGlossary",
+  "type": "object"
+}

@@ -1,0 +1,41 @@
+{
+  "description": "Public glossary entry for the reader drawer.",
+  "properties": {
+    "term_id": {
+      "title": "Term Id",
+      "type": "string"
+    },
+    "en_canonical": {
+      "title": "En Canonical",
+      "type": "string"
+    },
+    "ru_preferred": {
+      "title": "Ru Preferred",
+      "type": "string"
+    },
+    "definition_ru": {
+      "default": "",
+      "title": "Definition Ru",
+      "type": "string"
+    },
+    "definition_en": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Definition En"
+    }
+  },
+  "required": [
+    "term_id",
+    "en_canonical",
+    "ru_preferred"
+  ],
+  "title": "BundleGlossaryEntry",
+  "type": "object"
+}

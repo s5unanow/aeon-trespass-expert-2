@@ -15,6 +15,7 @@ from aeon_reader_pipeline.models.config_models import (
     DocumentProfiles,
     DocumentTitles,
     GlossaryPack,
+    GlossaryTermEntry,
     ModelProfile,
     RuleProfile,
     SymbolPack,
@@ -28,6 +29,7 @@ from aeon_reader_pipeline.models.ir_models import (
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.models.site_bundle_models import (
     BuildArtifacts,
+    BundleGlossary,
     BundlePage,
     SiteBundleManifest,
 )
@@ -250,3 +252,42 @@ class TestExportSiteBundleIntegration:
         stage = ExportSiteBundleStage()
         assert stage.name == "export_site_bundle"
         assert stage.version == "1.0.0"
+
+    def test_exports_glossary_with_terms(self, tmp_path: Path) -> None:
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        ctx.glossary_pack = GlossaryPack(
+            pack_id="test",
+            version="1.0.0",
+            terms=[
+                GlossaryTermEntry(
+                    term_id="titan",
+                    en_canonical="Titan",
+                    ru_preferred="Титан",
+                    definition_ru="Древнее существо.",
+                ),
+            ],
+        )
+        _run_through_safe_fixes(ctx)
+        ExportSiteBundleStage().execute(ctx)
+
+        manifest = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "export_site_bundle",
+            "site_bundle/test-doc/bundle_manifest.json",
+            SiteBundleManifest,
+        )
+        assert manifest.has_glossary is True
+
+        glossary = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "export_site_bundle",
+            "site_bundle/test-doc/glossary.json",
+            BundleGlossary,
+        )
+        assert glossary.total_entries == 1
+        assert glossary.entries[0].term_id == "titan"
+        assert glossary.entries[0].ru_preferred == "Титан"

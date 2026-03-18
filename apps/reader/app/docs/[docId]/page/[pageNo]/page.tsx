@@ -8,6 +8,7 @@ import {
   listDocIds,
   loadBundleManifest,
   loadBundlePage,
+  loadGlossary,
   loadNavigation,
   pageExists,
 } from "@/lib/bundle";
@@ -43,10 +44,15 @@ export default async function ReaderPage({
 
   const manifest = loadBundleManifest(docId);
   const navigation = loadNavigation(docId);
+  const glossary = loadGlossary(docId);
   const page = loadBundlePage(docId, pageNo);
 
   return (
-    <DocLayout manifest={manifest} navigation={navigation}>
+    <DocLayout
+      manifest={manifest}
+      navigation={navigation}
+      glossaryEntries={glossary?.entries}
+    >
       <PageView page={page} />
       <PageNav
         docId={docId}
