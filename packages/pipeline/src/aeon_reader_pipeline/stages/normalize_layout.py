@@ -181,7 +181,7 @@ def _is_caption_text(text: str) -> bool:
     return lower.startswith(("figure ", "fig. ", "fig ", "table ", "diagram "))
 
 
-def _classify_blocks(  # noqa: PLR0915
+def _classify_blocks(  # noqa: C901, PLR0915
     page: ExtractedPage,
     ctx: StageContext,
 ) -> list[Block]:
@@ -199,6 +199,7 @@ def _classify_blocks(  # noqa: PLR0915
     blocks: list[Block] = []
     pending_list_items: list[ListItemBlock] = []
     list_block_index: int | None = None
+    noise_count = 0
 
     def _flush_list() -> None:
         nonlocal pending_list_items, list_block_index
@@ -234,6 +235,13 @@ def _classify_blocks(  # noqa: PLR0915
         if strip_page_number_prefix(text) != text:
             continue
         if is_noise_block(text):
+            ctx.logger.debug(
+                "noise_block_filtered",
+                page=page_num,
+                block_index=text_block.block_index,
+                text=text[:80],
+            )
+            noise_count += 1
             continue
 
         font_size = _block_font_size(text_block)
@@ -309,6 +317,14 @@ def _classify_blocks(  # noqa: PLR0915
         )
 
     _flush_list()
+
+    if noise_count > 0:
+        ctx.logger.info(
+            "noise_blocks_filtered",
+            page=page_num,
+            count=noise_count,
+        )
+
     return blocks
 
 
