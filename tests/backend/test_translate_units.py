@@ -458,3 +458,104 @@ class TestTranslationMemory:
         tm.store(unit, result)
         # No fingerprint → nothing stored
         assert not list(tmp_path.glob("tm_cache/*.json"))
+
+    def test_concurrent_store_first_writer_wins(self, tmp_path: Path) -> None:
+        """Multiple threads storing the same fingerprint: only first write persists."""
+        import threading
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        from aeon_reader_pipeline.models.translation_models import TextNode, TranslatedNode
+
+        tm = TranslationMemory(tmp_path / "tm_cache")
+        barrier = threading.Barrier(4)
+
+        unit = TranslationUnit(
+            unit_id="u1",
+            doc_id="doc",
+            page_number=1,
+            text_nodes=[TextNode(inline_id="i1", source_text="Hello")],
+            source_fingerprint="fp_concurrent",
+        )
+
+        results_written: list[bool] = []
+
+        def _store_worker(worker_id: int) -> bool:
+            result = TranslationResult(
+                unit_id="u1",
+                translations=[
+                    TranslatedNode(
+                        inline_id="i1",
+                        ru_text=f"Привет-{worker_id}",
+                    ),
+                ],
+                source_fingerprint="fp_concurrent",
+            )
+            barrier.wait()  # all threads start simultaneously
+            tm.store(unit, result)
+            return tm.has("fp_concurrent")
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(_store_worker, i) for i in range(4)]
+            for f in as_completed(futures):
+                results_written.append(f.result())
+
+        # All should see the entry exists
+        assert all(results_written)
+        # Exactly one file should exist
+        files = list((tmp_path / "tm_cache").glob("*.json"))
+        assert len(files) == 1
+
+    def test_concurrent_lookup_and_store(self, tmp_path: Path) -> None:
+        """Concurrent lookups don't corrupt data while a store is in progress."""
+        import threading
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        from aeon_reader_pipeline.models.translation_models import TextNode, TranslatedNode
+
+        tm = TranslationMemory(tmp_path / "tm_cache")
+
+        unit = TranslationUnit(
+            unit_id="u1",
+            doc_id="doc",
+            page_number=1,
+            text_nodes=[TextNode(inline_id="i1", source_text="Hello")],
+            source_fingerprint="fp_rw",
+        )
+        result = TranslationResult(
+            unit_id="u1",
+            translations=[
+                TranslatedNode(inline_id="i1", ru_text="Привет"),
+            ],
+            source_fingerprint="fp_rw",
+        )
+
+        # Pre-store one entry
+        tm.store(unit, result)
+
+        errors: list[str] = []
+        barrier = threading.Barrier(8)
+
+        def _reader() -> None:
+            barrier.wait()
+            for _ in range(20):
+                looked = tm.lookup(unit)
+                if looked is None:
+                    errors.append("lookup returned None for existing entry")
+                elif looked.translations[0].ru_text != "Привет":
+                    errors.append(f"corrupt data: {looked.translations[0].ru_text}")
+
+        def _writer() -> None:
+            barrier.wait()
+            for _ in range(20):
+                tm.store(unit, result)
+
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures = []
+            for _ in range(6):
+                futures.append(executor.submit(_reader))
+            for _ in range(2):
+                futures.append(executor.submit(_writer))
+            for f in as_completed(futures):
+                f.result()  # raise any exceptions
+
+        assert not errors, f"Concurrent access errors: {errors}"
