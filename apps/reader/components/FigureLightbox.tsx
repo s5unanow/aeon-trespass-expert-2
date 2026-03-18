@@ -6,7 +6,8 @@
 
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { trapFocus } from "@/lib/a11y";
 
 interface FigureLightboxProps {
   src: string;
@@ -16,6 +17,9 @@ interface FigureLightboxProps {
 }
 
 export function FigureLightbox({ src, alt, open, onClose }: FigureLightboxProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -25,8 +29,14 @@ export function FigureLightbox({ src, alt, open, onClose }: FigureLightboxProps)
 
   useEffect(() => {
     if (open) {
+      closeRef.current?.focus();
       document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
+      const overlay = overlayRef.current;
+      const cleanupTrap = overlay ? trapFocus(overlay) : undefined;
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        cleanupTrap?.();
+      };
     }
   }, [open, handleKeyDown]);
 
@@ -34,14 +44,17 @@ export function FigureLightbox({ src, alt, open, onClose }: FigureLightboxProps)
 
   return (
     <div
+      ref={overlayRef}
       className="lightbox-overlay"
       onClick={onClose}
       role="dialog"
       aria-label="Image viewer"
+      aria-modal="true"
     >
       <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
         <img src={src} alt={alt} className="lightbox-image" />
         <button
+          ref={closeRef}
           className="lightbox-close"
           onClick={onClose}
           type="button"
