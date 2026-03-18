@@ -143,18 +143,23 @@ def _make_text_runs(block: TextBlock) -> list[InlineNode]:
                 prev = runs[-1]
                 assert isinstance(prev, TextRun)
                 if (
-                    _font_family(prev.font_name) == _font_family(font.name)
+                    prev.font_name is not None
+                    and _font_family(prev.font_name) == _font_family(font.name)
                     and prev.bold == font.is_bold
                     and prev.italic == font.is_italic
                     and prev.monospace == font.is_monospace
                 ):
+                    merged_size = max(
+                        prev.font_size or 0.0,
+                        font.size,
+                    )
                     runs[-1] = TextRun(
                         text=prev.text + text,
                         bold=prev.bold,
                         italic=prev.italic,
                         monospace=prev.monospace,
                         font_name=prev.font_name,
-                        font_size=max(prev.font_size, font.size),
+                        font_size=merged_size,
                     )
                     continue
             runs.append(
@@ -176,7 +181,7 @@ def _is_caption_text(text: str) -> bool:
     return lower.startswith(("figure ", "fig. ", "fig ", "table ", "diagram "))
 
 
-def _classify_blocks(
+def _classify_blocks(  # noqa: PLR0915
     page: ExtractedPage,
     ctx: StageContext,
 ) -> list[Block]:

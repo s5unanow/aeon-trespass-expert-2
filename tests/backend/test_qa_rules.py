@@ -31,12 +31,14 @@ def _page(
 
 class TestMissingTranslationRule:
     def test_flags_missing_ru_text(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="Hello world")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="Hello world")],
+                ),
+            ]
+        )
         rule = MissingTranslationRule()
         issues = rule.check([page], None)
         assert len(issues) == 1
@@ -45,12 +47,14 @@ class TestMissingTranslationRule:
         assert issues[0].location.page_number == 1
 
     def test_no_issue_when_translated(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="Hello", ru_text="Privyet")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="Hello", ru_text="Privyet")],
+                ),
+            ]
+        )
         rule = MissingTranslationRule()
         assert rule.check([page], None) == []
 
@@ -68,26 +72,30 @@ class TestMissingTranslationRule:
         assert rule.check([page], None) == []
 
     def test_skips_whitespace_only_text(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="   ")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="   ")],
+                ),
+            ]
+        )
         rule = MissingTranslationRule()
         assert rule.check([page], None) == []
 
     def test_multiple_text_runs(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[
-                    TextRun(text="Translated", ru_text="OK"),
-                    TextRun(text="Missing"),
-                    TextRun(text="Also missing"),
-                ],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[
+                        TextRun(text="Translated", ru_text="OK"),
+                        TextRun(text="Missing"),
+                        TextRun(text="Also missing"),
+                    ],
+                ),
+            ]
+        )
         rule = MissingTranslationRule()
         issues = rule.check([page], None)
         assert len(issues) == 2
@@ -95,12 +103,14 @@ class TestMissingTranslationRule:
 
 class TestEmptyTranslationRule:
     def test_flags_empty_ru_text(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="Hello", ru_text="")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="Hello", ru_text="")],
+                ),
+            ]
+        )
         rule = EmptyTranslationRule()
         issues = rule.check([page], None)
         assert len(issues) == 1
@@ -108,42 +118,50 @@ class TestEmptyTranslationRule:
         assert issues[0].severity == "error"
 
     def test_flags_whitespace_ru_text(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="Hello", ru_text="   ")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="Hello", ru_text="   ")],
+                ),
+            ]
+        )
         rule = EmptyTranslationRule()
         issues = rule.check([page], None)
         assert len(issues) == 1
 
     def test_no_issue_when_ru_text_present(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="Hello", ru_text="Valid")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="Hello", ru_text="Valid")],
+                ),
+            ]
+        )
         rule = EmptyTranslationRule()
         assert rule.check([page], None) == []
 
     def test_no_issue_when_ru_text_none(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="Hello", ru_text=None)],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="Hello", ru_text=None)],
+                ),
+            ]
+        )
         rule = EmptyTranslationRule()
         assert rule.check([page], None) == []
 
     def test_skips_whitespace_source(self) -> None:
-        page = _page([
-            ParagraphBlock(
-                block_id="p1",
-                content=[TextRun(text="  ", ru_text="")],
-            ),
-        ])
+        page = _page(
+            [
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[TextRun(text="  ", ru_text="")],
+                ),
+            ]
+        )
         rule = EmptyTranslationRule()
         assert rule.check([page], None) == []

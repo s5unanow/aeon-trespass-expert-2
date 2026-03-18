@@ -64,9 +64,7 @@ def _make_context(tmp_path: Path, source_pdf_path: Path) -> StageContext:
     configs_root.mkdir(exist_ok=True)
     prompts = configs_root.parent / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
-    (prompts / "system.j2").write_text(
-        "Translate from {{ source_locale }} to {{ target_locale }}."
-    )
+    (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
 
     store = ArtifactStore(tmp_path / "artifacts")
@@ -83,9 +81,7 @@ def _make_context(tmp_path: Path, source_pdf_path: Path) -> StageContext:
             titles=DocumentTitles(en="Test Doc", ru="\u0422\u0435\u0441\u0442"),
             source_locale="en",
             target_locale="ru",
-            profiles=DocumentProfiles(
-                rules="test", models="test", symbols="test", glossary="test"
-            ),
+            profiles=DocumentProfiles(rules="test", models="test", symbols="test", glossary="test"),
             build=DocumentBuild(route_base="/docs/test-doc"),
         ),
         rule_profile=RuleProfile(profile_id="test"),

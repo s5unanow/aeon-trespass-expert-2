@@ -105,7 +105,9 @@ class TestParseTranslationResponse:
         unit = _make_unit()
         result = parse_translation_response(raw, unit)
         assert len(result.translations) == 2
-        fallback = [t for t in result.translations if t.inline_id == "doc:p0001:b001:paragraph:i000"]
+        fallback = [
+            t for t in result.translations if t.inline_id == "doc:p0001:b001:paragraph:i000"
+        ]
         assert fallback[0].ru_text == "World"
 
     def test_duplicate_inline_id_skipped(self) -> None:
@@ -134,7 +136,9 @@ class TestParseTranslationResponse:
         unit = _make_unit()
         result = parse_translation_response(raw, unit)
         assert len(result.translations) == 2
-        fallback = [t for t in result.translations if t.inline_id == "doc:p0001:b001:paragraph:i000"]
+        fallback = [
+            t for t in result.translations if t.inline_id == "doc:p0001:b001:paragraph:i000"
+        ]
         assert fallback[0].ru_text == "World"
 
     def test_result_has_fingerprint(self) -> None:

@@ -39,7 +39,7 @@ def list_stages() -> None:
 
 
 @app.command()
-def run(
+def run(  # noqa: PLR0913, PLR0915
     doc: list[str] = typer.Option([], help="Document IDs to process"),  # noqa: B008
     configs: Path = typer.Option(Path("configs"), help="Config directory root"),  # noqa: B008
     artifact_root: Path = typer.Option(  # noqa: B008
@@ -129,18 +129,18 @@ def run(
             def provider_name(self) -> str:
                 return "mock"
 
-        TranslateUnitsStage._gateway = _MockGateway()  # type: ignore[assignment]
+        TranslateUnitsStage._gateway = _MockGateway()
         typer.echo("Using mock translation gateway.")
     elif cli:
         from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
 
-        TranslateUnitsStage._gateway = GeminiCliGateway()  # type: ignore[assignment]
+        TranslateUnitsStage._gateway = GeminiCliGateway()
         pipeline_config = pipeline_config.model_copy(update={"llm_concurrency": 1})
         typer.echo("Using Gemini CLI gateway (concurrency=1).")
     else:
         from aeon_reader_pipeline.llm.gemini import GeminiProvider
 
-        TranslateUnitsStage._gateway = GeminiProvider()  # type: ignore[assignment]
+        TranslateUnitsStage._gateway = GeminiProvider()
 
     runner = PipelineRunner()
 

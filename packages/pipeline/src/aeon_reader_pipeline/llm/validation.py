@@ -28,13 +28,13 @@ def _try_repair_json(raw_text: str) -> dict[str, Any] | None:
         try:
             data = orjson.loads((raw_text.rstrip() + suffix).encode("utf-8"))
             if isinstance(data, dict) and "translations" in data:
-                return data  # type: ignore[return-value]
+                return data
         except (orjson.JSONDecodeError, ValueError):
             continue
     return None
 
 
-def parse_translation_response(
+def parse_translation_response(  # noqa: C901, PLR0912
     raw_text: str,
     unit: TranslationUnit,
     provider: str = "",

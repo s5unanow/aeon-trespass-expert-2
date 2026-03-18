@@ -154,7 +154,7 @@ def _get_section_path(record: PageRecord, block_index: int) -> list[str]:
     return path
 
 
-def _plan_page(
+def _plan_page(  # noqa: C901, PLR0915
     record: PageRecord,
     doc_id: str,
     glossary_pack: GlossaryPack,
