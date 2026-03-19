@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BundleGlossaryEntry } from "@aeon-reader/contracts";
 import { trapFocus } from "@/lib/a11y";
+import { useLocale } from "@/lib/locale";
 
 interface GlossaryDrawerProps {
   entries: BundleGlossaryEntry[];
@@ -73,7 +74,12 @@ export function GlossaryDrawer({ entries }: GlossaryDrawerProps) {
     };
   }, [activeTerm]);
 
+  const { locale } = useLocale();
+
   if (!activeTerm) return null;
+
+  const title =
+    locale === "ru" ? activeTerm.ru_preferred : activeTerm.en_canonical;
 
   return (
     <div className="glossary-backdrop" onClick={close} role="presentation">
@@ -86,7 +92,7 @@ export function GlossaryDrawer({ entries }: GlossaryDrawerProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="glossary-drawer-header">
-          <h3 className="glossary-drawer-title">{activeTerm.ru_preferred}</h3>
+          <h3 className="glossary-drawer-title">{title}</h3>
           <button
             ref={closeRef}
             className="glossary-drawer-close"

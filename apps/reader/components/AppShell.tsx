@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { catalogRoute } from "@/lib/routes";
+import { LocaleSwitcher } from "./LocaleSwitcher";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link href={catalogRoute()} className="app-title">
             Aeon Trespass Reader
           </Link>
+          <LocaleSwitcher />
         </nav>
       </header>
       <main id="main-content" className="app-main">{children}</main>

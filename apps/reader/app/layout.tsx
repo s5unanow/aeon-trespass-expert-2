@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import "@/styles/theme.css";
 import { AppShell } from "@/components/AppShell";
+import { LocaleProvider } from "@/lib/locale";
 
 export const metadata: Metadata = {
   title: "Aeon Trespass Reader",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <body>
-        <AppShell>{children}</AppShell>
+        <LocaleProvider>
+          <AppShell>{children}</AppShell>
+        </LocaleProvider>
       </body>
     </html>
   );

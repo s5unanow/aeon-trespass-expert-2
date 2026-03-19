@@ -4,8 +4,11 @@
  * Exhaustive switch over BundleInlineNode kinds with assertNever fallback.
  */
 
+"use client";
+
 import type { BundleInlineNode } from "@aeon-reader/contracts";
 import { assertNever } from "@/lib/assertNever";
+import { pickText, useLocale } from "@/lib/locale";
 import { SymbolInline } from "./SymbolInline";
 
 interface InlineRendererProps {
@@ -13,9 +16,11 @@ interface InlineRendererProps {
 }
 
 export function InlineRenderer({ node }: InlineRendererProps) {
+  const { locale } = useLocale();
+
   switch (node.kind) {
     case "text": {
-      let content: React.ReactNode = node.ru_text ?? node.text;
+      let content: React.ReactNode = pickText(node.text, node.ru_text, locale);
       if (node.bold) content = <strong>{content}</strong>;
       if (node.italic) content = <em>{content}</em>;
       if (node.monospace) content = <code>{content}</code>;
@@ -37,7 +42,9 @@ export function InlineRenderer({ node }: InlineRendererProps) {
           data-term-id={node.term_id}
           title={node.surface_form}
         >
-          {node.ru_surface_form || node.surface_form}
+          {locale === "ru"
+            ? node.ru_surface_form || node.surface_form
+            : node.surface_form}
         </span>
       );
     default:
@@ -50,21 +57,22 @@ interface InlineListProps {
 }
 
 /** Get the display text of a node (for spacing logic). */
-function nodeText(node: BundleInlineNode): string {
-  if (node.kind === "text") return node.ru_text ?? node.text;
+function nodeText(node: BundleInlineNode, locale: "en" | "ru"): string {
+  if (node.kind === "text") return pickText(node.text, node.ru_text, locale);
   if (node.kind === "glossary_ref") return node.surface_form;
   return "";
 }
 
 export function InlineList({ nodes }: InlineListProps) {
+  const { locale } = useLocale();
   return (
     <>
       {nodes.map((node, i) => {
         // Insert space between adjacent nodes when neither boundary has whitespace
         let spacer: React.ReactNode = null;
         if (i > 0) {
-          const prevText = nodeText(nodes[i - 1]);
-          const curText = nodeText(node);
+          const prevText = nodeText(nodes[i - 1], locale);
+          const curText = nodeText(node, locale);
           const prevEnds = /\s$/.test(prevText);
           const curStarts = /^\s/.test(curText);
           if (!prevEnds && !curStarts && prevText && curText) {

@@ -38,7 +38,7 @@ describe("InlineRenderer", () => {
       expect(container.textContent).toBe("Привет");
     });
 
-    it("uses empty ru_text as-is (does not fall back to text)", () => {
+    it("falls back to English when ru_text is empty", () => {
       const node: BundleTextRun = {
         kind: "text",
         text: "English",
@@ -48,8 +48,8 @@ describe("InlineRenderer", () => {
         monospace: false,
       };
       const { container } = render(<InlineRenderer node={node} />);
-      // Nullish coalescing: "" is not null, so it stays ""
-      expect(container.querySelector(".inline-text")!.textContent).toBe("");
+      // Empty ru_text falls back to English source text
+      expect(container.querySelector(".inline-text")!.textContent).toBe("English");
     });
 
     it("renders bold text with <strong>", () => {

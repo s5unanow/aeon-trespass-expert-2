@@ -11,6 +11,7 @@ import {
   loadNavigation,
 } from "@/lib/bundle";
 import { DocLayout } from "@/components/DocLayout";
+import { GlossaryTermList } from "@/components/GlossaryTermList";
 
 export const dynamicParams = false;
 
@@ -42,25 +43,7 @@ export default async function GlossaryPage({
     >
       <div className="glossary-page">
         <h1>Glossary</h1>
-        {entries.length === 0 ? (
-          <p className="glossary-empty">
-            No glossary terms available for this document.
-          </p>
-        ) : (
-          <dl className="glossary-term-list">
-            {entries.map((entry) => (
-              <div key={entry.term_id} className="glossary-term-item">
-                <dt className="glossary-term-name">
-                  {entry.ru_preferred}
-                  <span className="glossary-term-en">{entry.en_canonical}</span>
-                </dt>
-                {entry.definition_ru && (
-                  <dd className="glossary-term-def">{entry.definition_ru}</dd>
-                )}
-              </div>
-            ))}
-          </dl>
-        )}
+        <GlossaryTermList entries={entries} />
       </div>
     </DocLayout>
   );
