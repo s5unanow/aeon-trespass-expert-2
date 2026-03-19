@@ -1,8 +1,8 @@
 /**
- * Public site bundle contracts — generated from Python models.
+ * Public site bundle contracts — generated from JSON Schema.
  *
- * These types mirror the Pydantic models in:
- *   packages/pipeline/src/aeon_reader_pipeline/models/site_bundle_models.py
+ * Source of truth: packages/contracts/jsonschema/*.json
+ * Contract flow: Python (Pydantic) → JSON Schema → TypeScript.
  *
  * Do NOT edit manually — regenerate with `make schemas`.
  */

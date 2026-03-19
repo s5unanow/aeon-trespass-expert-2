@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Generate JSON Schema + TypeScript types from Pydantic models.
 
-Usage: uv run python scripts/gen_contracts.py
+Contract flow: Python (Pydantic) → JSON Schema → TypeScript.
 
-Reads Pydantic models from site_bundle_models.py and enrich_content.py,
-writes JSON Schema to packages/contracts/jsonschema/ and TypeScript
-interfaces to packages/contracts/typescript/src/generated/.
+Phase 1 imports Python models to generate JSON Schema files.
+Phase 2 reads those JSON Schema files to generate TypeScript — it never
+touches pipeline model classes, ensuring JSON Schema is the single
+source of truth for TypeScript types.
+
+Usage: uv run python scripts/gen_contracts.py
 """
 
 from __future__ import annotations
@@ -15,14 +18,11 @@ import os
 import subprocess
 import sys
 import tempfile
-import types
 from pathlib import Path
-from typing import Any, Literal, Union, get_args, get_origin
+from typing import Any
 
 from pydantic import BaseModel
-from pydantic.fields import FieldInfo
 
-# -- Models to export --------------------------------------------------------
 from aeon_reader_pipeline.models.site_bundle_models import (
     BundleAssetEntry,
     BundleCalloutBlock,
@@ -51,17 +51,22 @@ from aeon_reader_pipeline.stages.enrich_content import (
     NavigationTree,
 )
 
+# ── Paths ─────────────────────────────────────────────────────────────
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 JSONSCHEMA_DIR = REPO_ROOT / "packages" / "contracts" / "jsonschema"
 TS_GENERATED_DIR = REPO_ROOT / "packages" / "contracts" / "typescript" / "src" / "generated"
 
-# Ordered list of all models to export (order matters for TS output)
-EXPORT_MODELS: list[type[BaseModel]] = [
-    # Inline nodes
+# ── Contract spec ─────────────────────────────────────────────────────
+# Defines export order, union aliases, and TypeScript section groupings.
+# Type information comes from JSON Schema files; these constants control
+# only the structure and layout of the generated output.
+
+# Phase 1 only: Python model objects for JSON Schema generation
+_EXPORT_MODELS: list[type[BaseModel]] = [
     BundleTextRun,
     BundleSymbolRef,
     BundleGlossaryRef,
-    # Block types
     BundleHeadingBlock,
     BundleParagraphBlock,
     BundleListItemBlock,
@@ -72,19 +77,14 @@ EXPORT_MODELS: list[type[BaseModel]] = [
     BundleTableBlock,
     BundleCalloutBlock,
     BundleDividerBlock,
-    # Page types
     BundlePageAnchor,
     BundlePage,
-    # Manifest types
     BundleAssetEntry,
     SiteBundleManifest,
-    # Glossary
     BundleGlossaryEntry,
     BundleGlossary,
-    # Navigation
     NavEntry,
     NavigationTree,
-    # Catalog
     CatalogEntry,
     CatalogManifest,
 ]
@@ -105,110 +105,150 @@ UNION_TYPES: dict[str, list[str]] = {
     ],
 }
 
+# TypeScript output sections: (header, model_names, union_aliases_after)
+_TS_SECTIONS: list[tuple[str, list[str], list[str]]] = [
+    (
+        "Inline node types",
+        ["BundleTextRun", "BundleSymbolRef", "BundleGlossaryRef"],
+        ["BundleInlineNode"],
+    ),
+    (
+        "Block types",
+        [
+            "BundleHeadingBlock",
+            "BundleParagraphBlock",
+            "BundleListItemBlock",
+            "BundleListBlock",
+            "BundleFigureBlock",
+            "BundleCaptionBlock",
+            "BundleTableCell",
+            "BundleTableBlock",
+            "BundleCalloutBlock",
+            "BundleDividerBlock",
+        ],
+        ["BundleBlock"],
+    ),
+    ("Page-level types", ["BundlePageAnchor", "BundlePage"], []),
+    ("Bundle manifests", ["BundleAssetEntry", "SiteBundleManifest"], []),
+    ("Glossary", ["BundleGlossaryEntry", "BundleGlossary"], []),
+    ("Navigation", ["NavEntry", "NavigationTree"], []),
+    ("Catalog", ["CatalogEntry", "CatalogManifest"], []),
+]
 
-# -- JSON Schema generation --------------------------------------------------
+
+# ── Phase 1: Python → JSON Schema ────────────────────────────────────
 
 
 def generate_json_schema() -> None:
     """Write individual JSON Schema files for each exported model."""
     JSONSCHEMA_DIR.mkdir(parents=True, exist_ok=True)
 
-    for model in EXPORT_MODELS:
+    for model in _EXPORT_MODELS:
         schema = model.model_json_schema(mode="serialization")
         name = model.__name__
         _atomic_write_json(JSONSCHEMA_DIR / f"{name}.json", schema)
 
-    print(f"  JSON Schema: {len(EXPORT_MODELS)} files → {JSONSCHEMA_DIR}")
+    print(f"  JSON Schema: {len(_EXPORT_MODELS)} files → {JSONSCHEMA_DIR}")
 
 
-# -- TypeScript generation ---------------------------------------------------
+# ── Phase 2: JSON Schema → TypeScript ────────────────────────────────
+# This section reads .json files from disk only.  No pipeline model
+# classes are referenced.
 
 
-def _py_type_to_ts(field_info: FieldInfo, annotation: Any) -> str:  # noqa: C901, PLR0912
-    """Convert a Python type annotation to a TypeScript type string."""
-    origin = get_origin(annotation)
+def _load_schema(name: str) -> dict[str, Any]:
+    """Load a JSON Schema file by model name."""
+    path = JSONSCHEMA_DIR / f"{name}.json"
+    return json.loads(path.read_text(encoding="utf-8"))
 
-    # Handle Optional (Union[X, None])
-    if origin is type(None):
-        return "null"
 
-    # list[X] → X[]
-    if origin is list:
-        args = get_args(annotation)
-        if args:
-            inner = _py_type_to_ts(field_info, args[0])
-            return f"{inner}[]"
-        return "unknown[]"
+def _resolve_top_level(
+    schema: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return (properties, $defs) from a schema.
 
-    # Literal["a", "b"] → "a" | "b"
-    if origin is Literal:
-        args = get_args(annotation)
-        return " | ".join(f'"{a}"' for a in args)
+    Some schemas (e.g. NavEntry) use a top-level ``$ref`` into ``$defs``
+    for recursive types, so we need to dereference first.
+    """
+    defs = schema.get("$defs", {})
 
-    # Union types (X | Y | None)
-    if isinstance(annotation, types.UnionType) or origin is Union:
-        args = get_args(annotation)
-        parts = [_py_type_to_ts(field_info, a) for a in args]
+    if "$ref" in schema:
+        ref_name = schema["$ref"].split("/")[-1]
+        resolved = defs.get(ref_name, {})
+        return resolved.get("properties", {}), defs
+
+    return schema.get("properties", {}), defs
+
+
+def _schema_type_to_ts(  # noqa: C901, PLR0912
+    prop: dict[str, Any],
+    defs: dict[str, Any],
+    known_models: set[str],
+    _visited: frozenset[str] | None = None,
+) -> str:
+    """Convert a JSON Schema property definition to a TypeScript type."""
+    if _visited is None:
+        _visited = frozenset()
+
+    # $ref — model reference or inline definition
+    if "$ref" in prop:
+        ref_name = prop["$ref"].split("/")[-1]
+        if ref_name in known_models:
+            return ref_name
+        if ref_name in defs and ref_name not in _visited:
+            return _schema_type_to_ts(defs[ref_name], defs, known_models, _visited | {ref_name})
+        return "unknown"
+
+    # const literal
+    if "const" in prop:
+        val = prop["const"]
+        return f'"{val}"' if isinstance(val, str) else str(val)
+
+    # enum — string union
+    if "enum" in prop:
+        return " | ".join(f'"{v}"' for v in prop["enum"])
+
+    # anyOf — Union / Optional
+    if "anyOf" in prop:
+        parts = [_schema_type_to_ts(a, defs, known_models, _visited) for a in prop["anyOf"]]
         return " | ".join(parts)
 
-    # Check for Annotated (used for discriminated unions)
-    if hasattr(annotation, "__metadata__"):
-        # Annotated type — check if it's a known union alias first
-        base_args = get_args(annotation)
-        if base_args:
-            base = base_args[0]
-            if isinstance(base, types.UnionType) or get_origin(base) is Union:
-                union_names = set()
-                for a in get_args(base):
-                    # Each union member may also be Annotated (with Tag)
-                    if hasattr(a, "__metadata__"):
-                        inner = get_args(a)[0]
-                        if isinstance(inner, type):
-                            union_names.add(inner.__name__)
-                    elif isinstance(a, type):
-                        union_names.add(a.__name__)
-                # Check against known aliases
-                for alias, members in UNION_TYPES.items():
-                    if union_names == set(members):
-                        return alias
-            return _py_type_to_ts(field_info, base)
+    # oneOf — discriminated union
+    if "oneOf" in prop:
+        ref_names = {item["$ref"].split("/")[-1] for item in prop["oneOf"] if "$ref" in item}
+        for alias, members in UNION_TYPES.items():
+            if ref_names == set(members):
+                return alias
+        parts = [_schema_type_to_ts(a, defs, known_models, _visited) for a in prop["oneOf"]]
+        return " | ".join(parts)
 
-    # Pydantic model reference → use model name
-    if isinstance(annotation, type) and issubclass(annotation, BaseModel):
-        return annotation.__name__
-
-    # Basic types
-    type_map: dict[type, str] = {
-        str: "string",
-        int: "number",
-        float: "number",
-        bool: "boolean",
-    }
-    if annotation in type_map:
-        return type_map[annotation]
-
-    # NoneType
-    if annotation is type(None):
+    # Primitive / array types
+    type_val = prop.get("type")
+    if type_val == "string":
+        return "string"
+    if type_val in ("integer", "number"):
+        return "number"
+    if type_val == "boolean":
+        return "boolean"
+    if type_val == "null":
         return "null"
+    if type_val == "array":
+        items = prop.get("items", {})
+        inner = _schema_type_to_ts(items, defs, known_models, _visited)
+        return f"{inner}[]"
 
     return "unknown"
 
 
-def _resolve_field_type(model: type[BaseModel], field_name: str) -> str:
-    """Resolve a field's TypeScript type, handling union type aliases."""
-    field_info = model.model_fields[field_name]
-    annotation = field_info.annotation
-    return _py_type_to_ts(field_info, annotation)
+def _generate_interface_from_schema(name: str, known_models: set[str]) -> str:
+    """Generate a TypeScript interface by reading a JSON Schema file."""
+    schema = _load_schema(name)
+    properties, defs = _resolve_top_level(schema)
 
-
-def _generate_interface(model: type[BaseModel]) -> str:
-    """Generate a TypeScript interface for a Pydantic model."""
-    lines = [f"export interface {model.__name__} {{"]
-
-    for field_name in model.model_fields:
-        ts_type = _resolve_field_type(model, field_name)
+    lines = [f"export interface {name} {{"]
+    for field_name, field_schema in properties.items():
+        ts_type = _schema_type_to_ts(field_schema, defs, known_models)
         lines.append(f"  {field_name}: {ts_type};")
-
     lines.append("}")
     return "\n".join(lines)
 
@@ -216,7 +256,6 @@ def _generate_interface(model: type[BaseModel]) -> str:
 def _generate_union_type(name: str, members: list[str]) -> str:
     """Generate a TypeScript union type alias."""
     joined = " | ".join(members)
-    # Single line if short enough, multi-line otherwise
     one_liner = f"export type {name} = {joined};"
     if len(one_liner) <= 100:
         return one_liner
@@ -225,99 +264,38 @@ def _generate_union_type(name: str, members: list[str]) -> str:
 
 
 def generate_typescript() -> None:
-    """Write TypeScript interfaces to the generated directory."""
+    """Write TypeScript interfaces from checked-in JSON Schema files."""
     TS_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+
+    known_models: set[str] = set()
+    for _header, model_names, _unions in _TS_SECTIONS:
+        known_models.update(model_names)
 
     sections: list[str] = [
         "/**",
-        " * Public site bundle contracts — generated from Python models.",
+        " * Public site bundle contracts — generated from JSON Schema.",
         " *",
-        " * These types mirror the Pydantic models in:",
-        " *   packages/pipeline/src/aeon_reader_pipeline/models/site_bundle_models.py",
+        " * Source of truth: packages/contracts/jsonschema/*.json",
+        " * Contract flow: Python (Pydantic) → JSON Schema → TypeScript.",
         " *",
         " * Do NOT edit manually — regenerate with `make schemas`.",
         " */",
         "",
     ]
 
-    # Group: Inline nodes
-    sections.append("// " + "-" * 75)
-    sections.append("// Inline node types")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    for model in [BundleTextRun, BundleSymbolRef, BundleGlossaryRef]:
-        sections.append(_generate_interface(model))
-        sections.append("")
-    sections.append(_generate_union_type("BundleInlineNode", UNION_TYPES["BundleInlineNode"]))
-    sections.append("")
-
-    # Group: Block types
-    sections.append("// " + "-" * 75)
-    sections.append("// Block types")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    block_models = [
-        BundleHeadingBlock,
-        BundleParagraphBlock,
-        BundleListItemBlock,
-        BundleListBlock,
-        BundleFigureBlock,
-        BundleCaptionBlock,
-        BundleTableCell,
-        BundleTableBlock,
-        BundleCalloutBlock,
-        BundleDividerBlock,
-    ]
-    for model in block_models:
-        sections.append(_generate_interface(model))
-        sections.append("")
-    sections.append(_generate_union_type("BundleBlock", UNION_TYPES["BundleBlock"]))
-    sections.append("")
-
-    # Group: Page-level types
-    sections.append("// " + "-" * 75)
-    sections.append("// Page-level types")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    for model in [BundlePageAnchor, BundlePage]:
-        sections.append(_generate_interface(model))
+    for header, model_names, union_names in _TS_SECTIONS:
+        sections.append("// " + "-" * 75)
+        sections.append(f"// {header}")
+        sections.append("// " + "-" * 75)
         sections.append("")
 
-    # Group: Bundle manifests
-    sections.append("// " + "-" * 75)
-    sections.append("// Bundle manifests")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    for model in [BundleAssetEntry, SiteBundleManifest]:
-        sections.append(_generate_interface(model))
-        sections.append("")
+        for model_name in model_names:
+            sections.append(_generate_interface_from_schema(model_name, known_models))
+            sections.append("")
 
-    # Group: Glossary
-    sections.append("// " + "-" * 75)
-    sections.append("// Glossary")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    for model in [BundleGlossaryEntry, BundleGlossary]:
-        sections.append(_generate_interface(model))
-        sections.append("")
-
-    # Group: Navigation
-    sections.append("// " + "-" * 75)
-    sections.append("// Navigation")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    for model in [NavEntry, NavigationTree]:
-        sections.append(_generate_interface(model))
-        sections.append("")
-
-    # Group: Catalog
-    sections.append("// " + "-" * 75)
-    sections.append("// Catalog")
-    sections.append("// " + "-" * 75)
-    sections.append("")
-    for model in [CatalogEntry, CatalogManifest]:
-        sections.append(_generate_interface(model))
-        sections.append("")
+        for union_name in union_names:
+            sections.append(_generate_union_type(union_name, UNION_TYPES[union_name]))
+            sections.append("")
 
     content = "\n".join(sections).rstrip() + "\n"
     outpath = TS_GENERATED_DIR / "site-bundle.ts"
@@ -325,7 +303,7 @@ def generate_typescript() -> None:
     print(f"  TypeScript: {outpath}")
 
 
-# -- Utilities ---------------------------------------------------------------
+# ── Utilities ─────────────────────────────────────────────────────────
 
 
 def _atomic_write_json(path: Path, data: Any) -> None:
@@ -347,12 +325,14 @@ def _atomic_write_text(path: Path, content: str) -> None:
         raise
 
 
-# -- Main --------------------------------------------------------------------
+# ── Main ──────────────────────────────────────────────────────────────
 
 
 def main() -> None:
     print("Generating contracts from Pydantic models...")
+    print("  Phase 1: Python → JSON Schema")
     generate_json_schema()
+    print("  Phase 2: JSON Schema → TypeScript")
     generate_typescript()
 
     # Run TS type check to verify generated output compiles
