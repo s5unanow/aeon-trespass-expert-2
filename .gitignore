@@ -46,6 +46,10 @@ review/
 *.swp
 *.swo
 
+# Coverage
+coverage/
+coverage-html/
+
 # Playwright
 test-results/
 playwright-report/

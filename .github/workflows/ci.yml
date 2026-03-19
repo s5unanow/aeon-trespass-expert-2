@@ -53,7 +53,12 @@ jobs:
       - run: pnpm install
       - run: pnpm --filter reader lint
       - run: pnpm -r run typecheck
-      - run: pnpm --filter reader test
+      - run: pnpm --filter reader test -- --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: apps/reader/coverage/
       - run: pnpm --filter reader build
 
   e2e:
