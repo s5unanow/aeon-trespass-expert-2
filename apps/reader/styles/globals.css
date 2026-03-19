@@ -361,7 +361,7 @@ a:hover {
   padding: 2rem;
   border: 1px dashed var(--color-border);
   border-radius: 0.5rem;
-  color: var(--color-fg-muted);
+  color: var(--color-muted);
   text-align: center;
 }
 
@@ -379,7 +379,7 @@ a:hover {
 
 .hybrid-fallback summary {
   cursor: pointer;
-  color: var(--color-fg-muted);
+  color: var(--color-muted);
   font-size: 0.875rem;
 }
 

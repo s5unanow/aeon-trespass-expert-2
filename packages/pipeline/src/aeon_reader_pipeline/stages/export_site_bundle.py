@@ -217,6 +217,7 @@ def convert_page_to_bundle(record: PageRecord) -> BundlePage:
         width_pt=record.width_pt,
         height_pt=record.height_pt,
         render_mode=record.render_mode,
+        fallback_image_ref=record.fallback_image_ref,
         blocks=[_convert_block(b) for b in record.blocks],
         anchors=[_convert_anchor(a) for a in record.anchors],
     )
