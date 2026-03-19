@@ -3,7 +3,6 @@
 Importing this package registers all implemented stages with the stage registry.
 """
 
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.build_reader import BuildReaderStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
@@ -20,7 +19,6 @@ from aeon_reader_pipeline.stages.resolve_run import ResolveRunStage
 from aeon_reader_pipeline.stages.translate_units import TranslateUnitsStage
 
 __all__ = [
-    "ApplySafeFixesStage",
     "BuildReaderStage",
     "EnrichContentStage",
     "EvaluateQAStage",

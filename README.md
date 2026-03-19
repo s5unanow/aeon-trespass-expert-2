@@ -41,7 +41,7 @@ reader-pipeline list-stages
 ```
 00_resolve_run → 01_ingest_source → 02_extract_primitives → 03_normalize_layout →
 04_resolve_assets_symbols → 05_plan_translation → 06_translate_units → 07_merge_localization →
-08_enrich_content → 09_evaluate_qa → 10_apply_safe_fixes → 11_export_site_bundle →
+08_enrich_content → 09_evaluate_qa → 11_export_site_bundle →
 12_build_reader → 13_index_search → 14_package_release
 ```
 

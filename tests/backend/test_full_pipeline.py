@@ -34,7 +34,6 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     SiteBundleManifest,
 )
 from aeon_reader_pipeline.stage_framework.context import StageContext
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.build_reader import (
     BuildReaderStage,
     ReaderBuildManifest,
@@ -206,9 +205,6 @@ class TestFullPipeline:
         )
         assert qa.accepted is True
         assert qa.errors == 0
-
-        # Stage 10: Apply safe fixes
-        ApplySafeFixesStage().execute(ctx)
 
         # Stage 11: Export site bundle
         ExportSiteBundleStage().execute(ctx)

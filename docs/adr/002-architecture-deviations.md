@@ -33,7 +33,7 @@ This ADR records the known deviations and their planned resolution, rather than 
 
 **Actual:** `apply_safe_fixes` is a pass-through. `qa/rules/layout_rules.py` and `qa/rules/search_rules.py` are empty placeholders. `config/patch_loader.py` and `config/symbol_loader.py` are scaffolding.
 
-**Resolution:** S5U-225 — prune or implement placeholders.
+**Resolution:** Resolved in S5U-225. The `apply_safe_fixes` pass-through stage was removed from the canonical DAG — `export_site_bundle` now reads directly from `enrich_content`. The four empty placeholder modules (`layout_rules`, `search_rules`, `patch_loader`, `symbol_loader`) were deleted. The pipeline is now 14 stages.
 
 ### 4. Hybrid/facsimile fallback
 

@@ -19,7 +19,6 @@ STAGE_ORDER: list[str] = [
     "merge_localization",
     "enrich_content",
     "evaluate_qa",
-    "apply_safe_fixes",
     "export_site_bundle",
     "build_reader",
     "index_search",

@@ -26,7 +26,6 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     SiteBundleManifest,
 )
 from aeon_reader_pipeline.stage_framework.context import StageContext
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
 from aeon_reader_pipeline.stages.export_site_bundle import ExportSiteBundleStage
@@ -124,7 +123,6 @@ def _run_through_export(ctx: StageContext) -> None:
     MergeLocalizationStage().execute(ctx)
     EnrichContentStage().execute(ctx)
     EvaluateQAStage().execute(ctx)
-    ApplySafeFixesStage().execute(ctx)
     ExportSiteBundleStage().execute(ctx)
 
 

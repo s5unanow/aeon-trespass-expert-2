@@ -161,7 +161,6 @@ _STAGE_PREFIXES: dict[str, str] = {
     "merge_localization": "07_localize",
     "enrich_content": "08_enrich",
     "evaluate_qa": "09_qa",
-    "apply_safe_fixes": "10_fix",
     "export_site_bundle": "11_export",
     "build_reader": "12_site",
     "index_search": "13_search",

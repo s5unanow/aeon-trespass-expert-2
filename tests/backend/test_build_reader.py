@@ -21,7 +21,6 @@ from aeon_reader_pipeline.models.config_models import (
 )
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.stage_framework.context import StageContext
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.build_reader import (
     BuildReaderStage,
     ReaderBuildManifest,
@@ -124,7 +123,6 @@ def _run_through_export(ctx: StageContext) -> None:
     MergeLocalizationStage().execute(ctx)
     EnrichContentStage().execute(ctx)
     EvaluateQAStage().execute(ctx)
-    ApplySafeFixesStage().execute(ctx)
     ExportSiteBundleStage().execute(ctx)
 
 
