@@ -33,8 +33,9 @@ _ContentBlock = HeadingBlock | ParagraphBlock | CaptionBlock | CalloutBlock
 STAGE_NAME = "plan_translation"
 STAGE_VERSION = "1.0.0"
 
-# Maximum text nodes per unit to keep LLM calls bounded
-MAX_NODES_PER_UNIT = 20
+# Default value moved to PipelineConfig.max_nodes_per_unit
+# Kept as module-level fallback for _plan_page when called outside a stage
+_DEFAULT_MAX_NODES_PER_UNIT = 20
 
 
 def _extract_text_from_block(block: Block) -> str:
@@ -159,6 +160,8 @@ def _plan_page(  # noqa: C901, PLR0915
     record: PageRecord,
     doc_id: str,
     glossary_pack: GlossaryPack,
+    max_nodes_per_unit: int = _DEFAULT_MAX_NODES_PER_UNIT,
+    context_window_chars: int = 200,
 ) -> list[TranslationUnit]:
     """Segment a page into translation units."""
     if record.render_mode == "facsimile":
@@ -250,7 +253,7 @@ def _plan_page(  # noqa: C901, PLR0915
             continue
 
         # Would adding this block exceed the node limit?
-        if len(pending_nodes) + len(nodes) > MAX_NODES_PER_UNIT:
+        if len(pending_nodes) + len(nodes) > max_nodes_per_unit:
             _flush_unit(
                 _style_hint_for_block(pending_blocks[0][1]) if pending_blocks else "paragraph",
                 _get_section_path(record, pending_blocks[0][0]) if pending_blocks else [],
@@ -271,11 +274,11 @@ def _plan_page(  # noqa: C901, PLR0915
     for i, u in enumerate(units):
         if i > 0:
             prev_text = " ".join(n.source_text for n in units[i - 1].text_nodes)
-            u_copy = u.model_copy(update={"context_before": prev_text[:200]})
+            u_copy = u.model_copy(update={"context_before": prev_text[:context_window_chars]})
             units[i] = u_copy
         if i < len(units) - 1:
             next_text = " ".join(n.source_text for n in units[i + 1].text_nodes)
-            u_copy = units[i].model_copy(update={"context_after": next_text[:200]})
+            u_copy = units[i].model_copy(update={"context_after": next_text[:context_window_chars]})
             units[i] = u_copy
 
     return units
@@ -317,7 +320,13 @@ class PlanTranslationStage(BaseStage):
                 ctx.logger.debug("page_skipped_facsimile", page=page_num)
                 continue
 
-            page_units = _plan_page(record, ctx.doc_id, ctx.glossary_pack)
+            page_units = _plan_page(
+                record,
+                ctx.doc_id,
+                ctx.glossary_pack,
+                max_nodes_per_unit=ctx.pipeline_config.max_nodes_per_unit,
+                context_window_chars=ctx.pipeline_config.context_window_chars,
+            )
             all_units.extend(page_units)
 
             ctx.logger.debug(

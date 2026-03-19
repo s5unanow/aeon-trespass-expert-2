@@ -33,13 +33,14 @@ class GeminiCliGateway(LlmGateway):
     ) -> LlmResponse:
         """Send a translation request via the Gemini CLI."""
         model = model_profile.model
-        result = self._call_cli(system_prompt, user_prompt, model)
+        timeout = model_profile.cli_timeout
+        result = self._call_cli(system_prompt, user_prompt, model, timeout=timeout)
 
         # Fallback on failure
         if result is None and model_profile.fallback_model:
             fallback = model_profile.fallback_model
             logger.warning("gemini_cli_fallback", primary=model, fallback=fallback)
-            result = self._call_cli(system_prompt, user_prompt, fallback)
+            result = self._call_cli(system_prompt, user_prompt, fallback, timeout=timeout)
 
         if result is None:
             raise RuntimeError("Gemini CLI failed on both primary and fallback model")
@@ -51,6 +52,8 @@ class GeminiCliGateway(LlmGateway):
         system_prompt: str,
         user_prompt: str,
         model: str,
+        *,
+        timeout: int = 180,
     ) -> LlmResponse | None:
         """Execute a single CLI call. Returns None on failure."""
         combined_prompt = (
@@ -65,7 +68,7 @@ class GeminiCliGateway(LlmGateway):
                 [self._cli, "-m", model, "-p", combined_prompt, "-o", "text"],
                 capture_output=True,
                 text=True,
-                timeout=180,
+                timeout=timeout,
             )
         except subprocess.TimeoutExpired:
             logger.warning("gemini_cli_timeout", model=model)

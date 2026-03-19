@@ -111,6 +111,7 @@ def run(  # noqa: PLR0913
     strict: bool = typer.Option(False, help="Enable strict mode"),
     mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
     cli: bool = typer.Option(False, help="Use Gemini CLI instead of SDK (no API key needed)"),
+    concurrency: int = typer.Option(5, help="LLM concurrency (parallel workers)"),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -167,7 +168,7 @@ def run(  # noqa: PLR0913
         ),
         cache_mode=cache_mode,  # type: ignore[arg-type]
         strict_mode=strict,
-        llm_concurrency=5,
+        llm_concurrency=concurrency,
         artifact_root=str(artifact_root.resolve()),
     )
 
