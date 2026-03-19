@@ -7,6 +7,12 @@ test.describe("Catalog page", () => {
     await expect(page.locator(".catalog-item").first()).toBeVisible();
   });
 
+  test("shows multiple documents in catalog", async ({ page }) => {
+    await page.goto("/");
+    const items = page.locator(".catalog-item");
+    await expect(items).toHaveCount(2);
+  });
+
   test("links to document landing page", async ({ page }) => {
     await page.goto("/");
     const link = page.locator(".catalog-link").first();
@@ -60,6 +66,18 @@ test.describe("Reader page", () => {
       ".block-heading, .block-paragraph, .block-list, .block-figure"
     );
     await expect(blocks.first()).toBeVisible();
+  });
+});
+
+test.describe("Multi-document", () => {
+  test("second document landing page loads", async ({ page }) => {
+    await page.goto("/docs/fixture-odyssey/");
+    await expect(page.locator(".doc-landing h1")).toBeVisible();
+  });
+
+  test("second document reader page loads", async ({ page }) => {
+    await page.goto("/docs/fixture-odyssey/page/1/");
+    await expect(page.locator(".doc-content")).toBeVisible();
   });
 });
 

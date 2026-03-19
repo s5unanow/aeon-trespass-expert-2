@@ -1,0 +1,12 @@
+{
+  "doc_id": "fixture-odyssey",
+  "documents": [
+    {
+      "page_number": 1,
+      "title": "The Voyage",
+      "body": "Set sail on a journey through the ancient seas.",
+      "url": "/docs/fixture-odyssey/page/1/"
+    }
+  ],
+  "total_documents": 1
+}
