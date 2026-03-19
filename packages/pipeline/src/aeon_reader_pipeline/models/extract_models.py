@@ -82,6 +82,26 @@ class RawImageInfo(BaseModel):
     stored_as: str | None = None
 
 
+class RawTableCell(BaseModel):
+    """A single cell in a raw extracted table."""
+
+    row: int
+    col: int
+    text: str
+    row_span: int = 1
+    col_span: int = 1
+
+
+class RawTableInfo(BaseModel):
+    """Raw table structure extracted from a PDF page."""
+
+    table_index: int
+    rows: int
+    cols: int
+    bbox: BBox
+    cells: list[RawTableCell] = Field(default_factory=list)
+
+
 class ExtractedPage(BaseModel):
     """Raw extraction output for a single PDF page.
 
@@ -95,6 +115,7 @@ class ExtractedPage(BaseModel):
     rotation: int = 0
     text_blocks: list[TextBlock] = Field(default_factory=list)
     images: list[RawImageInfo] = Field(default_factory=list)
+    tables: list[RawTableInfo] = Field(default_factory=list)
     fonts_used: list[str] = Field(default_factory=list)
     char_count: int = 0
     source_pdf_sha256: str = ""

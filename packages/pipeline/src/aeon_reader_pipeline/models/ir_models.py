@@ -121,13 +121,24 @@ class CaptionBlock(BaseModel):
     source_block_index: int | None = None
 
 
+class TableCell(BaseModel):
+    """A single cell in a table."""
+
+    row: int
+    col: int
+    text: str
+    row_span: int = 1
+    col_span: int = 1
+
+
 class TableBlock(BaseModel):
-    """Table placeholder (detailed cell model deferred to later epic)."""
+    """Table with cell data."""
 
     kind: Literal["table"] = "table"
     block_id: str
     rows: int = 0
     cols: int = 0
+    cells: list[TableCell] = Field(default_factory=list)
     source_block_index: int | None = None
 
 

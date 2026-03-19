@@ -213,12 +213,13 @@ describe("BlockRenderer", () => {
   });
 
   describe("table", () => {
-    it("renders a placeholder with dimensions", () => {
+    it("renders a placeholder when cells are empty", () => {
       const block: BundleTableBlock = {
         kind: "table",
         block_id: "tbl-1",
         rows: 3,
         cols: 5,
+        cells: [],
       };
       const { container } = render(<BlockRenderer block={block} />);
       const div = container.querySelector("div#tbl-1");
@@ -226,6 +227,31 @@ describe("BlockRenderer", () => {
       expect(div!.className).toBe("block-table-placeholder");
       expect(div!.textContent).toContain("3");
       expect(div!.textContent).toContain("5");
+    });
+
+    it("renders an actual table when cells are present", () => {
+      const block: BundleTableBlock = {
+        kind: "table",
+        block_id: "tbl-2",
+        rows: 2,
+        cols: 2,
+        cells: [
+          { row: 0, col: 0, text: "Name", row_span: 1, col_span: 1 },
+          { row: 0, col: 1, text: "Value", row_span: 1, col_span: 1 },
+          { row: 1, col: 0, text: "HP", row_span: 1, col_span: 1 },
+          { row: 1, col: 1, text: "10", row_span: 1, col_span: 1 },
+        ],
+      };
+      const { container } = render(<BlockRenderer block={block} />);
+      const table = container.querySelector("table.block-table");
+      expect(table).not.toBeNull();
+      const ths = table!.querySelectorAll("th");
+      expect(ths).toHaveLength(2);
+      expect(ths[0].textContent).toBe("Name");
+      const tds = table!.querySelectorAll("td");
+      expect(tds).toHaveLength(2);
+      expect(tds[0].textContent).toBe("HP");
+      expect(tds[1].textContent).toBe("10");
     });
   });
 
