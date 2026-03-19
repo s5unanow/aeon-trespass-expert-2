@@ -1,5 +1,5 @@
 .PHONY: help bootstrap lint typecheck test test-backend test-frontend schemas \
-        site-dev site-build e2e clean security-lint
+        site-dev site-build e2e clean security-lint deploy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -47,6 +47,10 @@ site-build: ## Build static reader site
 
 e2e: ## Run end-to-end tests
 	pnpm --filter reader test:e2e
+
+deploy: site-build ## Full deploy: build static site (run pipeline first)
+	@echo "Static site built at apps/reader/out/"
+	@echo "Deploy by uploading apps/reader/out/ to your hosting provider."
 
 clean: ## Remove build artifacts and caches
 	rm -rf .mypy_cache .ruff_cache .pytest_cache

@@ -105,12 +105,15 @@ def _create_fixture_pdf(path: Path) -> None:
 
 
 def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
-    configs_root = pdf_path.parent / "configs"
+    configs_root = tmp_path / "configs"
     configs_root.mkdir(exist_ok=True)
-    prompts = configs_root.parent / "prompts" / "translate" / "v1"
+    prompts = tmp_path / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
     (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
+
+    # Create reader generated dir for build_reader stage
+    (tmp_path / "apps" / "reader" / "generated").mkdir(parents=True, exist_ok=True)
 
     store = ArtifactStore(tmp_path / "artifacts")
     store.create_run("run-e2e", ["fixture-doc"])
@@ -242,15 +245,17 @@ class TestFullPipeline:
         )
         assert build_artifacts.total_artifacts >= 4  # 2 pages + nav + search + manifest
 
-        # Stage 12: Build reader
+        # Stages 12-14: Build reader, index search, package release
         BuildReaderStage().execute(ctx)
         build = ctx.artifact_store.read_artifact(
-            ctx.run_id, ctx.doc_id, "build_reader", "build_manifest.json", ReaderBuildManifest
+            ctx.run_id,
+            ctx.doc_id,
+            "build_reader",
+            "build_manifest.json",
+            ReaderBuildManifest,
         )
-        assert build.bundle_page_count == 2
-        assert len(build.routes) == 3  # doc root + 2 pages
+        assert build.bundle_page_count == 2 and build.build_status == "bundle-synced"
 
-        # Stage 13: Index search
         IndexSearchStage().execute(ctx)
         search_manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
@@ -261,7 +266,6 @@ class TestFullPipeline:
         )
         assert search_manifest.total_documents >= 1
 
-        # Stage 14: Package release
         PackageReleaseStage().execute(ctx)
         release = ctx.artifact_store.read_artifact(
             ctx.run_id,
@@ -270,6 +274,4 @@ class TestFullPipeline:
             "release_manifest.json",
             ReleaseManifest,
         )
-        assert release.all_accepted is True
-        assert release.total_documents == 1
-        assert release.release_id.startswith("rel-")
+        assert release.all_accepted and release.artifact_path is not None

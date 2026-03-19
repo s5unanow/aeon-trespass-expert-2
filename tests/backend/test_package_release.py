@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tarfile
 from pathlib import Path
 
 import pymupdf
@@ -60,12 +61,14 @@ class MockGateway(LlmGateway):
 
 
 def _make_context(tmp_path: Path, source_pdf_path: Path) -> StageContext:
-    configs_root = source_pdf_path.parent / "configs"
+    configs_root = tmp_path / "configs"
     configs_root.mkdir(exist_ok=True)
-    prompts = configs_root.parent / "prompts" / "translate" / "v1"
+    prompts = tmp_path / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
     (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
+
+    (tmp_path / "apps" / "reader" / "generated").mkdir(parents=True, exist_ok=True)
 
     store = ArtifactStore(tmp_path / "artifacts")
     store.create_run("run-001", ["test-doc"])
@@ -145,7 +148,38 @@ class TestPackageReleaseStage:
         assert manifest.documents[0].doc_id == "test-doc"
         assert manifest.release_id.startswith("rel-")
 
+    def test_release_creates_archive(self, tmp_path: Path) -> None:
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        _run_full_pipeline(ctx)
+        PackageReleaseStage().execute(ctx)
+
+        manifest = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "package_release",
+            "release_manifest.json",
+            ReleaseManifest,
+        )
+        assert manifest.artifact_path is not None
+        assert manifest.artifact_size_bytes is not None
+        assert manifest.artifact_size_bytes > 0
+        assert manifest.artifact_sha256 is not None
+
+        # Verify archive is a valid tar.gz
+        stage_dir = ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "package_release")
+        archive_path = stage_dir / manifest.artifact_path
+        assert archive_path.exists()
+
+        with tarfile.open(archive_path, "r:gz") as tar:
+            names = tar.getnames()
+            assert "release_manifest.json" in names
+            # Bundle content should be under doc_id/
+            bundle_files = [n for n in names if n.startswith("test-doc/")]
+            assert len(bundle_files) > 0
+
     def test_stage_registration(self) -> None:
         stage = PackageReleaseStage()
         assert stage.name == "package_release"
-        assert stage.version == "1.0.0"
+        assert stage.version == "2.0.0"
