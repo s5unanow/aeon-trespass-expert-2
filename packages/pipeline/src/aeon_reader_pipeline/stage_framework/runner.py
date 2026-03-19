@@ -33,6 +33,7 @@ class PipelineRunner:
             from_stage=ctx.pipeline_config.stages.from_stage,
             to_stage=ctx.pipeline_config.stages.to_stage,
             only=ctx.pipeline_config.stages.only,
+            exclude=ctx.pipeline_config.stages.exclude,
         )
 
         registered = set(get_registered_stages())

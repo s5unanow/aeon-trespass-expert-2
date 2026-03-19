@@ -98,6 +98,74 @@ def list_stages() -> None:
         typer.echo(f"  {name}: {status}")
 
 
+def _build_pipeline_config(  # noqa: PLR0913
+    *,
+    run_id: str,
+    doc_ids: list[str],
+    from_stage: str | None,
+    to_stage: str | None,
+    cache_mode: str,
+    strict: bool,
+    skip_qa_gate: bool,
+    source_only: bool,
+    dry_run: bool,
+    concurrency: int,
+    artifact_root: Path,
+) -> PipelineConfig:
+    """Build a PipelineConfig from CLI arguments."""
+    from aeon_reader_pipeline.models.run_models import PipelineConfig, StageSelector
+
+    effective_to_stage = "plan_translation" if dry_run else to_stage
+
+    stage_exclude: list[str] | None = None
+    effective_skip_qa_gate = skip_qa_gate
+    if source_only:
+        from aeon_reader_pipeline.stage_framework.registry import TRANSLATION_STAGES
+
+        stage_exclude = sorted(TRANSLATION_STAGES)
+        effective_skip_qa_gate = True
+        typer.echo("Source-only preview mode: skipping translation stages, QA gate auto-skipped.")
+
+    return PipelineConfig(
+        run_id=run_id,
+        docs=doc_ids,
+        stages=StageSelector(
+            from_stage=from_stage or "resolve_run",
+            to_stage=effective_to_stage,
+            exclude=stage_exclude,
+        ),
+        cache_mode=cache_mode,  # type: ignore[arg-type]
+        strict_mode=strict,
+        skip_qa_gate=effective_skip_qa_gate,
+        source_only=source_only,
+        llm_concurrency=concurrency,
+        artifact_root=str(artifact_root.resolve()),
+    )
+
+
+def _print_run_summary(
+    *,
+    dry_run: bool,
+    source_only: bool,
+    run_id: str,
+    doc_ids: list[str],
+    cost_estimates: list[CostEstimate],
+) -> None:
+    """Print the final summary after a pipeline run."""
+    if dry_run:
+        from aeon_reader_pipeline.utils.cost_estimation import format_cost_report
+
+        typer.echo(f"\n{format_cost_report(cost_estimates)}")
+        typer.echo("\nDry run complete. No translation calls were made.")
+    elif source_only:
+        typer.echo(f"\nSource-only preview run {run_id} finished.")
+        typer.echo(f"Documents: {doc_ids}")
+        typer.echo("Mode: source-only (no translation, QA gate skipped)")
+        typer.echo("The bundle contains English source text only.")
+    else:
+        typer.echo(f"\nPipeline run {run_id} finished.")
+
+
 @app.command()
 def run(  # noqa: PLR0913
     doc: list[str] = typer.Option([], help="Document IDs to process"),  # noqa: B008
@@ -122,8 +190,17 @@ def run(  # noqa: PLR0913
         "--dry-run",
         help="Run through plan_translation, show cost estimate, then stop",
     ),
+    source_only: bool = typer.Option(
+        False,
+        "--source-only",
+        help="Skip translation stages and produce a source-text preview bundle",
+    ),
 ) -> None:
     """Execute a pipeline run."""
+    if source_only and dry_run:
+        typer.echo("Error: --source-only and --dry-run are mutually exclusive.", err=True)
+        raise typer.Exit(1)
+
     _import_stages()
 
     from aeon_reader_pipeline.config.loader import (
@@ -136,7 +213,6 @@ def run(  # noqa: PLR0913
         load_symbol_pack,
     )
     from aeon_reader_pipeline.io.artifact_store import ArtifactStore
-    from aeon_reader_pipeline.models.run_models import PipelineConfig, StageSelector
     from aeon_reader_pipeline.stage_framework.context import StageContext
     from aeon_reader_pipeline.stage_framework.runner import PipelineRunner
 
@@ -160,40 +236,37 @@ def run(  # noqa: PLR0913
     store = ArtifactStore(artifact_root.resolve())
     store.create_run(run_id, doc_ids)
 
-    # For --dry-run, force stage range up through plan_translation and stop
-    effective_to_stage = "plan_translation" if dry_run else to_stage
-
-    # Create pipeline config
-    pipeline_config = PipelineConfig(
+    pipeline_config = _build_pipeline_config(
         run_id=run_id,
-        docs=doc_ids,
-        stages=StageSelector(
-            from_stage=from_stage or "resolve_run",
-            to_stage=effective_to_stage,
-        ),
-        cache_mode=cache_mode,  # type: ignore[arg-type]
-        strict_mode=strict,
+        doc_ids=doc_ids,
+        from_stage=from_stage,
+        to_stage=to_stage,
+        cache_mode=cache_mode,
+        strict=strict,
         skip_qa_gate=skip_qa_gate,
-        llm_concurrency=concurrency,
-        artifact_root=str(artifact_root.resolve()),
+        source_only=source_only,
+        dry_run=dry_run,
+        concurrency=concurrency,
+        artifact_root=artifact_root,
     )
 
-    # Set up translation gateway — injected via StageContext for clean isolation
-    pipeline_config, llm_gateway = _setup_gateway(
-        mock=mock,
-        cli=cli,
-        dry_run=dry_run,
-        pipeline_config=pipeline_config,
-    )
+    # Set up translation gateway
+    if source_only:
+        llm_gateway = None
+    else:
+        pipeline_config, llm_gateway = _setup_gateway(
+            mock=mock,
+            cli=cli,
+            dry_run=dry_run,
+            pipeline_config=pipeline_config,
+        )
 
     runner = PipelineRunner()
-
     cost_estimates: list[CostEstimate] = []
 
     for doc_config in doc_configs:
         typer.echo(f"\n--- Processing: {doc_config.doc_id} ---")
 
-        # Load profiles
         rule_profile = load_rule_profile(configs_root, doc_config.profiles.rules)
         model_profile = load_model_profile(configs_root, doc_config.profiles.models)
         symbol_pack = load_symbol_pack(configs_root, doc_config.profiles.symbols)
@@ -229,13 +302,13 @@ def run(  # noqa: PLR0913
 
         typer.echo(f"Completed: {doc_config.doc_id}")
 
-    if dry_run:
-        from aeon_reader_pipeline.utils.cost_estimation import format_cost_report
-
-        typer.echo(f"\n{format_cost_report(cost_estimates)}")
-        typer.echo("\nDry run complete. No translation calls were made.")
-    else:
-        typer.echo(f"\nPipeline run {run_id} finished.")
+    _print_run_summary(
+        dry_run=dry_run,
+        source_only=source_only,
+        run_id=run_id,
+        doc_ids=doc_ids,
+        cost_estimates=cost_estimates,
+    )
 
 
 def _compute_cost_estimate(ctx: StageContext, model_profile: ModelProfile) -> CostEstimate:

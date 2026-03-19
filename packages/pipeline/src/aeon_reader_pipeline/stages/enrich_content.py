@@ -182,15 +182,24 @@ class EnrichContentStage(BaseStage):
             DocumentManifest,
         )
 
-        ctx.logger.info("enriching_content", page_count=manifest.page_count)
+        # In source-only mode, read from resolve_assets_symbols (translation was skipped)
+        page_source_stage = (
+            "resolve_assets_symbols" if ctx.pipeline_config.source_only else "merge_localization"
+        )
 
-        # Load all localized pages
+        ctx.logger.info(
+            "enriching_content",
+            page_count=manifest.page_count,
+            page_source=page_source_stage,
+        )
+
+        # Load all pages from the appropriate upstream stage
         pages: list[PageRecord] = []
         for page_num in range(1, manifest.page_count + 1):
             record = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,
-                "merge_localization",
+                page_source_stage,
                 f"pages/p{page_num:04d}.json",
                 PageRecord,
             )
