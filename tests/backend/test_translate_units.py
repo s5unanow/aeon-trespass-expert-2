@@ -161,9 +161,8 @@ class TestTranslateUnits:
         ctx = _make_context(tmp_path, pdf)
         _run_through_plan(ctx)
 
-        stage = TranslateUnitsStage()
-        stage.set_gateway(MockGateway())
-        stage.execute(ctx)
+        ctx.llm_gateway = MockGateway()
+        TranslateUnitsStage().execute(ctx)
 
         summary = ctx.artifact_store.read_artifact(
             ctx.run_id, ctx.doc_id, "translate_units", "summary.json", TranslationStageSummary
@@ -182,9 +181,8 @@ class TestTranslateUnits:
             ctx.run_id, ctx.doc_id, "plan_translation", "translation_plan.json", TranslationPlan
         )
 
-        stage = TranslateUnitsStage()
-        stage.set_gateway(MockGateway())
-        stage.execute(ctx)
+        ctx.llm_gateway = MockGateway()
+        TranslateUnitsStage().execute(ctx)
 
         for unit in plan.units:
             result = ctx.artifact_store.read_artifact(
@@ -203,9 +201,8 @@ class TestTranslateUnits:
         ctx = _make_context(tmp_path, pdf)
         _run_through_plan(ctx)
 
-        stage = TranslateUnitsStage()
-        stage.set_gateway(MockGateway(fail=True))
-        stage.execute(ctx)
+        ctx.llm_gateway = MockGateway(fail=True)
+        TranslateUnitsStage().execute(ctx)
 
         summary = ctx.artifact_store.read_artifact(
             ctx.run_id, ctx.doc_id, "translate_units", "summary.json", TranslationStageSummary
@@ -221,9 +218,8 @@ class TestTranslateUnits:
         ctx = _make_context(tmp_path, pdf)
         _run_through_plan(ctx)
 
-        stage = TranslateUnitsStage()
-        stage.set_gateway(MockGateway(bad_json=True))
-        stage.execute(ctx)
+        ctx.llm_gateway = MockGateway(bad_json=True)
+        TranslateUnitsStage().execute(ctx)
 
         collected = ctx.errors.collect()
         assert len(collected) > 0, "Validation errors must be recorded in the error collector"
@@ -235,9 +231,8 @@ class TestTranslateUnits:
         ctx = _make_context(tmp_path, pdf)
         _run_through_plan(ctx)
 
-        stage = TranslateUnitsStage()
-        stage.set_gateway(MockGateway(bad_json=True))
-        stage.execute(ctx)
+        ctx.llm_gateway = MockGateway(bad_json=True)
+        TranslateUnitsStage().execute(ctx)
 
         summary = ctx.artifact_store.read_artifact(
             ctx.run_id, ctx.doc_id, "translate_units", "summary.json", TranslationStageSummary
@@ -251,9 +246,8 @@ class TestTranslateUnits:
         _run_through_plan(ctx)
 
         # First run — populates cache
-        stage1 = TranslateUnitsStage()
-        stage1.set_gateway(MockGateway())
-        stage1.execute(ctx)
+        ctx.llm_gateway = MockGateway()
+        TranslateUnitsStage().execute(ctx)
 
         # Second run — should hit cache
         store2 = ArtifactStore(tmp_path / "artifacts")
@@ -263,9 +257,8 @@ class TestTranslateUnits:
         # Re-run pipeline stages to populate new run's artifacts
         _run_through_plan(ctx2)
 
-        stage2 = TranslateUnitsStage()
-        stage2.set_gateway(MockGateway())
-        stage2.execute(ctx2)
+        ctx2.llm_gateway = MockGateway()
+        TranslateUnitsStage().execute(ctx2)
 
         summary = ctx2.artifact_store.read_artifact(
             ctx2.run_id, ctx2.doc_id, "translate_units", "summary.json", TranslationStageSummary
@@ -291,9 +284,8 @@ class TestTranslateUnits:
             empty_plan,
         )
 
-        stage = TranslateUnitsStage()
-        stage.set_gateway(MockGateway())
-        stage.execute(ctx)
+        ctx.llm_gateway = MockGateway()
+        TranslateUnitsStage().execute(ctx)
 
         summary = ctx.artifact_store.read_artifact(
             ctx.run_id, ctx.doc_id, "translate_units", "summary.json", TranslationStageSummary
