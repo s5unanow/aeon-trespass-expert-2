@@ -37,7 +37,6 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     SiteBundleManifest,
 )
 from aeon_reader_pipeline.stage_framework.context import StageContext
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
 from aeon_reader_pipeline.stages.export_site_bundle import (
@@ -123,7 +122,7 @@ def _create_pdf(path: Path) -> None:
     doc.close()
 
 
-def _run_through_safe_fixes(ctx: StageContext) -> None:
+def _run_through_enrich(ctx: StageContext) -> None:
     IngestSourceStage().execute(ctx)
     ExtractPrimitivesStage().execute(ctx)
     NormalizeLayoutStage().execute(ctx)
@@ -134,7 +133,6 @@ def _run_through_safe_fixes(ctx: StageContext) -> None:
     MergeLocalizationStage().execute(ctx)
     EnrichContentStage().execute(ctx)
     EvaluateQAStage().execute(ctx)
-    ApplySafeFixesStage().execute(ctx)
 
 
 class TestConvertPageToBundle:
@@ -289,7 +287,7 @@ class TestExportSiteBundleIntegration:
         pdf = tmp_path / "source.pdf"
         _create_pdf(pdf)
         ctx = _make_context(tmp_path, pdf)
-        _run_through_safe_fixes(ctx)
+        _run_through_enrich(ctx)
         ExportSiteBundleStage().execute(ctx)
 
         # Bundle manifest
@@ -348,7 +346,7 @@ class TestExportSiteBundleIntegration:
                 ),
             ],
         )
-        _run_through_safe_fixes(ctx)
+        _run_through_enrich(ctx)
         ExportSiteBundleStage().execute(ctx)
 
         manifest = ctx.artifact_store.read_artifact(

@@ -1,7 +1,7 @@
 """Stage 11 — export finalized content as a site bundle for the reader app.
 
-Reads from apply_safe_fixes (10_fix) pages, enrich_content navigation/search/
-summary, and evaluate_qa summary. Produces public BundlePage files and bundle
+Reads from enrich_content (08_enrich) pages, navigation/search/summary,
+and evaluate_qa summary. Produces public BundlePage files and bundle
 manifest under 11_export/site_bundle/<doc_id>/.
 """
 
@@ -374,13 +374,13 @@ class ExportSiteBundleStage(BaseStage):
             is_preview=is_preview,
         )
 
-        # Convert and write bundle pages (read from apply_safe_fixes)
+        # Convert and write bundle pages (read from enrich_content)
         artifacts: list[BuildArtifact] = []
         for page_num in page_nums:
             record = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,
-                "apply_safe_fixes",
+                "enrich_content",
                 f"pages/p{page_num:04d}.json",
                 PageRecord,
             )

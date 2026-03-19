@@ -23,7 +23,6 @@ from aeon_reader_pipeline.models.config_models import (
 from aeon_reader_pipeline.models.release_models import ReleaseManifest
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.stage_framework.context import StageContext
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.build_reader import BuildReaderStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
@@ -122,7 +121,6 @@ def _run_full_pipeline(ctx: StageContext) -> None:
     MergeLocalizationStage().execute(ctx)
     EnrichContentStage().execute(ctx)
     EvaluateQAStage().execute(ctx)
-    ApplySafeFixesStage().execute(ctx)
     ExportSiteBundleStage().execute(ctx)
     BuildReaderStage().execute(ctx)
     IndexSearchStage().execute(ctx)

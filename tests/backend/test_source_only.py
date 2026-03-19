@@ -39,7 +39,6 @@ from aeon_reader_pipeline.stage_framework.registry import (
     TRANSLATION_STAGES,
     filter_stages,
 )
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
 from aeon_reader_pipeline.stages.export_site_bundle import ExportSiteBundleStage
@@ -144,7 +143,6 @@ class TestFilterStagesExclude:
             "plan_translation",
             "enrich_content",
             "evaluate_qa",
-            "apply_safe_fixes",
             "export_site_bundle",
         ]
 
@@ -279,9 +277,6 @@ class TestSourceOnlyPipeline:
             ctx.run_id, ctx.doc_id, "evaluate_qa", "summary.json", QASummary
         )
         assert qa.gate_skipped is True
-
-        # 10: Apply safe fixes
-        ApplySafeFixesStage().execute(ctx)
 
         # 11: Export
         ExportSiteBundleStage().execute(ctx)

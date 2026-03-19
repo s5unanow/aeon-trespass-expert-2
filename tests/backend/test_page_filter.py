@@ -29,7 +29,6 @@ from aeon_reader_pipeline.models.enrich_models import DocumentSummary
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.models.site_bundle_models import BundlePage, SiteBundleManifest
 from aeon_reader_pipeline.stage_framework.context import StageContext
-from aeon_reader_pipeline.stages.apply_safe_fixes import ApplySafeFixesStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
 from aeon_reader_pipeline.stages.export_site_bundle import ExportSiteBundleStage
@@ -210,9 +209,6 @@ class TestPageScopedPipeline:
         # QA (gate skipped)
         EvaluateQAStage().execute(ctx)
 
-        # Apply fixes
-        ApplySafeFixesStage().execute(ctx)
-
         # Export
         ExportSiteBundleStage().execute(ctx)
 
@@ -257,7 +253,6 @@ class TestPageScopedPipeline:
         _run_structural_stages(ctx)
         EnrichContentStage().execute(ctx)
         EvaluateQAStage().execute(ctx)
-        ApplySafeFixesStage().execute(ctx)
         ExportSiteBundleStage().execute(ctx)
 
         manifest = ctx.artifact_store.read_artifact(
@@ -281,7 +276,6 @@ class TestPageScopedPipeline:
         _run_structural_stages(ctx)
         EnrichContentStage().execute(ctx)
         EvaluateQAStage().execute(ctx)
-        ApplySafeFixesStage().execute(ctx)
         ExportSiteBundleStage().execute(ctx)
 
         manifest = ctx.artifact_store.read_artifact(

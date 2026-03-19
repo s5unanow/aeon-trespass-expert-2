@@ -75,7 +75,6 @@ translate_units          # 06 — LLM translation (costs money!)
 merge_localization       # 07 — Merge translations back
 enrich_content           # 08 — Add metadata, glossary links
 evaluate_qa              # 09 — QA checks
-apply_safe_fixes         # 10 — Auto-fix issues
 export_site_bundle       # 11 — Export to site bundle format
 build_reader             # 12 — Build static site
 index_search             # 13 — Index for search
