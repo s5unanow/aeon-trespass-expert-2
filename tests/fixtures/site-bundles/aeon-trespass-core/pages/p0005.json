@@ -1,0 +1,77 @@
+{
+  "anchors": [
+    {
+      "anchor_id": "aeon-trespass-core:p0005:rules",
+      "block_id": "aeon-trespass-core:p0005:b001:heading",
+      "label": "Game Rules"
+    }
+  ],
+  "blocks": [
+    {
+      "block_id": "aeon-trespass-core:p0005:b001:heading",
+      "kind": "heading",
+      "level": 1,
+      "anchor": "aeon-trespass-core:p0005:rules",
+      "content": [
+        {
+          "kind": "text",
+          "text": "Game Rules",
+          "ru_text": "Правила игры",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    },
+    {
+      "block_id": "aeon-trespass-core:p0005:b002:paragraph",
+      "kind": "paragraph",
+      "content": [
+        {
+          "kind": "text",
+          "text": "Players take turns performing actions during the battle phase.",
+          "ru_text": "Игроки по очереди выполняют действия во время фазы сражения.",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    },
+    {
+      "block_id": "aeon-trespass-core:p0005:b003:list",
+      "kind": "list",
+      "list_type": "unordered",
+      "items": [
+        {
+          "content": [
+            {
+              "kind": "text",
+              "text": "Move your character",
+              "ru_text": "Переместите персонажа",
+              "bold": false,
+              "italic": false,
+              "monospace": false
+            }
+          ]
+        },
+        {
+          "content": [
+            {
+              "kind": "text",
+              "text": "Attack an enemy",
+              "ru_text": "Атакуйте врага",
+              "bold": false,
+              "italic": false,
+              "monospace": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "doc_id": "aeon-trespass-core",
+  "height_pt": 841.89,
+  "page_number": 5,
+  "render_mode": "semantic",
+  "width_pt": 595.28
+}

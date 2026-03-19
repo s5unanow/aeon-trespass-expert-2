@@ -126,7 +126,7 @@ addopts = "-v --tb=short --cov=aeon_reader_pipeline --cov-fail-under=60"
 
 [tool.coverage.run]
 source = ["packages/pipeline/src/aeon_reader_pipeline"]
-omit = ["*/cli/*"]
+omit = []
 
 [tool.coverage.report]
 show_missing = true

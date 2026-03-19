@@ -1,0 +1,18 @@
+{
+  "doc_id": "aeon-trespass-core",
+  "documents": [
+    {
+      "page_number": 3,
+      "title": "Contents",
+      "body": "Table of contents for the rulebook.",
+      "url": "/docs/aeon-trespass-core/page/3/"
+    },
+    {
+      "page_number": 5,
+      "title": "Game Rules",
+      "body": "Players take turns performing actions during the battle phase.",
+      "url": "/docs/aeon-trespass-core/page/5/"
+    }
+  ],
+  "total_documents": 2
+}
