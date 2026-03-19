@@ -149,7 +149,7 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
 class TestFullPipeline:
     """Run all 15 stages and validate key artifacts at each boundary."""
 
-    def test_full_pipeline_produces_release(self, tmp_path: Path) -> None:  # noqa: PLR0915
+    def test_full_pipeline_produces_release(self, tmp_path: Path) -> None:
         pdf = tmp_path / "fixture.pdf"
         _create_fixture_pdf(pdf)
         ctx = _make_context(tmp_path, pdf)
@@ -175,9 +175,8 @@ class TestFullPipeline:
         PlanTranslationStage().execute(ctx)
 
         # Stage 6: Translate units
-        translate = TranslateUnitsStage()
-        translate.set_gateway(MockGateway())
-        translate.execute(ctx)
+        ctx.llm_gateway = MockGateway()
+        TranslateUnitsStage().execute(ctx)
 
         # Stage 7: Merge localization
         MergeLocalizationStage().execute(ctx)

@@ -10,6 +10,7 @@ import structlog
 import typer
 
 if TYPE_CHECKING:
+    from aeon_reader_pipeline.llm.base import LlmGateway
     from aeon_reader_pipeline.models.config_models import ModelProfile
     from aeon_reader_pipeline.models.run_models import CostEstimate, PipelineConfig
     from aeon_reader_pipeline.stage_framework.context import StageContext
@@ -34,14 +35,15 @@ def _setup_gateway(
     cli: bool,
     dry_run: bool,
     pipeline_config: PipelineConfig,
-) -> PipelineConfig:
-    """Configure the LLM gateway on TranslateUnitsStage and return pipeline_config.
+) -> tuple[PipelineConfig, LlmGateway | None]:
+    """Configure the LLM gateway and return (pipeline_config, gateway).
 
-    Returns a (possibly updated) pipeline_config to allow concurrency changes.
+    Returns a (possibly updated) pipeline_config to allow concurrency changes,
+    and the gateway instance (or None for dry-run).
     """
     from aeon_reader_pipeline.llm.base import LlmGateway, LlmResponse
-    from aeon_reader_pipeline.stages.translate_units import TranslateUnitsStage
 
+    llm_gateway: LlmGateway | None = None
     if mock:
 
         class _MockGateway(LlmGateway):
@@ -64,20 +66,20 @@ def _setup_gateway(
             def provider_name(self) -> str:
                 return "mock"
 
-        TranslateUnitsStage._gateway = _MockGateway()
+        llm_gateway = _MockGateway()
         typer.echo("Using mock translation gateway.")
     elif cli:
         from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
 
-        TranslateUnitsStage._gateway = GeminiCliGateway()
+        llm_gateway = GeminiCliGateway()
         pipeline_config = pipeline_config.model_copy(update={"llm_concurrency": 1})
         typer.echo("Using Gemini CLI gateway (concurrency=1).")
     elif not dry_run:
         from aeon_reader_pipeline.llm.gemini import GeminiProvider
 
-        TranslateUnitsStage._gateway = GeminiProvider()
+        llm_gateway = GeminiProvider()
 
-    return pipeline_config
+    return pipeline_config, llm_gateway
 
 
 @app.command()
@@ -169,8 +171,8 @@ def run(  # noqa: PLR0913
         artifact_root=str(artifact_root.resolve()),
     )
 
-    # Set up translation gateway
-    pipeline_config = _setup_gateway(
+    # Set up translation gateway — injected via StageContext for clean isolation
+    pipeline_config, llm_gateway = _setup_gateway(
         mock=mock,
         cli=cli,
         dry_run=dry_run,
@@ -209,6 +211,7 @@ def run(  # noqa: PLR0913
             patch_set=patch_set,
             artifact_store=store,
             configs_root=configs_root,
+            llm_gateway=llm_gateway,
         )
 
         runner.run(ctx)

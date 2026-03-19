@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -19,6 +19,9 @@ from aeon_reader_pipeline.models.config_models import (
     SymbolPack,
 )
 from aeon_reader_pipeline.models.run_models import PipelineConfig, StageErrorRecord
+
+if TYPE_CHECKING:
+    from aeon_reader_pipeline.llm.base import LlmGateway
 
 
 class ErrorCollector:
@@ -68,6 +71,7 @@ class StageContext:
     patch_set: PatchSet | None
     artifact_store: ArtifactStore
     configs_root: Path
+    llm_gateway: LlmGateway | None = None
     logger: Any = field(default_factory=lambda: structlog.get_logger())
     errors: ErrorCollector = field(default_factory=ErrorCollector)
 

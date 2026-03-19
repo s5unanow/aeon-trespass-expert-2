@@ -174,13 +174,6 @@ class TranslateUnitsStage(BaseStage):
     version = STAGE_VERSION
     description = "Execute LLM translation of planned units with retry and caching"
 
-    # Injected gateway — None means stage will look for a real provider
-    _gateway: LlmGateway | None = None
-
-    def set_gateway(self, gateway: LlmGateway) -> None:
-        """Inject an LLM gateway (used for testing)."""
-        self._gateway = gateway
-
     def execute(self, ctx: StageContext) -> None:  # noqa: C901, PLR0915
         plan = ctx.artifact_store.read_artifact(
             ctx.run_id,
@@ -196,8 +189,8 @@ class TranslateUnitsStage(BaseStage):
             self._write_empty_summary(ctx, plan)
             return
 
-        # Set up gateway
-        gateway = self._gateway
+        # Get gateway from context, fall back to default provider
+        gateway = ctx.llm_gateway
         if gateway is None:
             from aeon_reader_pipeline.llm.gemini import GeminiProvider
 

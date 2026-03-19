@@ -136,9 +136,8 @@ def _run_through_translate(ctx: StageContext) -> None:
     NormalizeLayoutStage().execute(ctx)
     ResolveAssetsSymbolsStage().execute(ctx)
     PlanTranslationStage().execute(ctx)
-    stage = TranslateUnitsStage()
-    stage.set_gateway(MockGateway())
-    stage.execute(ctx)
+    ctx.llm_gateway = MockGateway()
+    TranslateUnitsStage().execute(ctx)
 
 
 class TestMergeLocalizationUnit:
