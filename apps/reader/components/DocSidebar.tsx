@@ -5,6 +5,7 @@
 import Link from "next/link";
 import type { NavigationTree, SiteBundleManifest } from "@aeon-reader/contracts";
 import { docRoute } from "@/lib/routes";
+import { DocTitle } from "./DocTitle";
 import { TocTree } from "./TocTree";
 
 interface DocSidebarProps {
@@ -17,11 +18,8 @@ export function DocSidebar({ manifest, navigation }: DocSidebarProps) {
     <aside className="doc-sidebar">
       <div className="doc-sidebar-header">
         <Link href={docRoute(manifest.doc_id)} className="doc-sidebar-title">
-          {manifest.title_en}
+          <DocTitle titleEn={manifest.title_en} titleRu={manifest.title_ru} />
         </Link>
-        {manifest.title_ru && (
-          <span className="doc-sidebar-subtitle">{manifest.title_ru}</span>
-        )}
       </div>
       {navigation && navigation.entries.length > 0 && (
         <nav className="doc-sidebar-nav" aria-label="Table of contents">

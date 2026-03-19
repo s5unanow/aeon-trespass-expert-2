@@ -2,9 +2,12 @@
  * TocTree — table of contents tree navigation.
  */
 
+"use client";
+
 import Link from "next/link";
 import type { NavEntry } from "@aeon-reader/contracts";
 import { pageRoute } from "@/lib/routes";
+import { pickText, useLocale } from "@/lib/locale";
 
 interface TocTreeProps {
   entries: NavEntry[];
@@ -12,13 +15,14 @@ interface TocTreeProps {
 }
 
 function TocEntry({ entry, docId }: { entry: NavEntry; docId: string }) {
+  const { locale } = useLocale();
   return (
     <li className={`toc-entry toc-level-${entry.level}`}>
       <Link
         href={`${pageRoute(docId, entry.page_number)}#${entry.anchor_id}`}
         className="toc-link"
       >
-        {entry.label_ru || entry.label_en}
+        {pickText(entry.label_en, entry.label_ru, locale)}
       </Link>
       {entry.children.length > 0 && (
         <ul className="toc-children">
