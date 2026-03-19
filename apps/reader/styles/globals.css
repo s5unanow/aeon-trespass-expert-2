@@ -351,6 +351,38 @@ a:hover {
   max-width: var(--content-max-width);
 }
 
+/* Facsimile/hybrid fallback rendering */
+.facsimile-page {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.facsimile-placeholder {
+  padding: 2rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 0.5rem;
+  color: var(--color-fg-muted);
+  text-align: center;
+}
+
+.fallback-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+.hybrid-fallback {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.hybrid-fallback summary {
+  cursor: pointer;
+  color: var(--color-fg-muted);
+  font-size: 0.875rem;
+}
+
 .block-heading {
   font-family: var(--font-heading);
   color: var(--color-fg-heading);
