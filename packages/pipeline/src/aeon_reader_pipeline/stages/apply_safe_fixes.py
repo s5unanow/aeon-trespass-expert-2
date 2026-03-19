@@ -31,6 +31,8 @@ class ApplySafeFixesStage(BaseStage):
     description = "Copy enriched pages to fix output (v1 pass-through)"
 
     def execute(self, ctx: StageContext) -> None:
+        from aeon_reader_pipeline.utils.page_filter import pages_to_process
+
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -39,13 +41,14 @@ class ApplySafeFixesStage(BaseStage):
             DocumentManifest,
         )
 
+        page_nums = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
         ctx.logger.info(
             "applying_safe_fixes",
-            page_count=manifest.page_count,
+            page_count=len(page_nums),
             mode="pass-through",
         )
 
-        for page_num in range(1, manifest.page_count + 1):
+        for page_num in page_nums:
             record = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,

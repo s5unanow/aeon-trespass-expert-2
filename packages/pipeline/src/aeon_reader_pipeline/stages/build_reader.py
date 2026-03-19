@@ -154,8 +154,12 @@ class BuildReaderStage(BaseStage):
 
         # Build expected routes
         routes = [f"/docs/{ctx.doc_id}"]
-        for page_num in range(1, bundle_manifest.page_count + 1):
-            routes.append(f"/docs/{ctx.doc_id}/page/{page_num}")
+        if bundle_manifest.filtered_pages:
+            for page_num in bundle_manifest.filtered_pages:
+                routes.append(f"/docs/{ctx.doc_id}/page/{page_num}")
+        else:
+            for page_num in range(1, bundle_manifest.page_count + 1):
+                routes.append(f"/docs/{ctx.doc_id}/page/{page_num}")
 
         build_manifest = ReaderBuildManifest(
             doc_id=ctx.doc_id,

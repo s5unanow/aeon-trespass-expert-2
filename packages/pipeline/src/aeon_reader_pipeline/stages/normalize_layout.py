@@ -512,9 +512,12 @@ class NormalizeLayoutStage(BaseStage):
             DocumentManifest,
         )
 
-        ctx.logger.info("normalizing_layout", page_count=manifest.page_count)
+        from aeon_reader_pipeline.utils.page_filter import pages_to_process
 
-        for page_num in range(1, manifest.page_count + 1):
+        page_nums = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
+        ctx.logger.info("normalizing_layout", page_count=len(page_nums))
+
+        for page_num in page_nums:
             extracted = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,
@@ -558,4 +561,4 @@ class NormalizeLayoutStage(BaseStage):
                 anchors=len(anchors),
             )
 
-        ctx.logger.info("normalization_complete", pages=manifest.page_count)
+        ctx.logger.info("normalization_complete", pages=len(page_nums))

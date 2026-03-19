@@ -363,14 +363,20 @@ class ExportSiteBundleStage(BaseStage):
             DocumentManifest,
         )
 
+        from aeon_reader_pipeline.utils.page_filter import pages_to_process
+
+        page_filter = ctx.pipeline_config.page_filter
+        page_nums = pages_to_process(manifest.page_count, page_filter)
+        is_preview = page_filter is not None
         ctx.logger.info(
             "exporting_site_bundle",
-            page_count=manifest.page_count,
+            page_count=len(page_nums),
+            is_preview=is_preview,
         )
 
         # Convert and write bundle pages (read from apply_safe_fixes)
         artifacts: list[BuildArtifact] = []
-        for page_num in range(1, manifest.page_count + 1):
+        for page_num in page_nums:
             record = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,
@@ -481,7 +487,7 @@ class ExportSiteBundleStage(BaseStage):
         bundle_manifest = SiteBundleManifest(
             doc_id=ctx.doc_id,
             run_id=ctx.run_id,
-            page_count=manifest.page_count,
+            page_count=len(page_nums),
             title_en=doc_summary.title_en,
             title_ru=doc_summary.title_ru,
             route_base=ctx.document_config.build.route_base,
@@ -493,6 +499,9 @@ class ExportSiteBundleStage(BaseStage):
             has_glossary=_export_glossary(ctx, artifacts),
             assets=asset_entries,
             qa_accepted=qa_accepted,
+            is_preview=is_preview,
+            filtered_pages=page_filter,
+            total_source_pages=manifest.page_count if is_preview else None,
             stage_version=STAGE_VERSION,
         )
         manifest_path = ctx.artifact_store.write_artifact(

@@ -111,6 +111,7 @@ def _build_pipeline_config(  # noqa: PLR0913
     dry_run: bool,
     concurrency: int,
     artifact_root: Path,
+    page_filter: list[int] | None = None,
 ) -> PipelineConfig:
     """Build a PipelineConfig from CLI arguments."""
     from aeon_reader_pipeline.models.run_models import PipelineConfig, StageSelector
@@ -138,6 +139,7 @@ def _build_pipeline_config(  # noqa: PLR0913
         strict_mode=strict,
         skip_qa_gate=effective_skip_qa_gate,
         source_only=source_only,
+        page_filter=page_filter,
         llm_concurrency=concurrency,
         artifact_root=str(artifact_root.resolve()),
     )
@@ -164,6 +166,17 @@ def _print_run_summary(
         typer.echo("The bundle contains English source text only.")
     else:
         typer.echo(f"\nPipeline run {run_id} finished.")
+
+
+def _parse_pages_option(pages: str | None) -> list[int] | None:
+    """Parse the --pages CLI option into a page filter list."""
+    if pages is None:
+        return None
+    from aeon_reader_pipeline.utils.page_filter import parse_page_range
+
+    page_filter = parse_page_range(pages)
+    typer.echo(f"Page filter: {page_filter}")
+    return page_filter
 
 
 @app.command()
@@ -195,12 +208,18 @@ def run(  # noqa: PLR0913
         "--source-only",
         help="Skip translation stages and produce a source-text preview bundle",
     ),
+    pages: str | None = typer.Option(
+        None,
+        "--pages",
+        help="Page filter for preview (e.g. '15', '10-15', '1,5,8-12')",
+    ),
 ) -> None:
     """Execute a pipeline run."""
     if source_only and dry_run:
         typer.echo("Error: --source-only and --dry-run are mutually exclusive.", err=True)
         raise typer.Exit(1)
 
+    page_filter = _parse_pages_option(pages)
     _import_stages()
 
     from aeon_reader_pipeline.config.loader import (
@@ -248,6 +267,7 @@ def run(  # noqa: PLR0913
         dry_run=dry_run,
         concurrency=concurrency,
         artifact_root=artifact_root,
+        page_filter=page_filter,
     )
 
     # Set up translation gateway

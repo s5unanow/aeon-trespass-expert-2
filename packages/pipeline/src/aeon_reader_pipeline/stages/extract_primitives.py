@@ -315,10 +315,13 @@ class ExtractPrimitivesStage(BaseStage):
 
         doc = pymupdf.open(str(source_path))
         total_image_failures = 0
+        page_filter = ctx.pipeline_config.page_filter
         try:
             for page_idx in range(len(doc)):
-                page = doc[page_idx]
                 page_number = page_idx + 1
+                if page_filter and page_number not in page_filter:
+                    continue
+                page = doc[page_idx]
 
                 text_blocks, fonts_used, char_count = _extract_text_blocks(page)
                 images, img_failures = _extract_images(
