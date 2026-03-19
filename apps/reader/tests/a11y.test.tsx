@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
-import { render } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FigureLightbox } from "@/components/FigureLightbox";
 import { trapFocus } from "@/lib/a11y";
@@ -45,17 +45,36 @@ describe("FigureLightbox", () => {
 });
 
 describe("SearchDialog a11y", () => {
-  // SearchDialog depends on Pagefind which isn't available in test env,
-  // so we verify the ARIA roles via a static check on the source
-  it("uses role=list and role=listitem (not listbox/option)", () => {
-    const src = fs.readFileSync(
-      path.resolve(__dirname, "../components/SearchDialog.tsx"),
-      "utf-8"
+  it("uses role=list for results and role=listitem for each result", async () => {
+    // Mock pagefind search to return results for role verification
+    const mockSearch = vi.fn().mockResolvedValue([
+      { url: "/docs/core/page/1", excerpt: "A <mark>result</mark>" },
+    ]);
+    vi.doMock("@/lib/pagefind", () => ({ search: mockSearch }));
+
+    const { SearchDialog } = await import("@/components/SearchDialog");
+    const { act } = await import("@testing-library/react");
+
+    const { container } = render(
+      <SearchDialog open={true} onClose={vi.fn()} />
     );
-    expect(src).toContain('role="list"');
-    expect(src).toContain('role="listitem"');
-    expect(src).not.toContain('role="listbox"');
-    expect(src).not.toContain('role="option"');
+
+    const resultsList = container.querySelector("[role='list']");
+    expect(resultsList).not.toBeNull();
+    expect(resultsList!.getAttribute("aria-label")).toBe("Search results");
+
+    // Trigger a search to get listitem roles
+    const input = container.querySelector("input")!;
+    await act(async () => {
+      fireEvent.change(input, { target: { value: "test" } });
+    });
+
+    const items = container.querySelectorAll("[role='listitem']");
+    expect(items.length).toBeGreaterThan(0);
+
+    // Ensure no listbox/option roles are used (not appropriate for link lists)
+    expect(container.querySelector("[role='listbox']")).toBeNull();
+    expect(container.querySelector("[role='option']")).toBeNull();
   });
 });
 
