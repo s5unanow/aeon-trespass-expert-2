@@ -122,7 +122,7 @@ skips = [
 testpaths = ["tests/backend"]
 python_files = "test_*.py"
 python_functions = "test_*"
-addopts = "-v --tb=short --cov=aeon_reader_pipeline --cov-fail-under=60"
+addopts = "-v --tb=short --cov=aeon_reader_pipeline --cov-fail-under=85"
 
 [tool.coverage.run]
 source = ["packages/pipeline/src/aeon_reader_pipeline"]

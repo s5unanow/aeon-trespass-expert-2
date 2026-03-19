@@ -15,7 +15,7 @@ const config = [
     },
   },
   {
-    ignores: [".next/", "out/", "generated/"],
+    ignores: [".next/", "out/", "generated/", "coverage/"],
   },
 ];
 
