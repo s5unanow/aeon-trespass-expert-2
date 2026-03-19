@@ -315,11 +315,15 @@ class ExtractPrimitivesStage(BaseStage):
 
         doc = pymupdf.open(str(source_path))
         total_image_failures = 0
-        page_filter = ctx.pipeline_config.page_filter
+        page_filter_set = (
+            frozenset(ctx.pipeline_config.page_filter)
+            if ctx.pipeline_config.page_filter is not None
+            else None
+        )
         try:
             for page_idx in range(len(doc)):
                 page_number = page_idx + 1
-                if page_filter and page_number not in page_filter:
+                if page_filter_set is not None and page_number not in page_filter_set:
                     continue
                 page = doc[page_idx]
 

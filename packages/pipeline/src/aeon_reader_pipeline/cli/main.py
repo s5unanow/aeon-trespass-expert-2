@@ -174,7 +174,11 @@ def _parse_pages_option(pages: str | None) -> list[int] | None:
         return None
     from aeon_reader_pipeline.utils.page_filter import parse_page_range
 
-    page_filter = parse_page_range(pages)
+    try:
+        page_filter = parse_page_range(pages)
+    except ValueError as e:
+        typer.echo(f"Error: invalid --pages value: {e}", err=True)
+        raise typer.Exit(1) from None
     typer.echo(f"Page filter: {page_filter}")
     return page_filter
 

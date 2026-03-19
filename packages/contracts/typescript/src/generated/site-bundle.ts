@@ -170,6 +170,9 @@ export interface SiteBundleManifest {
   has_glossary: boolean;
   assets: BundleAssetEntry[];
   qa_accepted: boolean;
+  is_preview: boolean;
+  filtered_pages: number[] | null;
+  total_source_pages: number | null;
   stage_version: string;
 }
 

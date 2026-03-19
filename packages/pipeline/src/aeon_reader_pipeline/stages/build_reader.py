@@ -154,7 +154,7 @@ class BuildReaderStage(BaseStage):
 
         # Build expected routes
         routes = [f"/docs/{ctx.doc_id}"]
-        if bundle_manifest.filtered_pages:
+        if bundle_manifest.filtered_pages is not None:
             for page_num in bundle_manifest.filtered_pages:
                 routes.append(f"/docs/{ctx.doc_id}/page/{page_num}")
         else:
