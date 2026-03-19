@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import re
+
 from typer.testing import CliRunner
 
 from aeon_reader_pipeline.cli.main import app
 
 runner = CliRunner()
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    return _ANSI_RE.sub("", text)
 
 
 class TestListStages:
@@ -65,6 +73,7 @@ class TestRun:
     def test_run_help(self) -> None:
         result = runner.invoke(app, ["run", "--help"])
         assert result.exit_code == 0
-        assert "--doc" in result.output
-        assert "--mock" in result.output
-        assert "--dry-run" in result.output
+        output = _strip_ansi(result.output)
+        assert "--doc" in output
+        assert "--mock" in output
+        assert "--dry-run" in output
