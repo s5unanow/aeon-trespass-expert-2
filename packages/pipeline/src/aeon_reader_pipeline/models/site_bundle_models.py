@@ -242,6 +242,9 @@ class SiteBundleManifest(BaseModel):
     has_glossary: bool = False
     assets: list[BundleAssetEntry] = Field(default_factory=list)
     qa_accepted: bool = True
+    is_preview: bool = False
+    filtered_pages: list[int] | None = None
+    total_source_pages: int | None = None
     stage_version: str = "1.0.0"
 
 

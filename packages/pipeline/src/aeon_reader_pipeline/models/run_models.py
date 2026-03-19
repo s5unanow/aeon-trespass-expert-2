@@ -40,6 +40,7 @@ class PipelineConfig(BaseModel):
     retry_policy: RetryPolicy = Field(default_factory=RetryPolicy)
     artifact_root: str = "artifacts"
     source_only: bool = False
+    page_filter: list[int] | None = None
     release_channel: Literal["dev", "preview", "prod"] = "dev"
     baseline_run_ref: str | None = None
 

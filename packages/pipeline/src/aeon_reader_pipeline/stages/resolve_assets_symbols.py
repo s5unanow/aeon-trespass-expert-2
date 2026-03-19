@@ -144,12 +144,15 @@ class ResolveAssetsSymbolsStage(BaseStage):
             DocumentManifest,
         )
 
-        ctx.logger.info("resolving_assets_symbols", page_count=manifest.page_count)
+        from aeon_reader_pipeline.utils.page_filter import pages_to_process
+
+        page_nums = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
+        ctx.logger.info("resolving_assets_symbols", page_count=len(page_nums))
 
         symbol_tokens = _build_symbol_token_map(ctx)
         all_assets: list[ResolvedAsset] = []
 
-        for page_num in range(1, manifest.page_count + 1):
+        for page_num in page_nums:
             record = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,

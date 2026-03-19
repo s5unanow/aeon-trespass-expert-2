@@ -182,20 +182,23 @@ class EnrichContentStage(BaseStage):
             DocumentManifest,
         )
 
+        from aeon_reader_pipeline.utils.page_filter import pages_to_process
+
         # In source-only mode, read from resolve_assets_symbols (translation was skipped)
         page_source_stage = (
             "resolve_assets_symbols" if ctx.pipeline_config.source_only else "merge_localization"
         )
 
+        page_nums = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
         ctx.logger.info(
             "enriching_content",
-            page_count=manifest.page_count,
+            page_count=len(page_nums),
             page_source=page_source_stage,
         )
 
         # Load all pages from the appropriate upstream stage
         pages: list[PageRecord] = []
-        for page_num in range(1, manifest.page_count + 1):
+        for page_num in page_nums:
             record = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,
@@ -262,7 +265,7 @@ class EnrichContentStage(BaseStage):
             doc_id=ctx.doc_id,
             title_en=ctx.document_config.titles.en,
             title_ru=ctx.document_config.titles.ru,
-            page_count=manifest.page_count,
+            page_count=len(enriched_pages),
             block_count=total_blocks,
             heading_count=heading_count,
             translation_coverage=coverage,
