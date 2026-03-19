@@ -8,7 +8,7 @@ from aeon_reader_pipeline.models.ir_models import PageRecord, TextRun
 from aeon_reader_pipeline.models.qa_models import IssueLocation, QAIssue
 
 if TYPE_CHECKING:
-    from aeon_reader_pipeline.stages.enrich_content import NavigationTree
+    from aeon_reader_pipeline.models.enrich_models import NavigationTree
 
 
 class MissingTranslationRule:

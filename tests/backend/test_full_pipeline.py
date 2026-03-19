@@ -19,6 +19,11 @@ from aeon_reader_pipeline.models.config_models import (
     RuleProfile,
     SymbolPack,
 )
+from aeon_reader_pipeline.models.enrich_models import (
+    DocumentSummary,
+    NavigationTree,
+    SearchIndex,
+)
 from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.qa_models import QASummary
 from aeon_reader_pipeline.models.release_models import ReleaseManifest
@@ -34,12 +39,7 @@ from aeon_reader_pipeline.stages.build_reader import (
     BuildReaderStage,
     ReaderBuildManifest,
 )
-from aeon_reader_pipeline.stages.enrich_content import (
-    DocumentSummary,
-    EnrichContentStage,
-    NavigationTree,
-    SearchIndex,
-)
+from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
 from aeon_reader_pipeline.stages.export_site_bundle import ExportSiteBundleStage
 from aeon_reader_pipeline.stages.extract_primitives import ExtractPrimitivesStage

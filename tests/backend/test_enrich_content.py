@@ -19,6 +19,11 @@ from aeon_reader_pipeline.models.config_models import (
     RuleProfile,
     SymbolPack,
 )
+from aeon_reader_pipeline.models.enrich_models import (
+    DocumentSummary,
+    NavigationTree,
+    SearchIndex,
+)
 from aeon_reader_pipeline.models.ir_models import (
     HeadingBlock,
     PageRecord,
@@ -27,10 +32,7 @@ from aeon_reader_pipeline.models.ir_models import (
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stages.enrich_content import (
-    DocumentSummary,
     EnrichContentStage,
-    NavigationTree,
-    SearchIndex,
     _build_navigation,
     _build_search_documents,
     _compute_coverage,

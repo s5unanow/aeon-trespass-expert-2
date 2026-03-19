@@ -103,6 +103,12 @@ forbidden_modules = [
     "aeon_reader_pipeline.cli",
 ]
 
+[[tool.importlinter.contracts]]
+name = "QA must not import stages"
+type = "forbidden"
+source_modules = ["aeon_reader_pipeline.qa"]
+forbidden_modules = ["aeon_reader_pipeline.stages"]
+
 [tool.bandit]
 targets = ["packages/pipeline/src"]
 skips = [

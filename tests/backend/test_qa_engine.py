@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from aeon_reader_pipeline.models.enrich_models import NavigationTree
 from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.qa_models import QAIssue
 from aeon_reader_pipeline.qa.engine import QAEngine
-from aeon_reader_pipeline.stages.enrich_content import NavigationTree
 
 
 class StubRule:

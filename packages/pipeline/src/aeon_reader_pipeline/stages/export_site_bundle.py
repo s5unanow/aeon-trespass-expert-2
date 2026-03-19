@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import shutil
 
+from aeon_reader_pipeline.models.enrich_models import (
+    DocumentSummary,
+    NavigationTree,
+    SearchIndex,
+)
 from aeon_reader_pipeline.models.ir_models import (
     CalloutBlock,
     CaptionBlock,
@@ -53,11 +58,6 @@ from aeon_reader_pipeline.models.site_bundle_models import (
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
-from aeon_reader_pipeline.stages.enrich_content import (
-    DocumentSummary,
-    NavigationTree,
-    SearchIndex,
-)
 
 STAGE_NAME = "export_site_bundle"
 STAGE_VERSION = "1.0.0"
