@@ -1,0 +1,46 @@
+{
+  "anchors": [
+    {
+      "anchor_id": "fixture-odyssey:p0001:voyage",
+      "block_id": "fixture-odyssey:p0001:b001:heading",
+      "label": "The Voyage"
+    }
+  ],
+  "blocks": [
+    {
+      "block_id": "fixture-odyssey:p0001:b001:heading",
+      "kind": "heading",
+      "level": 1,
+      "anchor": "fixture-odyssey:p0001:voyage",
+      "content": [
+        {
+          "kind": "text",
+          "text": "The Voyage",
+          "ru_text": "Путешествие",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    },
+    {
+      "block_id": "fixture-odyssey:p0001:b002:paragraph",
+      "kind": "paragraph",
+      "content": [
+        {
+          "kind": "text",
+          "text": "Set sail on a journey through the ancient seas.",
+          "ru_text": "Отправьтесь в путешествие по древним морям.",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    }
+  ],
+  "doc_id": "fixture-odyssey",
+  "height_pt": 841.89,
+  "page_number": 1,
+  "render_mode": "semantic",
+  "width_pt": 595.28
+}

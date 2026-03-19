@@ -77,7 +77,11 @@ def _sync_bundle(ctx: StageContext, log: Any) -> tuple[Path, int]:
 
 
 def _write_catalog(ctx: StageContext, bundle_manifest: SiteBundleManifest) -> None:
-    """Write or update the catalog manifest in the generated root."""
+    """Write or update the catalog manifest in the generated root.
+
+    Respects ``include_in_catalog`` from the document config: when False the
+    document is removed from the catalog (or never added).
+    """
     generated_root = _reader_generated_dir(ctx)
     catalog_path = generated_root / "catalog.json"
 
@@ -86,6 +90,14 @@ def _write_catalog(ctx: StageContext, bundle_manifest: SiteBundleManifest) -> No
     if catalog_path.exists():
         existing = orjson.loads(catalog_path.read_bytes())
         documents = [d for d in existing.get("documents", []) if d.get("doc_id") != ctx.doc_id]
+
+    if not ctx.document_config.build.include_in_catalog:
+        # Write catalog without this doc
+        catalog = {"documents": documents, "total_documents": len(documents)}
+        tmp_path = catalog_path.with_suffix(".tmp")
+        tmp_path.write_bytes(orjson.dumps(catalog, option=orjson.OPT_INDENT_2))
+        tmp_path.rename(catalog_path)
+        return
 
     documents.append(
         {

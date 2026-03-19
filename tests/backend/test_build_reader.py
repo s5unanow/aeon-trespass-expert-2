@@ -176,6 +176,22 @@ class TestBuildReaderStage:
         assert catalog["total_documents"] == 1
         assert catalog["documents"][0]["doc_id"] == "test-doc"
 
+    def test_include_in_catalog_false_excludes_doc(self, tmp_path: Path) -> None:
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        ctx.document_config.build.include_in_catalog = False
+        _run_through_export(ctx)
+        BuildReaderStage().execute(ctx)
+
+        catalog_path = tmp_path / "apps" / "reader" / "generated" / "catalog.json"
+        assert catalog_path.exists()
+        import orjson
+
+        catalog = orjson.loads(catalog_path.read_bytes())
+        assert catalog["total_documents"] == 0
+        assert len(catalog["documents"]) == 0
+
     def test_stage_registration(self) -> None:
         stage = BuildReaderStage()
         assert stage.name == "build_reader"

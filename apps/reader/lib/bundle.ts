@@ -68,9 +68,17 @@ export function loadGlossary(docId: string): BundleGlossary | null {
 }
 
 /**
- * Build a catalog manifest from all available documents.
+ * Load the authoritative catalog manifest.
+ *
+ * Uses catalog.json written by the pipeline's build_reader stage.
+ * Falls back to directory scanning if catalog.json is missing.
  */
 export function loadCatalog(): CatalogManifest {
+  const catalogPath = join(GENERATED_ROOT, "catalog.json");
+  if (existsSync(catalogPath)) {
+    return readJson<CatalogManifest>(catalogPath);
+  }
+  // Fallback: scan directories (for backwards compatibility)
   const docIds = listDocIds();
   const documents = docIds.map((docId) => {
     const manifest = loadBundleManifest(docId);

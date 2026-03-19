@@ -1,0 +1,23 @@
+{
+  "documents": [
+    {
+      "doc_id": "aeon-trespass-core",
+      "slug": "aeon-trespass-core",
+      "title_en": "Aeon Trespass: Core Rulebook",
+      "title_ru": "Aeon Trespass: Fixture",
+      "route_base": "/docs/aeon-trespass-core",
+      "page_count": 5,
+      "translation_coverage": 0.95
+    },
+    {
+      "doc_id": "fixture-odyssey",
+      "slug": "fixture-odyssey",
+      "title_en": "Aeon Trespass: Odyssey",
+      "title_ru": "Aeon Trespass: Одиссея",
+      "route_base": "/docs/fixture-odyssey",
+      "page_count": 2,
+      "translation_coverage": 0.88
+    }
+  ],
+  "total_documents": 2
+}
