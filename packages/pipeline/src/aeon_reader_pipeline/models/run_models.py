@@ -21,6 +21,7 @@ class StageSelector(BaseModel):
     from_stage: str | None = None
     to_stage: str | None = None
     only: list[str] | None = None
+    exclude: list[str] | None = None
 
 
 class PipelineConfig(BaseModel):
@@ -38,6 +39,7 @@ class PipelineConfig(BaseModel):
     llm_concurrency: int = 1
     retry_policy: RetryPolicy = Field(default_factory=RetryPolicy)
     artifact_root: str = "artifacts"
+    source_only: bool = False
     release_channel: Literal["dev", "preview", "prod"] = "dev"
     baseline_run_ref: str | None = None
 

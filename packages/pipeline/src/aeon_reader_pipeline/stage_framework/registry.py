@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 
+# Stages that perform LLM-based translation work
+TRANSLATION_STAGES: frozenset[str] = frozenset({"translate_units", "merge_localization"})
+
 # Canonical stage order
 STAGE_ORDER: list[str] = [
     "resolve_run",
@@ -58,23 +61,31 @@ def filter_stages(
     from_stage: str | None = None,
     to_stage: str | None = None,
     only: list[str] | None = None,
+    exclude: list[str] | None = None,
 ) -> list[str]:
     """Filter and return stage names based on selection criteria."""
     if only is not None:
         for name in only:
             if name not in STAGE_ORDER:
                 raise ValueError(f"Unknown stage: {name}")
-        return [name for name in STAGE_ORDER if name in only]
+        stages = [name for name in STAGE_ORDER if name in only]
+    else:
+        stages = list(STAGE_ORDER)
+        if from_stage is not None:
+            if from_stage not in STAGE_ORDER:
+                raise ValueError(f"Unknown from_stage: {from_stage}")
+            idx = stages.index(from_stage)
+            stages = stages[idx:]
+        if to_stage is not None:
+            if to_stage not in STAGE_ORDER:
+                raise ValueError(f"Unknown to_stage: {to_stage}")
+            idx = stages.index(to_stage)
+            stages = stages[: idx + 1]
 
-    stages = list(STAGE_ORDER)
-    if from_stage is not None:
-        if from_stage not in STAGE_ORDER:
-            raise ValueError(f"Unknown from_stage: {from_stage}")
-        idx = stages.index(from_stage)
-        stages = stages[idx:]
-    if to_stage is not None:
-        if to_stage not in STAGE_ORDER:
-            raise ValueError(f"Unknown to_stage: {to_stage}")
-        idx = stages.index(to_stage)
-        stages = stages[: idx + 1]
+    if exclude:
+        for name in exclude:
+            if name not in STAGE_ORDER:
+                raise ValueError(f"Unknown exclude stage: {name}")
+        stages = [s for s in stages if s not in exclude]
+
     return stages
