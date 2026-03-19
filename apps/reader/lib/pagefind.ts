@@ -33,7 +33,6 @@ export async function getPagefind(): Promise<PagefindInstance | null> {
     // Pagefind places its JS at /pagefind/pagefind.js in the built site.
     // Dynamic import with string concatenation to avoid TS module resolution.
     const pagefindPath = "/pagefind/pagefind.js";
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const pf = await import(/* webpackIgnore: true */ /* @vite-ignore */ pagefindPath);
     pagefindInstance = pf as PagefindInstance;
     return pagefindInstance;

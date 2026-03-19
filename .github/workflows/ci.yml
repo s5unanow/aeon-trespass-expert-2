@@ -48,6 +48,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - run: pnpm install
+      - run: pnpm --filter reader lint
       - run: pnpm -r run typecheck
       - run: pnpm --filter reader test
       - run: pnpm --filter reader build
