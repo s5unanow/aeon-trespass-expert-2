@@ -13,6 +13,7 @@ dev = [
     "aeon-reader-pipeline",
     "import-linter>=2.0,<3",
     "pytest-cov>=7.0.0",
+    "bandit[toml]>=1.8,<2",
 ]
 
 [tool.uv.workspace]
@@ -100,6 +101,15 @@ forbidden_modules = [
     "aeon_reader_pipeline.stages",
     "aeon_reader_pipeline.llm",
     "aeon_reader_pipeline.cli",
+]
+
+[tool.bandit]
+targets = ["packages/pipeline/src"]
+skips = [
+    "B101",  # assert_used — used for type narrowing / mypy guards
+    "B311",  # random for non-crypto — used only for retry jitter
+    "B404",  # import subprocess — low-value import-level warning
+    "B603",  # subprocess without shell — our calls use literal arg lists
 ]
 
 [tool.pytest.ini_options]

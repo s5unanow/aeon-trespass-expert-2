@@ -25,7 +25,7 @@ def render_system_prompt(
 
     env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(bundle_dir)),
-        autoescape=False,
+        autoescape=False,  # nosec B701
         keep_trailing_newline=True,
     )
     template = env.get_template(template_path.name)
