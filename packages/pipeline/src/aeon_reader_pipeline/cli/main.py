@@ -168,7 +168,7 @@ def run(  # noqa: PLR0913
         run_id=run_id,
         docs=doc_ids,
         stages=StageSelector(
-            from_stage=from_stage or "ingest_source",
+            from_stage=from_stage or "resolve_run",
             to_stage=effective_to_stage,
         ),
         cache_mode=cache_mode,  # type: ignore[arg-type]

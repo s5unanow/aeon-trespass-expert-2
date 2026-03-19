@@ -41,4 +41,4 @@ Not all stages can be re-run independently:
 - **Rate limiting (429)** → Built-in retry with exponential backoff handles this. If persistent, reduce concurrency or wait.
 - **PDF not found** → Check `source_pdf` path in document config. It's relative to CWD.
 - **Stage already completed** → Pipeline skips it. Use `--cache-mode force_refresh` to re-run.
-- **resolve_run stage empty** → Stage 00 is not fully implemented yet (S5U-127). Pipeline starts from `ingest_source` by default, which is fine.
+- **resolve_run fails** → Stage 00 validates configs and checks that `source_pdf` exists. If it fails, fix the config before proceeding.

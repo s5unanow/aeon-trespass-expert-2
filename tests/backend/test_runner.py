@@ -6,6 +6,7 @@ from aeon_reader_pipeline.stage_framework.registry import (
     STAGE_ORDER,
     filter_stages,
     get_all_stages_ordered,
+    get_registered_stages,
 )
 
 
@@ -17,6 +18,30 @@ def test_get_all_stages_ordered():
     stages = get_all_stages_ordered()
     assert stages[0] == "resolve_run"
     assert stages[-1] == "package_release"
+
+
+def test_all_stages_registered():
+    """Every stage in STAGE_ORDER must be registered after importing stages."""
+    import aeon_reader_pipeline.stages  # noqa: F401
+
+    registered = set(get_registered_stages())
+    for name in STAGE_ORDER:
+        assert name in registered, f"Stage '{name}' is not registered"
+
+
+def test_resolve_run_is_first_registered_stage():
+    """resolve_run must be first in the registered stage order."""
+    import aeon_reader_pipeline.stages  # noqa: F401
+
+    registered = get_registered_stages()
+    assert registered[0] == "resolve_run"
+
+
+def test_filter_from_resolve_run_includes_all():
+    """Starting from resolve_run includes all 15 stages."""
+    stages = filter_stages(from_stage="resolve_run")
+    assert stages == STAGE_ORDER
+    assert len(stages) == 15
 
 
 def test_filter_stages_all():
