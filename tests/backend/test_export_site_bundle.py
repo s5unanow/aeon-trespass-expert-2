@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pymupdf
+import pytest
 
 import aeon_reader_pipeline.stages.export_site_bundle as export_module
 from aeon_reader_pipeline.io.artifact_store import ArtifactStore
@@ -207,6 +208,10 @@ class TestConvertPageToBundle:
 
 
 class TestSymbolConversion:
+    @pytest.fixture(autouse=True)
+    def _reset_symbol_lookup(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(export_module, "_symbol_lookup", {})
+
     def test_symbol_gets_svg_data_from_lookup(self) -> None:
         svg = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/></svg>'
         export_module._symbol_lookup = {
@@ -235,10 +240,8 @@ class TestSymbolConversion:
         assert sym.label == "Action Point"
         assert sym.svg_data == svg
         assert sym.alt_text == "AP"
-        export_module._symbol_lookup = {}
 
     def test_symbol_falls_back_when_not_in_lookup(self) -> None:
-        export_module._symbol_lookup = {}
         record = PageRecord(
             page_number=1,
             doc_id="doc",
@@ -279,7 +282,6 @@ class TestSymbolConversion:
         bundle = convert_page_to_bundle(record)
         content = bundle.blocks[0].content  # type: ignore[union-attr]
         assert content[0].alt_text == "custom"
-        export_module._symbol_lookup = {}
 
 
 class TestExportSiteBundleIntegration:

@@ -230,7 +230,14 @@ def _build_symbol_lookup(ctx: StageContext) -> dict[str, tuple[str, str, str]]:
         if sym.svg_path:
             svg_file = ctx.configs_root / sym.svg_path
             if svg_file.is_file():
-                svg_data = svg_file.read_text(encoding="utf-8").strip()
+                try:
+                    svg_data = svg_file.read_text(encoding="utf-8").strip()
+                except OSError:
+                    ctx.logger.warning(
+                        "symbol_svg_read_failed",
+                        symbol_id=sym.symbol_id,
+                        svg_path=str(svg_file),
+                    )
         lookup[sym.symbol_id] = (sym.label_en, svg_data, sym.alt_text)
     return lookup
 
