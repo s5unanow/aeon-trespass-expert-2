@@ -238,9 +238,7 @@ def _extract_tables(
 
     for tbl_idx, table in enumerate(finder.tables):
         try:
-            bbox = BBox(
-                x0=table.bbox[0], y0=table.bbox[1], x1=table.bbox[2], y1=table.bbox[3]
-            )
+            bbox = BBox(x0=table.bbox[0], y0=table.bbox[1], x1=table.bbox[2], y1=table.bbox[3])
             extracted = table.extract()
             row_count = len(extracted)
             col_count = table.col_count
