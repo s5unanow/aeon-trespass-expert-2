@@ -1,5 +1,5 @@
 .PHONY: help bootstrap lint typecheck test test-backend test-frontend schemas \
-        site-dev site-build e2e clean
+        site-dev site-build e2e clean security-lint
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -13,6 +13,9 @@ lint: ## Run all linters
 	uv run ruff check packages/pipeline/src tests/backend
 	uv run ruff format --check packages/pipeline/src tests/backend
 	pnpm -r run lint
+
+security-lint: ## Run security linter (bandit)
+	uv run bandit -c pyproject.toml -r packages/pipeline/src
 
 typecheck: ## Run all type checkers
 	uv run mypy packages/pipeline/src
