@@ -1,0 +1,24 @@
+{
+  "anchors": [],
+  "blocks": [
+    {
+      "block_id": "aeon-trespass-core:p0002:b001:paragraph",
+      "kind": "paragraph",
+      "content": [
+        {
+          "kind": "text",
+          "text": "Copyright notice and legal information.",
+          "ru_text": "Уведомление об авторских правах.",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    }
+  ],
+  "doc_id": "aeon-trespass-core",
+  "height_pt": 841.89,
+  "page_number": 2,
+  "render_mode": "semantic",
+  "width_pt": 595.28
+}

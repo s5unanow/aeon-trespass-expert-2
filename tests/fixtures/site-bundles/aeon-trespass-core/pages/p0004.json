@@ -1,0 +1,46 @@
+{
+  "anchors": [
+    {
+      "anchor_id": "aeon-trespass-core:p0004:introduction",
+      "block_id": "aeon-trespass-core:p0004:b001:heading",
+      "label": "Introduction"
+    }
+  ],
+  "blocks": [
+    {
+      "block_id": "aeon-trespass-core:p0004:b001:heading",
+      "kind": "heading",
+      "level": 1,
+      "anchor": "aeon-trespass-core:p0004:introduction",
+      "content": [
+        {
+          "kind": "text",
+          "text": "Introduction",
+          "ru_text": "Введение",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    },
+    {
+      "block_id": "aeon-trespass-core:p0004:b002:paragraph",
+      "kind": "paragraph",
+      "content": [
+        {
+          "kind": "text",
+          "text": "Welcome to Aeon Trespass, a cooperative adventure game.",
+          "ru_text": "Добро пожаловать в Aeon Trespass, кооперативную приключенческую игру.",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    }
+  ],
+  "doc_id": "aeon-trespass-core",
+  "height_pt": 841.89,
+  "page_number": 4,
+  "render_mode": "semantic",
+  "width_pt": 595.28
+}

@@ -1,0 +1,33 @@
+{
+  "doc_id": "aeon-trespass-core",
+  "entries": [
+    {
+      "anchor_id": "aeon-trespass-core:p0003:contents",
+      "block_id": "aeon-trespass-core:p0003:b001:heading",
+      "children": [],
+      "label_en": "Contents",
+      "label_ru": "Содержание",
+      "level": 1,
+      "page_number": 3
+    },
+    {
+      "anchor_id": "aeon-trespass-core:p0004:introduction",
+      "block_id": "aeon-trespass-core:p0004:b001:heading",
+      "children": [],
+      "label_en": "Introduction",
+      "label_ru": "Введение",
+      "level": 1,
+      "page_number": 4
+    },
+    {
+      "anchor_id": "aeon-trespass-core:p0005:rules",
+      "block_id": "aeon-trespass-core:p0005:b001:heading",
+      "children": [],
+      "label_en": "Game Rules",
+      "label_ru": "Правила игры",
+      "level": 1,
+      "page_number": 5
+    }
+  ],
+  "total_entries": 3
+}

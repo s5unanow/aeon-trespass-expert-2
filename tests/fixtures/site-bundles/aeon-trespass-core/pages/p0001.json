@@ -1,0 +1,31 @@
+{
+  "anchors": [],
+  "blocks": [
+    {
+      "block_id": "aeon-trespass-core:p0001:b001:figure",
+      "kind": "figure",
+      "asset_ref": "/assets/aeon-trespass-core/cover.png",
+      "alt_text": "Cover art",
+      "caption_block_id": null
+    },
+    {
+      "block_id": "aeon-trespass-core:p0001:b002:paragraph",
+      "kind": "paragraph",
+      "content": [
+        {
+          "kind": "text",
+          "text": "RULEBOOK",
+          "ru_text": "КНИГА ПРАВИЛ",
+          "bold": true,
+          "italic": false,
+          "monospace": false
+        }
+      ]
+    }
+  ],
+  "doc_id": "aeon-trespass-core",
+  "height_pt": 841.89,
+  "page_number": 1,
+  "render_mode": "semantic",
+  "width_pt": 595.28
+}
