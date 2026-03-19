@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from aeon_reader_pipeline.models.enrich_models import SearchIndex
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
-from aeon_reader_pipeline.stages.enrich_content import SearchIndex
 
 STAGE_NAME = "index_search"
 STAGE_VERSION = "1.0.0"

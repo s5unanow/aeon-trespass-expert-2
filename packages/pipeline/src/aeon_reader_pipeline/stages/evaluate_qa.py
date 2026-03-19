@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from aeon_reader_pipeline.models.enrich_models import NavigationTree
 from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
 from aeon_reader_pipeline.qa import QualityGateError
@@ -13,7 +14,6 @@ from aeon_reader_pipeline.qa.rules.translation_rules import (
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
-from aeon_reader_pipeline.stages.enrich_content import NavigationTree
 
 STAGE_NAME = "evaluate_qa"
 STAGE_VERSION = "1.0.0"

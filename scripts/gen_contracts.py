@@ -23,6 +23,10 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from aeon_reader_pipeline.models.enrich_models import (
+    NavEntry,
+    NavigationTree,
+)
 from aeon_reader_pipeline.models.site_bundle_models import (
     BundleAssetEntry,
     BundleCalloutBlock,
@@ -45,10 +49,6 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     CatalogEntry,
     CatalogManifest,
     SiteBundleManifest,
-)
-from aeon_reader_pipeline.stages.enrich_content import (
-    NavEntry,
-    NavigationTree,
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────
