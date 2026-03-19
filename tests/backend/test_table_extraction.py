@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from aeon_reader_pipeline.models.extract_models import (
     BBox,
     ExtractedPage,
