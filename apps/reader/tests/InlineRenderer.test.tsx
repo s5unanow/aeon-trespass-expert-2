@@ -112,11 +112,13 @@ describe("InlineRenderer", () => {
   });
 
   describe("symbol node", () => {
-    it("renders a SymbolInline component", () => {
+    it("renders text fallback when no svg_data", () => {
       const node: BundleSymbolRef = {
         kind: "symbol",
         symbol_id: "action-point",
         alt_text: "AP",
+        label: "Action Point",
+        svg_data: "",
       };
       const { container } = render(<InlineRenderer node={node} />);
       const symbol = container.querySelector(".inline-symbol");
@@ -124,6 +126,53 @@ describe("InlineRenderer", () => {
       expect(symbol!.getAttribute("data-symbol-id")).toBe("action-point");
       expect(symbol!.getAttribute("role")).toBe("img");
       expect(symbol!.getAttribute("aria-label")).toBe("AP");
+      expect(symbol!.getAttribute("title")).toBe("AP");
+      expect(symbol!.textContent).toBe("[AP]");
+    });
+
+    it("renders inline SVG when svg_data is provided", () => {
+      const svgContent = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/></svg>';
+      const node: BundleSymbolRef = {
+        kind: "symbol",
+        symbol_id: "action-point",
+        alt_text: "AP",
+        label: "Action Point",
+        svg_data: svgContent,
+      };
+      const { container } = render(<InlineRenderer node={node} />);
+      const symbol = container.querySelector(".inline-symbol--svg");
+      expect(symbol).not.toBeNull();
+      expect(symbol!.getAttribute("data-symbol-id")).toBe("action-point");
+      expect(symbol!.getAttribute("title")).toBe("AP");
+      expect(symbol!.querySelector("svg")).not.toBeNull();
+    });
+
+    it("uses label as fallback when alt_text is empty", () => {
+      const node: BundleSymbolRef = {
+        kind: "symbol",
+        symbol_id: "action-point",
+        alt_text: "",
+        label: "Action Point",
+        svg_data: "",
+      };
+      const { container } = render(<InlineRenderer node={node} />);
+      const symbol = container.querySelector(".inline-symbol");
+      expect(symbol!.getAttribute("aria-label")).toBe("Action Point");
+      expect(symbol!.textContent).toBe("[Action Point]");
+    });
+
+    it("uses symbolId as last-resort fallback", () => {
+      const node: BundleSymbolRef = {
+        kind: "symbol",
+        symbol_id: "action-point",
+        alt_text: "",
+        label: "",
+        svg_data: "",
+      };
+      const { container } = render(<InlineRenderer node={node} />);
+      const symbol = container.querySelector(".inline-symbol");
+      expect(symbol!.getAttribute("aria-label")).toBe("action-point");
+      expect(symbol!.textContent).toBe("[action-point]");
     });
   });
 
@@ -206,7 +255,7 @@ describe("InlineList", () => {
   it("does not insert space adjacent to symbol nodes (empty nodeText)", () => {
     const nodes: BundleInlineNode[] = [
       { kind: "text", text: "Cost:", ru_text: null, bold: false, italic: false, monospace: false },
-      { kind: "symbol", symbol_id: "ap", alt_text: "AP" },
+      { kind: "symbol", symbol_id: "ap", alt_text: "AP", label: "", svg_data: "" },
     ];
     const { container } = render(<InlineList nodes={nodes} />);
     // Symbol nodeText returns "" so no spacer is inserted

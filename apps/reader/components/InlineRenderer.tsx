@@ -22,7 +22,14 @@ export function InlineRenderer({ node }: InlineRendererProps) {
       return <span className="inline-text">{content}</span>;
     }
     case "symbol":
-      return <SymbolInline symbolId={node.symbol_id} altText={node.alt_text} />;
+      return (
+        <SymbolInline
+          symbolId={node.symbol_id}
+          altText={node.alt_text}
+          label={node.label}
+          svgData={node.svg_data}
+        />
+      );
     case "glossary_ref":
       return (
         <span
