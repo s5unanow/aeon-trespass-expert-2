@@ -11,3 +11,6 @@ prompt_bundle: translate-v1
 max_retries: 3
 retry_base_delay: 1.0
 retry_max_delay: 60.0
+# Pricing per million tokens (USD). Used for --dry-run cost estimation.
+input_price_per_mtok: 1.25
+output_price_per_mtok: 10.0
