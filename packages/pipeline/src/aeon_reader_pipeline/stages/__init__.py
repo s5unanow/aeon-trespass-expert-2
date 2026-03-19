@@ -16,6 +16,7 @@ from aeon_reader_pipeline.stages.normalize_layout import NormalizeLayoutStage
 from aeon_reader_pipeline.stages.package_release import PackageReleaseStage
 from aeon_reader_pipeline.stages.plan_translation import PlanTranslationStage
 from aeon_reader_pipeline.stages.resolve_assets_symbols import ResolveAssetsSymbolsStage
+from aeon_reader_pipeline.stages.resolve_run import ResolveRunStage
 from aeon_reader_pipeline.stages.translate_units import TranslateUnitsStage
 
 __all__ = [
@@ -32,5 +33,6 @@ __all__ = [
     "PackageReleaseStage",
     "PlanTranslationStage",
     "ResolveAssetsSymbolsStage",
+    "ResolveRunStage",
     "TranslateUnitsStage",
 ]
