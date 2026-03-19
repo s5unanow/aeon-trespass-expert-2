@@ -82,11 +82,20 @@ export interface BundleCaptionBlock {
   parent_block_id: string | null;
 }
 
+export interface BundleTableCell {
+  row: number;
+  col: number;
+  text: string;
+  row_span: number;
+  col_span: number;
+}
+
 export interface BundleTableBlock {
   kind: "table";
   block_id: string;
   rows: number;
   cols: number;
+  cells: BundleTableCell[];
 }
 
 export interface BundleCalloutBlock {

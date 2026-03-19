@@ -430,6 +430,30 @@ h3.block-heading {
   border-radius: 0.3rem;
 }
 
+.block-table-wrap {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.block-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.block-table th,
+.block-table td {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.block-table th {
+  background: var(--color-surface);
+  font-weight: 600;
+}
+
 /* Inline renderers */
 .inline-text {
   /* no extra styling needed — inherits from block */

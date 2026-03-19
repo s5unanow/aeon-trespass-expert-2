@@ -76,14 +76,41 @@ export function BlockRenderer({ block }: BlockRendererProps) {
           <InlineList nodes={block.content} />
         </figcaption>
       );
-    case "table":
+    case "table": {
+      if (block.cells.length === 0) {
+        return (
+          <div id={block.block_id} className="block-table-placeholder">
+            <p>
+              Table ({block.rows}&times;{block.cols})
+            </p>
+          </div>
+        );
+      }
+      const rows: string[][][] = [];
+      for (const cell of block.cells) {
+        while (rows.length <= cell.row) rows.push([]);
+        while (rows[cell.row].length <= cell.col) rows[cell.row].push([]);
+        rows[cell.row][cell.col] = [cell.text];
+      }
       return (
-        <div id={block.block_id} className="block-table-placeholder">
-          <p>
-            Table ({block.rows}&times;{block.cols})
-          </p>
+        <div id={block.block_id} className="block-table-wrap">
+          <table className="block-table">
+            <tbody>
+              {rows.map((row, rIdx) => (
+                <tr key={rIdx}>
+                  {row.map((cellArr, cIdx) => {
+                    const cellText = cellArr[0] ?? "";
+                    const isHeader = rIdx === 0;
+                    const Tag = isHeader ? "th" : "td";
+                    return <Tag key={cIdx}>{cellText}</Tag>;
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       );
+    }
     case "callout":
       return (
         <aside

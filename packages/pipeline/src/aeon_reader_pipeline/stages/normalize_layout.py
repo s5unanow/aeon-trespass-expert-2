@@ -15,6 +15,8 @@ from aeon_reader_pipeline.models.ir_models import (
     PageAnchor,
     PageRecord,
     ParagraphBlock,
+    TableBlock,
+    TableCell,
     TextRun,
 )
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
@@ -225,6 +227,29 @@ def _classify_blocks(  # noqa: C901, PLR0915
                 asset_ref=img.stored_as or img.content_hash[:16],
                 alt_text="",
                 source_block_index=900 + img.image_index,
+            )
+        )
+
+    # Add table blocks from extracted tables
+    for tbl in page.tables:
+        bid = block_id(doc_id, page_num, 800 + tbl.table_index, "table")
+        cells = [
+            TableCell(
+                row=c.row,
+                col=c.col,
+                text=c.text,
+                row_span=c.row_span,
+                col_span=c.col_span,
+            )
+            for c in tbl.cells
+        ]
+        blocks.append(
+            TableBlock(
+                block_id=bid,
+                rows=tbl.rows,
+                cols=tbl.cols,
+                cells=cells,
+                source_block_index=800 + tbl.table_index,
             )
         )
 

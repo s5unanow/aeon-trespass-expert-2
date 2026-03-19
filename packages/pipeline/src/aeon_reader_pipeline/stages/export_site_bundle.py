@@ -46,6 +46,7 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     BundleParagraphBlock,
     BundleSymbolRef,
     BundleTableBlock,
+    BundleTableCell,
     BundleTextRun,
     SiteBundleManifest,
 )
@@ -173,6 +174,16 @@ def _convert_block(
             block_id=block.block_id,
             rows=block.rows,
             cols=block.cols,
+            cells=[
+                BundleTableCell(
+                    row=c.row,
+                    col=c.col,
+                    text=c.text,
+                    row_span=c.row_span,
+                    col_span=c.col_span,
+                )
+                for c in block.cells
+            ],
         )
     if isinstance(block, CalloutBlock):
         return BundleCalloutBlock(

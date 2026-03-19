@@ -1,4 +1,40 @@
 {
+  "$defs": {
+    "BundleTableCell": {
+      "description": "Public table cell.",
+      "properties": {
+        "row": {
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "title": "Col",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "row_span": {
+          "default": 1,
+          "title": "Row Span",
+          "type": "integer"
+        },
+        "col_span": {
+          "default": 1,
+          "title": "Col Span",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "text"
+      ],
+      "title": "BundleTableCell",
+      "type": "object"
+    }
+  },
   "description": "Public table block.",
   "properties": {
     "kind": {
@@ -20,6 +56,13 @@
       "default": 0,
       "title": "Cols",
       "type": "integer"
+    },
+    "cells": {
+      "items": {
+        "$ref": "#/$defs/BundleTableCell"
+      },
+      "title": "Cells",
+      "type": "array"
     }
   },
   "required": [

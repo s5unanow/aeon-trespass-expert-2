@@ -117,6 +117,16 @@ class BundleCaptionBlock(BaseModel):
     parent_block_id: str | None = None
 
 
+class BundleTableCell(BaseModel):
+    """Public table cell."""
+
+    row: int
+    col: int
+    text: str
+    row_span: int = 1
+    col_span: int = 1
+
+
 class BundleTableBlock(BaseModel):
     """Public table block."""
 
@@ -124,6 +134,7 @@ class BundleTableBlock(BaseModel):
     block_id: str
     rows: int = 0
     cols: int = 0
+    cells: list[BundleTableCell] = Field(default_factory=list)
 
 
 class BundleCalloutBlock(BaseModel):

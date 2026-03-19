@@ -12,6 +12,8 @@ from aeon_reader_pipeline.models.extract_models import (
     ExtractedPage,
     FontInfo,
     RawImageInfo,
+    RawTableCell,
+    RawTableInfo,
     TextBlock,
     TextLine,
     TextSpan,
@@ -215,6 +217,69 @@ def _extract_images(
     return images, failures
 
 
+def _extract_tables(
+    page: pymupdf.Page,
+    *,
+    ctx: StageContext,
+    page_number: int,
+) -> list[RawTableInfo]:
+    """Extract table structures from a page using PyMuPDF's table finder."""
+    tables: list[RawTableInfo] = []
+    try:
+        finder = page.find_tables()  # type: ignore[attr-defined]
+    except Exception as exc:
+        ctx.logger.warning(
+            "table_detection_failed",
+            page=page_number,
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+        return tables
+
+    for tbl_idx, table in enumerate(finder.tables):
+        try:
+            bbox = BBox(
+                x0=table.bbox[0], y0=table.bbox[1], x1=table.bbox[2], y1=table.bbox[3]
+            )
+            extracted = table.extract()
+            row_count = len(extracted)
+            col_count = table.col_count
+            cells: list[RawTableCell] = []
+            for r_idx, row in enumerate(extracted):
+                for c_idx, cell_text in enumerate(row):
+                    cells.append(
+                        RawTableCell(
+                            row=r_idx,
+                            col=c_idx,
+                            text=cell_text or "",
+                        )
+                    )
+            tables.append(
+                RawTableInfo(
+                    table_index=tbl_idx,
+                    rows=row_count,
+                    cols=col_count,
+                    bbox=bbox,
+                    cells=cells,
+                )
+            )
+        except Exception as exc:
+            ctx.logger.warning(
+                "table_extraction_failed",
+                page=page_number,
+                table_index=tbl_idx,
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            ctx.errors.record(
+                error_type=type(exc).__name__,
+                message=str(exc),
+                page=page_number,
+                table_index=tbl_idx,
+            )
+    return tables
+
+
 def _page_filename(page_number: int) -> str:
     """Generate the canonical per-page filename."""
     return f"pages/p{page_number:04d}.json"
@@ -266,6 +331,7 @@ class ExtractPrimitivesStage(BaseStage):
                     ctx=ctx,
                 )
                 total_image_failures += img_failures
+                raw_tables = _extract_tables(page, ctx=ctx, page_number=page_number)
 
                 rect = page.rect
                 extracted = ExtractedPage(
@@ -275,6 +341,7 @@ class ExtractPrimitivesStage(BaseStage):
                     rotation=page.rotation,
                     text_blocks=text_blocks,
                     images=images,
+                    tables=raw_tables,
                     fonts_used=sorted(fonts_used),
                     char_count=char_count,
                     source_pdf_sha256=manifest.source_pdf_sha256,
