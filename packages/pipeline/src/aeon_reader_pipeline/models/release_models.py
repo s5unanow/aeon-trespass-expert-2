@@ -29,5 +29,8 @@ class ReleaseManifest(BaseModel):
     total_documents: int = 0
     all_accepted: bool = True
     rejection_reasons: list[str] = Field(default_factory=list)
+    artifact_path: str | None = None
+    artifact_size_bytes: int | None = None
+    artifact_sha256: str | None = None
     created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     stage_version: str = "1.0.0"

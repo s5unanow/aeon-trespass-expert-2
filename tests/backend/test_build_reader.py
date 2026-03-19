@@ -60,12 +60,17 @@ class MockGateway(LlmGateway):
 
 
 def _make_context(tmp_path: Path, source_pdf_path: Path) -> StageContext:
-    configs_root = source_pdf_path.parent / "configs"
+    # Use a dedicated configs dir under tmp_path so build_reader can
+    # derive the reader generated dir from configs_root.parent
+    configs_root = tmp_path / "configs"
     configs_root.mkdir(exist_ok=True)
-    prompts = configs_root.parent / "prompts" / "translate" / "v1"
+    prompts = tmp_path / "prompts" / "translate" / "v1"
     prompts.mkdir(parents=True, exist_ok=True)
     (prompts / "system.j2").write_text("Translate from {{ source_locale }} to {{ target_locale }}.")
     (prompts / "response_schema.json").write_text("{}")
+
+    # Create reader generated dir structure (build_reader writes here)
+    (tmp_path / "apps" / "reader" / "generated").mkdir(parents=True, exist_ok=True)
 
     store = ArtifactStore(tmp_path / "artifacts")
     store.create_run("run-001", ["test-doc"])
@@ -140,10 +145,38 @@ class TestBuildReaderStage:
         )
         assert manifest.doc_id == "test-doc"
         assert manifest.bundle_page_count == 1
-        assert manifest.build_status == "manifest-only"
+        assert manifest.build_status == "bundle-synced"
+        assert manifest.synced_files > 0
         assert len(manifest.routes) == 2  # doc root + 1 page
+
+    def test_syncs_bundle_to_reader(self, tmp_path: Path) -> None:
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        _run_through_export(ctx)
+        BuildReaderStage().execute(ctx)
+
+        generated = tmp_path / "apps" / "reader" / "generated" / "test-doc"
+        assert generated.exists()
+        assert (generated / "bundle_manifest.json").exists()
+        assert (generated / "pages" / "p0001.json").exists()
+
+    def test_writes_catalog(self, tmp_path: Path) -> None:
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        _run_through_export(ctx)
+        BuildReaderStage().execute(ctx)
+
+        catalog_path = tmp_path / "apps" / "reader" / "generated" / "catalog.json"
+        assert catalog_path.exists()
+        import orjson
+
+        catalog = orjson.loads(catalog_path.read_bytes())
+        assert catalog["total_documents"] == 1
+        assert catalog["documents"][0]["doc_id"] == "test-doc"
 
     def test_stage_registration(self) -> None:
         stage = BuildReaderStage()
         assert stage.name == "build_reader"
-        assert stage.version == "1.0.0"
+        assert stage.version == "2.0.0"

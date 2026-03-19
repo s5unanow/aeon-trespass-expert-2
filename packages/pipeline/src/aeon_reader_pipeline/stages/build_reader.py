@@ -1,12 +1,20 @@
-"""Stage 12 — build the static reader application from the site bundle.
+"""Stage 12 — sync exported site bundle to the reader application directory.
 
-This stage wraps the frontend build process. In v1 it records a build manifest
-and validates that the exported bundle exists. The actual pnpm build is deferred
-to EP-009 when the reader app is implemented.
+This stage copies the exported bundle from the pipeline artifact store into the
+reader's ``generated/`` directory and produces a catalog manifest.  The actual
+Next.js static build is an explicit operator step (``make site-build``).
+
+After this stage completes, ``apps/reader/generated/<doc_id>/`` contains
+everything the reader needs to build a static site.
 """
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
+from typing import Any
+
+import orjson
 from pydantic import BaseModel, Field
 
 from aeon_reader_pipeline.models.site_bundle_models import SiteBundleManifest
@@ -15,11 +23,11 @@ from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
 
 STAGE_NAME = "build_reader"
-STAGE_VERSION = "1.0.0"
+STAGE_VERSION = "2.0.0"
 
 
 class ReaderBuildManifest(BaseModel):
-    """Manifest recording what the reader build would produce."""
+    """Manifest recording the sync operation and expected routes."""
 
     doc_id: str
     run_id: str
@@ -27,23 +35,92 @@ class ReaderBuildManifest(BaseModel):
     has_navigation: bool = False
     has_search: bool = False
     build_status: str = "pending"
+    synced_files: int = 0
+    reader_generated_dir: str = ""
     routes: list[str] = Field(default_factory=list)
+
+
+def _reader_generated_dir(ctx: StageContext) -> Path:
+    """Derive the reader generated directory from the project root.
+
+    The project root is the parent of ``configs_root`` (which defaults to
+    ``<project>/configs``).
+    """
+    project_root = ctx.configs_root.parent
+    return project_root / "apps" / "reader" / "generated"
+
+
+def _sync_bundle(ctx: StageContext, log: Any) -> tuple[Path, int]:
+    """Copy the exported site bundle into the reader's generated directory.
+
+    Returns (generated_doc_dir, file_count).
+    """
+    export_dir = ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "export_site_bundle")
+    bundle_src = export_dir / "site_bundle" / ctx.doc_id
+
+    if not bundle_src.exists():
+        raise FileNotFoundError(f"Exported bundle not found: {bundle_src}")
+
+    generated_root = _reader_generated_dir(ctx)
+    generated_doc = generated_root / ctx.doc_id
+
+    # Remove stale content and copy fresh bundle
+    if generated_doc.exists():
+        shutil.rmtree(generated_doc)
+    shutil.copytree(bundle_src, generated_doc)
+
+    # Count synced files
+    file_count = sum(1 for _ in generated_doc.rglob("*") if _.is_file())
+
+    log.info("bundle_synced", dest=str(generated_doc), files=file_count)
+    return generated_doc, file_count
+
+
+def _write_catalog(ctx: StageContext, bundle_manifest: SiteBundleManifest) -> None:
+    """Write or update the catalog manifest in the generated root."""
+    generated_root = _reader_generated_dir(ctx)
+    catalog_path = generated_root / "catalog.json"
+
+    # Load existing catalog or start fresh
+    documents: list[dict[str, object]] = []
+    if catalog_path.exists():
+        existing = orjson.loads(catalog_path.read_bytes())
+        documents = [d for d in existing.get("documents", []) if d.get("doc_id") != ctx.doc_id]
+
+    documents.append(
+        {
+            "doc_id": bundle_manifest.doc_id,
+            "slug": bundle_manifest.doc_id,
+            "title_en": bundle_manifest.title_en,
+            "title_ru": bundle_manifest.title_ru,
+            "route_base": bundle_manifest.route_base,
+            "page_count": bundle_manifest.page_count,
+            "translation_coverage": bundle_manifest.translation_coverage,
+        }
+    )
+
+    catalog = {"documents": documents, "total_documents": len(documents)}
+
+    # Atomic write
+    tmp_path = catalog_path.with_suffix(".tmp")
+    tmp_path.write_bytes(orjson.dumps(catalog, option=orjson.OPT_INDENT_2))
+    tmp_path.rename(catalog_path)
 
 
 @register_stage
 class BuildReaderStage(BaseStage):
-    """Build the static reader from the exported site bundle.
+    """Sync site bundle to the reader generated directory and write catalog.
 
-    V1: validates exported bundle exists and records build manifest.
-    Future: shells out to pnpm build.
+    After this stage: ``apps/reader/generated/<doc_id>/`` is ready.
+    Run ``make site-build`` to produce the static HTML output.
     """
 
     name = STAGE_NAME
     version = STAGE_VERSION
-    description = "Build static reader from exported site bundle"
+    description = "Sync site bundle to reader and build catalog"
 
     def execute(self, ctx: StageContext) -> None:
-        # Validate exported bundle exists
+        # Read exported bundle manifest
         bundle_manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -55,8 +132,13 @@ class BuildReaderStage(BaseStage):
         ctx.logger.info(
             "building_reader",
             page_count=bundle_manifest.page_count,
-            mode="manifest-only",
         )
+
+        # Sync bundle to reader
+        generated_doc, file_count = _sync_bundle(ctx, ctx.logger)
+
+        # Write/update catalog
+        _write_catalog(ctx, bundle_manifest)
 
         # Build expected routes
         routes = [f"/docs/{ctx.doc_id}"]
@@ -69,7 +151,9 @@ class BuildReaderStage(BaseStage):
             bundle_page_count=bundle_manifest.page_count,
             has_navigation=bundle_manifest.has_navigation,
             has_search=bundle_manifest.has_search,
-            build_status="manifest-only",
+            build_status="bundle-synced",
+            synced_files=file_count,
+            reader_generated_dir=str(generated_doc),
             routes=routes,
         )
 
@@ -84,5 +168,6 @@ class BuildReaderStage(BaseStage):
         ctx.logger.info(
             "reader_build_complete",
             routes=len(routes),
-            status="manifest-only",
+            synced_files=file_count,
+            status="bundle-synced",
         )
