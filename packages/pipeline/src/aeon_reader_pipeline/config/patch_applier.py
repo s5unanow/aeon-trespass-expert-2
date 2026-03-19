@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from aeon_reader_pipeline.models.config_models import PatchEntry, PatchSet
 from aeon_reader_pipeline.models.ir_models import (
     Block,
@@ -29,24 +31,45 @@ def apply_patches(record: PageRecord, patch_set: PatchSet | None) -> PageRecord:
 
     new_blocks = list(record.blocks)
     render_mode = record.render_mode
+    fallback_image_ref = record.fallback_image_ref
 
     for patch in page_patches:
         if patch.action == "override_block_kind":
             new_blocks = _apply_override_block_kind(new_blocks, patch)
         elif patch.action == "set_render_mode":
-            mode = str(patch.payload.get("render_mode", "semantic"))
-            if mode == "hybrid":
-                render_mode = "hybrid"
-            elif mode == "facsimile":
-                render_mode = "facsimile"
-            elif mode == "semantic":
-                render_mode = "semantic"
+            render_mode = _resolve_render_mode(patch)
+            fallback_image_ref = _resolve_fallback_ref(patch, fallback_image_ref)
         elif patch.action == "force_fallback":
             render_mode = "facsimile"
+            fallback_image_ref = _resolve_fallback_ref(patch, fallback_image_ref)
         elif patch.action == "replace_text":
             new_blocks = _apply_replace_text(new_blocks, patch)
 
-    return record.model_copy(update={"blocks": new_blocks, "render_mode": render_mode})
+    return record.model_copy(
+        update={
+            "blocks": new_blocks,
+            "render_mode": render_mode,
+            "fallback_image_ref": fallback_image_ref,
+        }
+    )
+
+
+def _resolve_render_mode(
+    patch: PatchEntry,
+) -> Literal["semantic", "hybrid", "facsimile"]:
+    """Extract validated render_mode from a set_render_mode patch."""
+    mode = str(patch.payload.get("render_mode", "semantic"))
+    if mode == "hybrid":
+        return "hybrid"
+    if mode == "facsimile":
+        return "facsimile"
+    return "semantic"
+
+
+def _resolve_fallback_ref(patch: PatchEntry, current: str | None) -> str | None:
+    """Extract fallback_image_ref from a patch payload if present."""
+    ref = patch.payload.get("fallback_image_ref")
+    return str(ref) if ref is not None else current
 
 
 def _apply_override_block_kind(blocks: list[Block], patch: PatchEntry) -> list[Block]:

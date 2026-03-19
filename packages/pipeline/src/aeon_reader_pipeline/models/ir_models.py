@@ -205,6 +205,7 @@ class PageRecord(BaseModel):
     width_pt: float
     height_pt: float
     render_mode: Literal["semantic", "hybrid", "facsimile"] = "semantic"
+    fallback_image_ref: str | None = None
     blocks: list[Block] = Field(default_factory=list)
     anchors: list[PageAnchor] = Field(default_factory=list)
     source_pdf_sha256: str = ""
