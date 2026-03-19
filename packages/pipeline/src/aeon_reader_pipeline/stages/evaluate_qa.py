@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
+from aeon_reader_pipeline.qa import QualityGateError
 from aeon_reader_pipeline.qa.engine import QAEngine
 from aeon_reader_pipeline.qa.rules.translation_rules import (
     EmptyTranslationRule,
@@ -85,8 +86,17 @@ class EvaluateQAStage(BaseStage):
             )
 
         # Build and write summary
-        max_warnings = ctx.rule_profile.release.max_warnings
-        summary = engine.summarize(ctx.doc_id, issues, max_warnings)
+        gate_config = ctx.rule_profile.qa_gate
+        skip_gate = ctx.pipeline_config.skip_qa_gate
+        summary = engine.summarize(
+            ctx.doc_id,
+            issues,
+            gate_config=gate_config,
+        )
+
+        if skip_gate:
+            summary = summary.model_copy(update={"gate_skipped": True})
+
         ctx.artifact_store.write_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -101,4 +111,9 @@ class EvaluateQAStage(BaseStage):
             errors=summary.errors,
             warnings=summary.warnings,
             accepted=summary.accepted,
+            gate_skipped=skip_gate,
         )
+
+        # Enforce quality gate
+        if gate_config.enabled and not skip_gate and not summary.accepted:
+            raise QualityGateError(summary)

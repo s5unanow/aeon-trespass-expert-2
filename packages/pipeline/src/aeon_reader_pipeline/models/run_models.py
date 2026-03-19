@@ -33,6 +33,7 @@ class PipelineConfig(BaseModel):
         "read_write"
     )
     strict_mode: bool = False
+    skip_qa_gate: bool = False
     max_workers: int = 1
     llm_concurrency: int = 1
     retry_policy: RetryPolicy = Field(default_factory=RetryPolicy)

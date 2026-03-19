@@ -43,6 +43,15 @@ class QAIssue(BaseModel):
             self.issue_id = f"qa-{self.fingerprint[:12]}"
 
 
+class CategoryBreakdown(BaseModel):
+    """Issue counts for a single QA category."""
+
+    category: str
+    errors: int = 0
+    warnings: int = 0
+    infos: int = 0
+
+
 class QASummary(BaseModel):
     """Summary of QA evaluation for acceptance gating."""
 
@@ -52,7 +61,9 @@ class QASummary(BaseModel):
     warnings: int = 0
     infos: int = 0
     accepted: bool = True
+    gate_skipped: bool = False
     rejection_reasons: list[str] = Field(default_factory=list)
+    by_category: list[CategoryBreakdown] = Field(default_factory=list)
 
 
 class QADelta(BaseModel):

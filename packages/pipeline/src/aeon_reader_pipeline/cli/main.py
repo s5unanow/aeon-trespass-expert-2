@@ -109,6 +109,11 @@ def run(  # noqa: PLR0913
     to_stage: str | None = typer.Option(None, "--to", help="Stop after this stage"),
     cache_mode: str = typer.Option("read_write", help="Cache mode"),
     strict: bool = typer.Option(False, help="Enable strict mode"),
+    skip_qa_gate: bool = typer.Option(
+        False,
+        "--skip-qa-gate",
+        help="Skip QA quality gate (allow low quality)",
+    ),
     mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
     cli: bool = typer.Option(False, help="Use Gemini CLI instead of SDK (no API key needed)"),
     concurrency: int = typer.Option(5, help="LLM concurrency (parallel workers)"),
@@ -168,6 +173,7 @@ def run(  # noqa: PLR0913
         ),
         cache_mode=cache_mode,  # type: ignore[arg-type]
         strict_mode=strict,
+        skip_qa_gate=skip_qa_gate,
         llm_concurrency=concurrency,
         artifact_root=str(artifact_root.resolve()),
     )
