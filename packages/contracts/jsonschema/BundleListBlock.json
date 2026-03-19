@@ -89,6 +89,16 @@
           "default": "",
           "title": "Alt Text",
           "type": "string"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        },
+        "svg_data": {
+          "default": "",
+          "title": "Svg Data",
+          "type": "string"
         }
       },
       "required": [

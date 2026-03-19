@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pymupdf
 
+import aeon_reader_pipeline.stages.export_site_bundle as export_module
 from aeon_reader_pipeline.io.artifact_store import ArtifactStore
 from aeon_reader_pipeline.llm.base import LlmGateway, LlmResponse
 from aeon_reader_pipeline.models.config_models import (
@@ -24,6 +25,7 @@ from aeon_reader_pipeline.models.ir_models import (
     HeadingBlock,
     PageRecord,
     ParagraphBlock,
+    SymbolRef,
     TextRun,
 )
 from aeon_reader_pipeline.models.run_models import PipelineConfig
@@ -202,6 +204,82 @@ class TestConvertPageToBundle:
         assert content[0].text == "Hello"
         assert content[0].ru_text == "RU Hello"
         assert content[0].bold is True
+
+
+class TestSymbolConversion:
+    def test_symbol_gets_svg_data_from_lookup(self) -> None:
+        svg = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/></svg>'
+        export_module._symbol_lookup = {
+            "action-point": ("Action Point", svg, "AP"),
+        }
+        record = PageRecord(
+            page_number=1,
+            doc_id="doc",
+            width_pt=612,
+            height_pt=792,
+            blocks=[
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[
+                        TextRun(text="Cost: "),
+                        SymbolRef(symbol_id="action-point"),
+                    ],
+                ),
+            ],
+        )
+        bundle = convert_page_to_bundle(record)
+        content = bundle.blocks[0].content  # type: ignore[union-attr]
+        sym = content[1]
+        assert sym.kind == "symbol"
+        assert sym.symbol_id == "action-point"
+        assert sym.label == "Action Point"
+        assert sym.svg_data == svg
+        assert sym.alt_text == "AP"
+        export_module._symbol_lookup = {}
+
+    def test_symbol_falls_back_when_not_in_lookup(self) -> None:
+        export_module._symbol_lookup = {}
+        record = PageRecord(
+            page_number=1,
+            doc_id="doc",
+            width_pt=612,
+            height_pt=792,
+            blocks=[
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[SymbolRef(symbol_id="unknown", alt_text="??")],
+                ),
+            ],
+        )
+        bundle = convert_page_to_bundle(record)
+        content = bundle.blocks[0].content  # type: ignore[union-attr]
+        sym = content[0]
+        assert sym.kind == "symbol"
+        assert sym.symbol_id == "unknown"
+        assert sym.alt_text == "??"
+        assert sym.label == ""
+        assert sym.svg_data == ""
+
+    def test_symbol_alt_text_from_node_takes_priority(self) -> None:
+        export_module._symbol_lookup = {
+            "ap": ("Action Point", "", "AP default"),
+        }
+        record = PageRecord(
+            page_number=1,
+            doc_id="doc",
+            width_pt=612,
+            height_pt=792,
+            blocks=[
+                ParagraphBlock(
+                    block_id="p1",
+                    content=[SymbolRef(symbol_id="ap", alt_text="custom")],
+                ),
+            ],
+        )
+        bundle = convert_page_to_bundle(record)
+        content = bundle.blocks[0].content  # type: ignore[union-attr]
+        assert content[0].alt_text == "custom"
+        export_module._symbol_lookup = {}
 
 
 class TestExportSiteBundleIntegration:

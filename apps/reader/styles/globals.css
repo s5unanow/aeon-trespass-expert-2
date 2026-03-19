@@ -464,6 +464,20 @@ h3.block-heading {
   color: var(--color-accent);
 }
 
+.inline-symbol--svg {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  font-weight: normal;
+}
+
+.inline-symbol--svg svg {
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: middle;
+  fill: currentColor;
+}
+
 .inline-glossary-ref {
   border-bottom: 1px dotted var(--color-accent);
   cursor: help;

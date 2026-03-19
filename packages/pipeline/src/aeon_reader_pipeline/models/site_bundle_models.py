@@ -32,6 +32,8 @@ class BundleSymbolRef(BaseModel):
     kind: Literal["symbol"] = "symbol"
     symbol_id: str
     alt_text: str = ""
+    label: str = ""
+    svg_data: str = ""
 
 
 class BundleGlossaryRef(BaseModel):

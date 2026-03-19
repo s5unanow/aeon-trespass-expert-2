@@ -65,6 +65,9 @@ STAGE_VERSION = "1.0.0"
 # Set during export to prefix asset paths
 _export_doc_id: str = ""
 
+# Symbol lookup: symbol_id → SymbolEntry (set during export)
+_symbol_lookup: dict[str, tuple[str, str, str]] = {}  # id → (label, svg_data, alt_text)
+
 
 # ---------------------------------------------------------------------------
 # Conversion helpers — strip internal fields from IR models
@@ -86,9 +89,12 @@ def _convert_inline(node: _InlineSource) -> BundleTextRun | BundleSymbolRef | Bu
             monospace=node.monospace,
         )
     if isinstance(node, SymbolRef):
+        label, svg_data, default_alt = _symbol_lookup.get(node.symbol_id, ("", "", ""))
         return BundleSymbolRef(
             symbol_id=node.symbol_id,
-            alt_text=node.alt_text,
+            alt_text=node.alt_text or default_alt,
+            label=label,
+            svg_data=svg_data,
         )
     return BundleGlossaryRef(
         term_id=node.term_id,
@@ -216,6 +222,70 @@ def convert_page_to_bundle(record: PageRecord) -> BundlePage:
     )
 
 
+def _build_symbol_lookup(ctx: StageContext) -> dict[str, tuple[str, str, str]]:
+    """Build symbol_id → (label, svg_data, alt_text) lookup from the symbol pack."""
+    lookup: dict[str, tuple[str, str, str]] = {}
+    for sym in ctx.symbol_pack.symbols:
+        svg_data = ""
+        if sym.svg_path:
+            svg_file = ctx.configs_root / sym.svg_path
+            if svg_file.is_file():
+                svg_data = svg_file.read_text(encoding="utf-8").strip()
+        lookup[sym.symbol_id] = (sym.label_en, svg_data, sym.alt_text)
+    return lookup
+
+
+def _copy_image_assets(
+    ctx: StageContext,
+) -> tuple[list[BundleAssetEntry], list[BuildArtifact]]:
+    """Copy image assets from extract stage to bundle. Returns (asset_entries, artifacts)."""
+    asset_entries: list[BundleAssetEntry] = []
+    artifacts: list[BuildArtifact] = []
+    extract_assets_dir = (
+        ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "extract_primitives")
+        / "assets"
+        / "raw"
+    )
+    if not extract_assets_dir.is_dir():
+        return asset_entries, artifacts
+    bundle_assets_dir = (
+        ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, STAGE_NAME)
+        / "site_bundle"
+        / ctx.doc_id
+        / "assets"
+    )
+    bundle_assets_dir.mkdir(parents=True, exist_ok=True)
+    for asset_file in sorted(extract_assets_dir.iterdir()):
+        if asset_file.is_file() and asset_file.suffix in (
+            ".png",
+            ".jpeg",
+            ".jpg",
+            ".gif",
+            ".svg",
+            ".webp",
+        ):
+            dest = bundle_assets_dir / asset_file.name
+            shutil.copy2(asset_file, dest)
+            content_type = f"image/{asset_file.suffix.lstrip('.')}".replace("jpg", "jpeg")
+            asset_entries.append(
+                BundleAssetEntry(
+                    asset_ref=asset_file.name,
+                    path=f"assets/{asset_file.name}",
+                    content_type=content_type,
+                    size_bytes=dest.stat().st_size,
+                )
+            )
+            artifacts.append(
+                BuildArtifact(
+                    path=f"assets/{asset_file.name}",
+                    artifact_type="image_asset",
+                    size_bytes=dest.stat().st_size,
+                )
+            )
+    ctx.logger.info("assets_copied", count=len(asset_entries), dest=str(bundle_assets_dir))
+    return asset_entries, artifacts
+
+
 def _export_glossary(
     ctx: StageContext,
     artifacts: list[BuildArtifact],
@@ -273,8 +343,9 @@ class ExportSiteBundleStage(BaseStage):
     description = "Export site bundle for reader consumption"
 
     def execute(self, ctx: StageContext) -> None:
-        global _export_doc_id
+        global _export_doc_id, _symbol_lookup
         _export_doc_id = ctx.doc_id
+        _symbol_lookup = _build_symbol_lookup(ctx)
 
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
@@ -316,48 +387,8 @@ class ExportSiteBundleStage(BaseStage):
             )
 
         # Copy image assets from extract stage to bundle
-        asset_entries: list[BundleAssetEntry] = []
-        extract_assets_dir = (
-            ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "extract_primitives")
-            / "assets"
-            / "raw"
-        )
-        if extract_assets_dir.is_dir():
-            bundle_assets_dir = (
-                ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, STAGE_NAME)
-                / "site_bundle"
-                / ctx.doc_id
-                / "assets"
-            )
-            bundle_assets_dir.mkdir(parents=True, exist_ok=True)
-            for asset_file in sorted(extract_assets_dir.iterdir()):
-                if asset_file.is_file() and asset_file.suffix in (
-                    ".png",
-                    ".jpeg",
-                    ".jpg",
-                    ".gif",
-                    ".svg",
-                    ".webp",
-                ):
-                    dest = bundle_assets_dir / asset_file.name
-                    shutil.copy2(asset_file, dest)
-                    content_type = f"image/{asset_file.suffix.lstrip('.')}".replace("jpg", "jpeg")
-                    asset_entries.append(
-                        BundleAssetEntry(
-                            asset_ref=asset_file.name,
-                            path=f"assets/{asset_file.name}",
-                            content_type=content_type,
-                            size_bytes=dest.stat().st_size,
-                        )
-                    )
-                    artifacts.append(
-                        BuildArtifact(
-                            path=f"assets/{asset_file.name}",
-                            artifact_type="image_asset",
-                            size_bytes=dest.stat().st_size,
-                        )
-                    )
-            ctx.logger.info("assets_copied", count=len(asset_entries), dest=str(bundle_assets_dir))
+        asset_entries, asset_artifacts = _copy_image_assets(ctx)
+        artifacts.extend(asset_artifacts)
 
         # Copy navigation
         has_navigation = False

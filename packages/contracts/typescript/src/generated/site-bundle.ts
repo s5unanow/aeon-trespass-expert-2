@@ -24,6 +24,8 @@ export interface BundleSymbolRef {
   kind: "symbol";
   symbol_id: string;
   alt_text: string;
+  label: string;
+  svg_data: string;
 }
 
 export interface BundleGlossaryRef {
