@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 import pymupdf
+import pytest
 from typer.testing import CliRunner
 
 from aeon_reader_pipeline.cli.main import app
@@ -148,8 +149,6 @@ class TestFilterStagesExclude:
         ]
 
     def test_exclude_unknown_stage_raises(self) -> None:
-        import pytest
-
         with pytest.raises(ValueError, match="Unknown exclude stage"):
             filter_stages(exclude=["nonexistent"])
 
@@ -318,3 +317,8 @@ class TestSourceOnlyCLI:
         assert result.exit_code == 0
         output = _strip_ansi(result.output)
         assert "--source-only" in output
+
+    def test_source_only_and_dry_run_mutually_exclusive(self) -> None:
+        result = cli_runner.invoke(app, ["run", "--source-only", "--dry-run"])
+        assert result.exit_code == 1
+        assert "mutually exclusive" in result.output.lower()

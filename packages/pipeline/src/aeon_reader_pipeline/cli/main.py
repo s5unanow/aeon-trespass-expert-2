@@ -197,6 +197,10 @@ def run(  # noqa: PLR0913
     ),
 ) -> None:
     """Execute a pipeline run."""
+    if source_only and dry_run:
+        typer.echo("Error: --source-only and --dry-run are mutually exclusive.", err=True)
+        raise typer.Exit(1)
+
     _import_stages()
 
     from aeon_reader_pipeline.config.loader import (
