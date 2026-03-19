@@ -79,6 +79,12 @@ test.describe("Multi-document", () => {
     await page.goto("/docs/fixture-odyssey/page/1/");
     await expect(page.locator(".doc-content")).toBeVisible();
   });
+
+  test("facsimile page shows placeholder", async ({ page }) => {
+    await page.goto("/docs/fixture-odyssey/page/2/");
+    await expect(page.locator(".page-view-facsimile")).toBeVisible();
+    await expect(page.locator(".facsimile-placeholder")).toBeVisible();
+  });
 });
 
 test.describe("App shell", () => {

@@ -551,6 +551,18 @@
       "title": "Render Mode",
       "type": "string"
     },
+    "fallback_image_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallback Image Ref"
+    },
     "blocks": {
       "items": {
         "oneOf": [

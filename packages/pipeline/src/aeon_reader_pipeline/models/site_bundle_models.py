@@ -203,6 +203,7 @@ class BundlePage(BaseModel):
     width_pt: float
     height_pt: float
     render_mode: Literal["semantic", "hybrid", "facsimile"] = "semantic"
+    fallback_image_ref: str | None = None
     blocks: list[BundleBlock] = Field(default_factory=list)
     anchors: list[BundlePageAnchor] = Field(default_factory=list)
 

@@ -139,6 +139,7 @@ export interface BundlePage {
   width_pt: number;
   height_pt: number;
   render_mode: "semantic" | "hybrid" | "facsimile";
+  fallback_image_ref: string | null;
   blocks: BundleBlock[];
   anchors: BundlePageAnchor[];
 }

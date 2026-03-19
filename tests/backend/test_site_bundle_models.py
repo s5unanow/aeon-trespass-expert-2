@@ -31,8 +31,22 @@ class TestBundlePage:
             height_pt=792,
         )
         assert page.render_mode == "semantic"
+        assert page.fallback_image_ref is None
         assert page.blocks == []
         assert page.anchors == []
+
+    def test_facsimile_page_with_fallback(self) -> None:
+        page = BundlePage(
+            page_number=1,
+            doc_id="doc-1",
+            width_pt=612,
+            height_pt=792,
+            render_mode="facsimile",
+            fallback_image_ref="/assets/doc-1/page-001.png",
+        )
+        assert page.render_mode == "facsimile"
+        assert page.fallback_image_ref == "/assets/doc-1/page-001.png"
+        assert page.blocks == []
 
     def test_page_with_blocks(self) -> None:
         page = BundlePage(

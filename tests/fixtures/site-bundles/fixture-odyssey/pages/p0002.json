@@ -1,24 +1,10 @@
 {
   "anchors": [],
-  "blocks": [
-    {
-      "block_id": "fixture-odyssey:p0002:b001:paragraph",
-      "kind": "paragraph",
-      "content": [
-        {
-          "kind": "text",
-          "text": "The crew prepares for battle against the Titans.",
-          "ru_text": "Команда готовится к битве с Титанами.",
-          "bold": false,
-          "italic": false,
-          "monospace": false
-        }
-      ]
-    }
-  ],
+  "blocks": [],
   "doc_id": "fixture-odyssey",
   "height_pt": 841.89,
   "page_number": 2,
-  "render_mode": "semantic",
+  "render_mode": "facsimile",
+  "fallback_image_ref": null,
   "width_pt": 595.28
 }
