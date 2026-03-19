@@ -110,6 +110,14 @@ class SymbolDetection(BaseModel):
     min_confidence: float = 0.8
 
 
+class QAGateConfig(BaseModel):
+    """Quality gate thresholds for the evaluate_qa stage."""
+
+    enabled: bool = True
+    max_errors: int = 0
+    max_warnings: int = 50
+
+
 class ReleaseRules(BaseModel):
     """Release gate rules."""
 
@@ -126,6 +134,7 @@ class RuleProfile(BaseModel):
     list_detection: ListDetection = Field(default_factory=ListDetection)
     symbol_detection: SymbolDetection = Field(default_factory=SymbolDetection)
     release: ReleaseRules = Field(default_factory=ReleaseRules)
+    qa_gate: QAGateConfig = Field(default_factory=QAGateConfig)
 
 
 class SymbolDetectionConfig(BaseModel):

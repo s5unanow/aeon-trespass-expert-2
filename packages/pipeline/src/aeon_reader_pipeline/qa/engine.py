@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from collections import defaultdict
+from typing import TYPE_CHECKING, Protocol
 
+from aeon_reader_pipeline.models.config_models import QAGateConfig
 from aeon_reader_pipeline.models.ir_models import PageRecord
-from aeon_reader_pipeline.models.qa_models import QAIssue, QASummary
-from aeon_reader_pipeline.stages.enrich_content import NavigationTree
+from aeon_reader_pipeline.models.qa_models import CategoryBreakdown, QAIssue, QASummary
+
+if TYPE_CHECKING:
+    from aeon_reader_pipeline.stages.enrich_content import NavigationTree
 
 
 class QARule(Protocol):
@@ -23,6 +27,22 @@ class QARule(Protocol):
         pages: list[PageRecord],
         navigation: NavigationTree | None,
     ) -> list[QAIssue]: ...
+
+
+def _build_category_breakdown(issues: list[QAIssue]) -> list[CategoryBreakdown]:
+    """Aggregate issue counts by category."""
+    counts: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"errors": 0, "warnings": 0, "infos": 0}
+    )
+    for issue in issues:
+        bucket = counts[issue.category]
+        if issue.severity == "error":
+            bucket["errors"] += 1
+        elif issue.severity == "warning":
+            bucket["warnings"] += 1
+        else:
+            bucket["infos"] += 1
+    return [CategoryBreakdown(category=cat, **vals) for cat, vals in sorted(counts.items())]
 
 
 class QAEngine:
@@ -52,17 +72,30 @@ class QAEngine:
         doc_id: str,
         issues: list[QAIssue],
         max_warnings: int = 50,
+        *,
+        gate_config: QAGateConfig | None = None,
     ) -> QASummary:
-        """Build acceptance summary from issues."""
+        """Build acceptance summary from issues.
+
+        When *gate_config* is provided its thresholds are used instead of
+        the legacy *max_warnings* parameter.
+        """
         errors = sum(1 for i in issues if i.severity == "error")
         warnings = sum(1 for i in issues if i.severity == "warning")
         infos = sum(1 for i in issues if i.severity == "info")
 
+        effective_max_errors = gate_config.max_errors if gate_config else 0
+        effective_max_warnings = gate_config.max_warnings if gate_config else max_warnings
+
         rejection_reasons: list[str] = []
-        if errors > 0:
-            rejection_reasons.append(f"{errors} error(s) found")
-        if warnings > max_warnings:
-            rejection_reasons.append(f"{warnings} warnings exceed threshold ({max_warnings})")
+        if errors > effective_max_errors:
+            rejection_reasons.append(f"{errors} error(s) exceed threshold ({effective_max_errors})")
+        if warnings > effective_max_warnings:
+            rejection_reasons.append(
+                f"{warnings} warnings exceed threshold ({effective_max_warnings})"
+            )
+
+        by_category = _build_category_breakdown(issues)
 
         return QASummary(
             doc_id=doc_id,
@@ -72,4 +105,5 @@ class QAEngine:
             infos=infos,
             accepted=len(rejection_reasons) == 0,
             rejection_reasons=rejection_reasons,
+            by_category=by_category,
         )

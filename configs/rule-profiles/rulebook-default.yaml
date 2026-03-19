@@ -22,3 +22,8 @@ symbol_detection:
 release:
   max_warnings: 50
   block_on_review: false
+
+qa_gate:
+  enabled: true
+  max_errors: 0
+  max_warnings: 50

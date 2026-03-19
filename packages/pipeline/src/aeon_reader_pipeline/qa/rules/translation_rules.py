@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from aeon_reader_pipeline.models.ir_models import PageRecord, TextRun
 from aeon_reader_pipeline.models.qa_models import IssueLocation, QAIssue
-from aeon_reader_pipeline.stages.enrich_content import NavigationTree
+
+if TYPE_CHECKING:
+    from aeon_reader_pipeline.stages.enrich_content import NavigationTree
 
 
 class MissingTranslationRule:
