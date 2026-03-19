@@ -78,6 +78,7 @@ class ModelProfile(BaseModel):
     retry_max_delay: float = Field(default=60.0, ge=0)
     input_price_per_mtok: float = Field(default=0.0, ge=0)
     output_price_per_mtok: float = Field(default=0.0, ge=0)
+    cli_timeout: int = Field(default=180, ge=1)
 
 
 class HeadingDetection(BaseModel):

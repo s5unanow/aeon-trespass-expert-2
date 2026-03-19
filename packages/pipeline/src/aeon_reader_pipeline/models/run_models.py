@@ -40,6 +40,12 @@ class PipelineConfig(BaseModel):
     release_channel: Literal["dev", "preview", "prod"] = "dev"
     baseline_run_ref: str | None = None
 
+    # Translation stage constants (previously hardcoded)
+    translation_max_retries: int = Field(default=3, ge=1)
+    max_nodes_per_unit: int = Field(default=20, ge=1)
+    context_window_chars: int = Field(default=200, ge=0)
+    progress_log_interval: int = Field(default=50, ge=1)
+
 
 class WorkUnitStatus(BaseModel):
     """Status of a single work unit (page, translation unit, etc.)."""

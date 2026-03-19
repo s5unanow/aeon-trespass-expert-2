@@ -34,8 +34,6 @@ from aeon_reader_pipeline.stage_framework.registry import register_stage
 STAGE_NAME = "translate_units"
 STAGE_VERSION = "1.0.0"
 
-MAX_RETRIES = 3
-
 
 def _translate_single_unit(
     unit: TranslationUnit,
@@ -64,8 +62,9 @@ def _translate_single_unit(
 
     profile = ctx.model_profile
     prompt_bundle = profile.prompt_bundle
+    max_retries = ctx.pipeline_config.translation_max_retries
 
-    for attempt in range(1, MAX_RETRIES + 1):
+    for attempt in range(1, max_retries + 1):
         try:
             user_prompt = render_user_prompt(processed_unit)
             response = gateway.translate(system_prompt, user_prompt, profile)
@@ -116,7 +115,7 @@ def _translate_single_unit(
                 attempt=attempt,
                 errors=e.errors,
             )
-            if attempt == MAX_RETRIES:
+            if attempt == max_retries:
                 ctx.errors.record(
                     error_type="validation_error",
                     message=str(e),
@@ -140,7 +139,7 @@ def _translate_single_unit(
                 attempt=attempt,
                 error=str(e),
             )
-            if attempt == MAX_RETRIES:
+            if attempt == max_retries:
                 ctx.errors.record(
                     error_type=type(e).__name__,
                     message=str(e),
@@ -261,7 +260,8 @@ class TranslateUnitsStage(BaseStage):
                     calls.append(meta)
 
                 completed_count += 1
-                if completed_count % 50 == 0:
+                log_interval = ctx.pipeline_config.progress_log_interval
+                if completed_count % log_interval == 0:
                     ctx.logger.info(
                         "translation_progress",
                         completed=completed_count,

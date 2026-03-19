@@ -256,3 +256,18 @@ class TestModelProfileRetryValidation:
     def test_negative_max_delay_rejected(self) -> None:
         with pytest.raises(PydanticValidationError):
             _make_profile(retry_max_delay=-1.0)
+
+    def test_cli_timeout_default(self) -> None:
+        profile = _make_profile()
+        assert profile.cli_timeout == 180
+
+    def test_cli_timeout_custom(self) -> None:
+        profile = _make_profile(cli_timeout=300)
+        assert profile.cli_timeout == 300
+
+    def test_cli_timeout_must_be_positive(self) -> None:
+        with pytest.raises(PydanticValidationError):
+            _make_profile(cli_timeout=0)
+
+        with pytest.raises(PydanticValidationError):
+            _make_profile(cli_timeout=-10)
