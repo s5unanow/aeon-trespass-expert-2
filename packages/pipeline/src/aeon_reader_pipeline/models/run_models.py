@@ -76,6 +76,21 @@ class StageManifest(BaseModel):
     errors: list[StageErrorRecord] = Field(default_factory=list)
 
 
+class CostEstimate(BaseModel):
+    """Estimated token counts and API cost for a pipeline run."""
+
+    doc_id: str
+    total_units: int = 0
+    total_text_nodes: int = 0
+    estimated_input_tokens: int = 0
+    estimated_output_tokens: int = 0
+    input_price_per_mtok: float = 0.0
+    output_price_per_mtok: float = 0.0
+    estimated_cost_usd: float = 0.0
+    model: str = ""
+    provider: str = ""
+
+
 class ResolvedDocPlan(BaseModel):
     """Resolved plan for a single document."""
 

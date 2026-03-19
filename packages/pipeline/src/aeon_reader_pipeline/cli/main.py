@@ -4,9 +4,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import structlog
 import typer
+
+if TYPE_CHECKING:
+    from aeon_reader_pipeline.models.config_models import ModelProfile
+    from aeon_reader_pipeline.models.run_models import CostEstimate, PipelineConfig
+    from aeon_reader_pipeline.stage_framework.context import StageContext
 
 logger = structlog.get_logger()
 
@@ -22,91 +28,20 @@ def _import_stages() -> None:
     import aeon_reader_pipeline.stages  # noqa: F401
 
 
-@app.command()
-def list_stages() -> None:
-    """List all pipeline stages and their registration status."""
-    _import_stages()
-    from aeon_reader_pipeline.stage_framework.registry import (
-        get_all_stages_ordered,
-        get_registered_stages,
-    )
+def _setup_gateway(
+    *,
+    mock: bool,
+    cli: bool,
+    dry_run: bool,
+    pipeline_config: PipelineConfig,
+) -> PipelineConfig:
+    """Configure the LLM gateway on TranslateUnitsStage and return pipeline_config.
 
-    all_stages = get_all_stages_ordered()
-    registered = set(get_registered_stages())
-    for name in all_stages:
-        status = "registered" if name in registered else "not registered"
-        typer.echo(f"  {name}: {status}")
-
-
-@app.command()
-def run(  # noqa: PLR0913, PLR0915
-    doc: list[str] = typer.Option([], help="Document IDs to process"),  # noqa: B008
-    configs: Path = typer.Option(Path("configs"), help="Config directory root"),  # noqa: B008
-    artifact_root: Path = typer.Option(  # noqa: B008
-        Path("artifacts"), help="Artifact output root"
-    ),
-    from_stage: str | None = typer.Option(None, "--from", help="Start from this stage"),
-    to_stage: str | None = typer.Option(None, "--to", help="Stop after this stage"),
-    cache_mode: str = typer.Option("read_write", help="Cache mode"),
-    strict: bool = typer.Option(False, help="Enable strict mode"),
-    mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
-    cli: bool = typer.Option(False, help="Use Gemini CLI instead of SDK (no API key needed)"),
-) -> None:
-    """Execute a pipeline run."""
-    _import_stages()
-
-    from aeon_reader_pipeline.config.loader import (
-        load_all_document_configs,
-        load_document_config,
-        load_glossary_pack,
-        load_model_profile,
-        load_patch_set,
-        load_rule_profile,
-        load_symbol_pack,
-    )
-    from aeon_reader_pipeline.io.artifact_store import ArtifactStore
+    Returns a (possibly updated) pipeline_config to allow concurrency changes.
+    """
     from aeon_reader_pipeline.llm.base import LlmGateway, LlmResponse
-    from aeon_reader_pipeline.models.config_models import ModelProfile
-    from aeon_reader_pipeline.models.run_models import PipelineConfig, StageSelector
-    from aeon_reader_pipeline.stage_framework.context import StageContext
-    from aeon_reader_pipeline.stage_framework.runner import PipelineRunner
     from aeon_reader_pipeline.stages.translate_units import TranslateUnitsStage
 
-    configs_root = configs.resolve()
-    run_id = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%SZ")
-
-    # Load document configs
-    if doc:
-        doc_configs = [load_document_config(configs_root, d) for d in doc]
-    else:
-        doc_configs = load_all_document_configs(configs_root)
-
-    if not doc_configs:
-        typer.echo("No documents found to process.", err=True)
-        raise typer.Exit(1)
-
-    doc_ids = [d.doc_id for d in doc_configs]
-    typer.echo(f"Run {run_id}: processing {len(doc_ids)} document(s): {doc_ids}")
-
-    # Create artifact store and run
-    store = ArtifactStore(artifact_root.resolve())
-    store.create_run(run_id, doc_ids)
-
-    # Create pipeline config
-    pipeline_config = PipelineConfig(
-        run_id=run_id,
-        docs=doc_ids,
-        stages=StageSelector(
-            from_stage=from_stage or "ingest_source",
-            to_stage=to_stage,
-        ),
-        cache_mode=cache_mode,  # type: ignore[arg-type]
-        strict_mode=strict,
-        llm_concurrency=5,
-        artifact_root=str(artifact_root.resolve()),
-    )
-
-    # Set up translation gateway at the class level so runner's new instances inherit it
     if mock:
 
         class _MockGateway(LlmGateway):
@@ -137,12 +72,114 @@ def run(  # noqa: PLR0913, PLR0915
         TranslateUnitsStage._gateway = GeminiCliGateway()
         pipeline_config = pipeline_config.model_copy(update={"llm_concurrency": 1})
         typer.echo("Using Gemini CLI gateway (concurrency=1).")
-    else:
+    elif not dry_run:
         from aeon_reader_pipeline.llm.gemini import GeminiProvider
 
         TranslateUnitsStage._gateway = GeminiProvider()
 
+    return pipeline_config
+
+
+@app.command()
+def list_stages() -> None:
+    """List all pipeline stages and their registration status."""
+    _import_stages()
+    from aeon_reader_pipeline.stage_framework.registry import (
+        get_all_stages_ordered,
+        get_registered_stages,
+    )
+
+    all_stages = get_all_stages_ordered()
+    registered = set(get_registered_stages())
+    for name in all_stages:
+        status = "registered" if name in registered else "not registered"
+        typer.echo(f"  {name}: {status}")
+
+
+@app.command()
+def run(  # noqa: PLR0913
+    doc: list[str] = typer.Option([], help="Document IDs to process"),  # noqa: B008
+    configs: Path = typer.Option(Path("configs"), help="Config directory root"),  # noqa: B008
+    artifact_root: Path = typer.Option(  # noqa: B008
+        Path("artifacts"), help="Artifact output root"
+    ),
+    from_stage: str | None = typer.Option(None, "--from", help="Start from this stage"),
+    to_stage: str | None = typer.Option(None, "--to", help="Stop after this stage"),
+    cache_mode: str = typer.Option("read_write", help="Cache mode"),
+    strict: bool = typer.Option(False, help="Enable strict mode"),
+    mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
+    cli: bool = typer.Option(False, help="Use Gemini CLI instead of SDK (no API key needed)"),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Run through plan_translation, show cost estimate, then stop",
+    ),
+) -> None:
+    """Execute a pipeline run."""
+    _import_stages()
+
+    from aeon_reader_pipeline.config.loader import (
+        load_all_document_configs,
+        load_document_config,
+        load_glossary_pack,
+        load_model_profile,
+        load_patch_set,
+        load_rule_profile,
+        load_symbol_pack,
+    )
+    from aeon_reader_pipeline.io.artifact_store import ArtifactStore
+    from aeon_reader_pipeline.models.run_models import PipelineConfig, StageSelector
+    from aeon_reader_pipeline.stage_framework.context import StageContext
+    from aeon_reader_pipeline.stage_framework.runner import PipelineRunner
+
+    configs_root = configs.resolve()
+    run_id = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%SZ")
+
+    # Load document configs
+    if doc:
+        doc_configs = [load_document_config(configs_root, d) for d in doc]
+    else:
+        doc_configs = load_all_document_configs(configs_root)
+
+    if not doc_configs:
+        typer.echo("No documents found to process.", err=True)
+        raise typer.Exit(1)
+
+    doc_ids = [d.doc_id for d in doc_configs]
+    typer.echo(f"Run {run_id}: processing {len(doc_ids)} document(s): {doc_ids}")
+
+    # Create artifact store and run
+    store = ArtifactStore(artifact_root.resolve())
+    store.create_run(run_id, doc_ids)
+
+    # For --dry-run, force stage range up through plan_translation and stop
+    effective_to_stage = "plan_translation" if dry_run else to_stage
+
+    # Create pipeline config
+    pipeline_config = PipelineConfig(
+        run_id=run_id,
+        docs=doc_ids,
+        stages=StageSelector(
+            from_stage=from_stage or "ingest_source",
+            to_stage=effective_to_stage,
+        ),
+        cache_mode=cache_mode,  # type: ignore[arg-type]
+        strict_mode=strict,
+        llm_concurrency=5,
+        artifact_root=str(artifact_root.resolve()),
+    )
+
+    # Set up translation gateway
+    pipeline_config = _setup_gateway(
+        mock=mock,
+        cli=cli,
+        dry_run=dry_run,
+        pipeline_config=pipeline_config,
+    )
+
     runner = PipelineRunner()
+
+    cost_estimates: list[CostEstimate] = []
 
     for doc_config in doc_configs:
         typer.echo(f"\n--- Processing: {doc_config.doc_id} ---")
@@ -176,9 +213,34 @@ def run(  # noqa: PLR0913, PLR0915
 
         runner.run(ctx)
 
+        if dry_run:
+            estimate = _compute_cost_estimate(ctx, model_profile)
+            cost_estimates.append(estimate)
+
         typer.echo(f"Completed: {doc_config.doc_id}")
 
-    typer.echo(f"\nPipeline run {run_id} finished.")
+    if dry_run:
+        from aeon_reader_pipeline.utils.cost_estimation import format_cost_report
+
+        typer.echo(f"\n{format_cost_report(cost_estimates)}")
+        typer.echo("\nDry run complete. No translation calls were made.")
+    else:
+        typer.echo(f"\nPipeline run {run_id} finished.")
+
+
+def _compute_cost_estimate(ctx: StageContext, model_profile: ModelProfile) -> CostEstimate:
+    """Load the translation plan from artifacts and compute a cost estimate."""
+    from aeon_reader_pipeline.models.translation_models import TranslationPlan
+    from aeon_reader_pipeline.utils.cost_estimation import estimate_cost
+
+    plan = ctx.artifact_store.read_artifact(
+        ctx.run_id,
+        ctx.doc_id,
+        "plan_translation",
+        "translation_plan.json",
+        TranslationPlan,
+    )
+    return estimate_cost(plan.units, model_profile, ctx.doc_id)
 
 
 @app.command()
