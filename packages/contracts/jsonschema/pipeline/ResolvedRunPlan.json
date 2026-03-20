@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "ResolvedDocPlan": {
+      "description": "Resolved plan for a single document.",
+      "properties": {
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "source_pdf_path": {
+          "title": "Source Pdf Path",
+          "type": "string"
+        },
+        "config_hash": {
+          "title": "Config Hash",
+          "type": "string"
+        },
+        "rule_profile_hash": {
+          "title": "Rule Profile Hash",
+          "type": "string"
+        },
+        "model_profile_hash": {
+          "title": "Model Profile Hash",
+          "type": "string"
+        },
+        "symbol_pack_hash": {
+          "title": "Symbol Pack Hash",
+          "type": "string"
+        },
+        "glossary_pack_hash": {
+          "title": "Glossary Pack Hash",
+          "type": "string"
+        },
+        "patch_set_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Patch Set Hash"
+        },
+        "prompt_bundle_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Bundle Hash"
+        }
+      },
+      "required": [
+        "doc_id",
+        "source_pdf_path",
+        "config_hash",
+        "rule_profile_hash",
+        "model_profile_hash",
+        "symbol_pack_hash",
+        "glossary_pack_hash"
+      ],
+      "title": "ResolvedDocPlan",
+      "type": "object"
+    }
+  },
+  "description": "Fully resolved run plan.",
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "docs": {
+      "items": {
+        "$ref": "#/$defs/ResolvedDocPlan"
+      },
+      "title": "Docs",
+      "type": "array"
+    },
+    "stage_plan": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Stage Plan",
+      "type": "array"
+    },
+    "config_snapshot": {
+      "additionalProperties": true,
+      "title": "Config Snapshot",
+      "type": "object"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "title": "ResolvedRunPlan",
+  "type": "object"
+}

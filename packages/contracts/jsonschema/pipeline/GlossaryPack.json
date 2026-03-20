@@ -1,0 +1,117 @@
+{
+  "$defs": {
+    "GlossaryTermEntry": {
+      "description": "Single glossary term.",
+      "properties": {
+        "term_id": {
+          "title": "Term Id",
+          "type": "string"
+        },
+        "en_canonical": {
+          "title": "En Canonical",
+          "type": "string"
+        },
+        "en_aliases": {
+          "items": {
+            "type": "string"
+          },
+          "title": "En Aliases",
+          "type": "array"
+        },
+        "ru_preferred": {
+          "title": "Ru Preferred",
+          "type": "string"
+        },
+        "ru_variants": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ru Variants",
+          "type": "array"
+        },
+        "lock_translation": {
+          "default": false,
+          "title": "Lock Translation",
+          "type": "boolean"
+        },
+        "link_policy": {
+          "default": "first_only",
+          "enum": [
+            "always",
+            "first_only",
+            "never"
+          ],
+          "title": "Link Policy",
+          "type": "string"
+        },
+        "doc_scope": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Doc Scope",
+          "type": "array"
+        },
+        "definition_ru": {
+          "default": "",
+          "title": "Definition Ru",
+          "type": "string"
+        },
+        "definition_en": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition En"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "term_id",
+        "en_canonical",
+        "ru_preferred"
+      ],
+      "title": "GlossaryTermEntry",
+      "type": "object"
+    }
+  },
+  "description": "Canonical terminology pack.",
+  "properties": {
+    "pack_id": {
+      "title": "Pack Id",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "terms": {
+      "items": {
+        "$ref": "#/$defs/GlossaryTermEntry"
+      },
+      "title": "Terms",
+      "type": "array"
+    }
+  },
+  "required": [
+    "pack_id",
+    "version"
+  ],
+  "title": "GlossaryPack",
+  "type": "object"
+}

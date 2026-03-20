@@ -1,0 +1,112 @@
+{
+  "$defs": {
+    "SymbolDetectionConfig": {
+      "description": "Detection signatures for a symbol.",
+      "properties": {
+        "image_hashes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Image Hashes",
+          "type": "array"
+        },
+        "vector_signatures": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Vector Signatures",
+          "type": "array"
+        },
+        "text_tokens": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Text Tokens",
+          "type": "array"
+        }
+      },
+      "title": "SymbolDetectionConfig",
+      "type": "object"
+    },
+    "SymbolEntry": {
+      "description": "Single symbol definition.",
+      "properties": {
+        "symbol_id": {
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "label_en": {
+          "title": "Label En",
+          "type": "string"
+        },
+        "label_ru": {
+          "title": "Label Ru",
+          "type": "string"
+        },
+        "aliases": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Aliases",
+          "type": "array"
+        },
+        "svg_path": {
+          "default": "",
+          "title": "Svg Path",
+          "type": "string"
+        },
+        "alt_text": {
+          "default": "",
+          "title": "Alt Text",
+          "type": "string"
+        },
+        "detection": {
+          "$ref": "#/$defs/SymbolDetectionConfig"
+        },
+        "render_component": {
+          "default": "",
+          "title": "Render Component",
+          "type": "string"
+        },
+        "search_tokens": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Search Tokens",
+          "type": "array"
+        }
+      },
+      "required": [
+        "symbol_id",
+        "label_en",
+        "label_ru"
+      ],
+      "title": "SymbolEntry",
+      "type": "object"
+    }
+  },
+  "description": "Canonical symbol registry.",
+  "properties": {
+    "pack_id": {
+      "title": "Pack Id",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "symbols": {
+      "items": {
+        "$ref": "#/$defs/SymbolEntry"
+      },
+      "title": "Symbols",
+      "type": "array"
+    }
+  },
+  "required": [
+    "pack_id",
+    "version"
+  ],
+  "title": "SymbolPack",
+  "type": "object"
+}

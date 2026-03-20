@@ -1,0 +1,117 @@
+{
+  "$defs": {
+    "GlossaryHint": {
+      "description": "Glossary term hint included with a translation unit.",
+      "properties": {
+        "en": {
+          "title": "En",
+          "type": "string"
+        },
+        "ru": {
+          "title": "Ru",
+          "type": "string"
+        },
+        "locked": {
+          "default": false,
+          "title": "Locked",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "en",
+        "ru"
+      ],
+      "title": "GlossaryHint",
+      "type": "object"
+    },
+    "TextNode": {
+      "description": "Single translatable text node within a unit.",
+      "properties": {
+        "inline_id": {
+          "title": "Inline Id",
+          "type": "string"
+        },
+        "source_text": {
+          "title": "Source Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "inline_id",
+        "source_text"
+      ],
+      "title": "TextNode",
+      "type": "object"
+    }
+  },
+  "description": "Bounded group of text nodes sent to the LLM for translation.\n\nUnits are the atomic work item for translation — each contains a small\nset of semantically related text nodes from the same page/section.",
+  "properties": {
+    "unit_id": {
+      "title": "Unit Id",
+      "type": "string"
+    },
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "block_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Block Ids",
+      "type": "array"
+    },
+    "section_path": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Section Path",
+      "type": "array"
+    },
+    "style_hint": {
+      "default": "paragraph",
+      "title": "Style Hint",
+      "type": "string"
+    },
+    "glossary_subset": {
+      "items": {
+        "$ref": "#/$defs/GlossaryHint"
+      },
+      "title": "Glossary Subset",
+      "type": "array"
+    },
+    "text_nodes": {
+      "items": {
+        "$ref": "#/$defs/TextNode"
+      },
+      "title": "Text Nodes",
+      "type": "array"
+    },
+    "context_before": {
+      "default": "",
+      "title": "Context Before",
+      "type": "string"
+    },
+    "context_after": {
+      "default": "",
+      "title": "Context After",
+      "type": "string"
+    },
+    "source_fingerprint": {
+      "default": "",
+      "title": "Source Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "unit_id",
+    "doc_id",
+    "page_number"
+  ],
+  "title": "TranslationUnit",
+  "type": "object"
+}

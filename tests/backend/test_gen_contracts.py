@@ -10,6 +10,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 JSONSCHEMA_DIR = REPO_ROOT / "packages" / "contracts" / "jsonschema"
+INTERNAL_SCHEMA_DIR = JSONSCHEMA_DIR / "pipeline"
 TS_GENERATED = (
     REPO_ROOT / "packages" / "contracts" / "typescript" / "src" / "generated" / "site-bundle.ts"
 )
@@ -80,6 +81,55 @@ class TestJsonSchemaFiles:
                 assert data.get("title") == expected_name, (
                     f"{path.name}: title is {data.get('title')!r}, expected {expected_name!r}"
                 )
+
+
+class TestInternalJsonSchemaFiles:
+    @pytest.fixture()
+    def internal_model_names(self) -> list[str]:
+        mod = _load_gen_module()
+        return [m.__name__ for m in mod._INTERNAL_SCHEMA_MODELS]
+
+    def test_all_internal_schema_files_exist(self, internal_model_names: list[str]) -> None:
+        """Every internal model has a corresponding JSON Schema file."""
+        for name in internal_model_names:
+            path = INTERNAL_SCHEMA_DIR / f"{name}.json"
+            assert path.exists(), f"Missing internal JSON Schema: {path}"
+
+    def test_internal_schemas_are_valid_json(self) -> None:
+        """All internal JSON Schema files must be parseable."""
+        for path in sorted(INTERNAL_SCHEMA_DIR.glob("*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            assert isinstance(data, dict), f"{path.name} not a JSON object"
+
+    def test_no_extra_internal_schema_files(self, internal_model_names: list[str]) -> None:
+        """No orphaned JSON Schema files in the pipeline directory."""
+        expected = {f"{n}.json" for n in internal_model_names}
+        actual = {p.name for p in INTERNAL_SCHEMA_DIR.glob("*.json")}
+        extra = actual - expected
+        assert not extra, f"Unexpected internal JSON Schema files: {extra}"
+
+    def test_internal_schemas_have_title(self) -> None:
+        """Each internal schema should have a title matching its filename."""
+        for path in sorted(INTERNAL_SCHEMA_DIR.glob("*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            expected_name = path.stem
+            if "$ref" in data:
+                ref_name = data["$ref"].split("/")[-1]
+                assert ref_name == expected_name, (
+                    f"{path.name}: $ref points to {ref_name}, expected {expected_name}"
+                )
+            else:
+                assert data.get("title") == expected_name, (
+                    f"{path.name}: title is {data.get('title')!r}, expected {expected_name!r}"
+                )
+
+    def test_no_overlap_with_public_schemas(self, internal_model_names: list[str]) -> None:
+        """Internal and public schema sets must not overlap."""
+        mod = _load_gen_module()
+        public_names = {m.__name__ for m in mod._EXPORT_MODELS}
+        internal_names = set(internal_model_names)
+        overlap = public_names & internal_names
+        assert not overlap, f"Models in both public and internal: {overlap}"
 
 
 class TestTypescriptGeneration:

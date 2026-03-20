@@ -1,0 +1,24 @@
+{
+  "description": "Root document catalog.",
+  "properties": {
+    "documents": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Documents",
+      "type": "array"
+    },
+    "groups": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Groups",
+      "type": "object"
+    }
+  },
+  "title": "CatalogConfig",
+  "type": "object"
+}

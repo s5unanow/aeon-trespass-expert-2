@@ -1,0 +1,119 @@
+{
+  "$defs": {
+    "ReleaseDocEntry": {
+      "description": "Single document included in a release.",
+      "properties": {
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "page_count": {
+          "default": 0,
+          "title": "Page Count",
+          "type": "integer"
+        },
+        "qa_accepted": {
+          "default": true,
+          "title": "Qa Accepted",
+          "type": "boolean"
+        },
+        "translation_coverage": {
+          "default": 0.0,
+          "title": "Translation Coverage",
+          "type": "number"
+        }
+      },
+      "required": [
+        "doc_id"
+      ],
+      "title": "ReleaseDocEntry",
+      "type": "object"
+    }
+  },
+  "description": "Metadata for a packaged release.\n\nLives at 14_release/release_manifest.json.\nThe package stage does not decide acceptance — it enforces it.",
+  "properties": {
+    "release_id": {
+      "title": "Release Id",
+      "type": "string"
+    },
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/ReleaseDocEntry"
+      },
+      "title": "Documents",
+      "type": "array"
+    },
+    "total_documents": {
+      "default": 0,
+      "title": "Total Documents",
+      "type": "integer"
+    },
+    "all_accepted": {
+      "default": true,
+      "title": "All Accepted",
+      "type": "boolean"
+    },
+    "rejection_reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Rejection Reasons",
+      "type": "array"
+    },
+    "artifact_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Artifact Path"
+    },
+    "artifact_size_bytes": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Artifact Size Bytes"
+    },
+    "artifact_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Artifact Sha256"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "stage_version": {
+      "default": "1.0.0",
+      "title": "Stage Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "release_id",
+    "run_id"
+  ],
+  "title": "ReleaseManifest",
+  "type": "object"
+}

@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "PatchEntry": {
+      "description": "Single deterministic override.",
+      "properties": {
+        "patch_id": {
+          "title": "Patch Id",
+          "type": "string"
+        },
+        "target_page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Page"
+        },
+        "target_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Block Id"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "patch_id",
+        "action"
+      ],
+      "title": "PatchEntry",
+      "type": "object"
+    }
+  },
+  "description": "Deterministic page/block overrides.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "patches": {
+      "items": {
+        "$ref": "#/$defs/PatchEntry"
+      },
+      "title": "Patches",
+      "type": "array"
+    }
+  },
+  "required": [
+    "doc_id",
+    "version"
+  ],
+  "title": "PatchSet",
+  "type": "object"
+}

@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "SearchDocument": {
+      "description": "Single searchable document unit for Pagefind indexing.",
+      "properties": {
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "content_en": {
+          "title": "Content En",
+          "type": "string"
+        },
+        "content_ru": {
+          "default": "",
+          "title": "Content Ru",
+          "type": "string"
+        },
+        "section_path": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Section Path",
+          "type": "array"
+        },
+        "heading": {
+          "default": "",
+          "title": "Heading",
+          "type": "string"
+        },
+        "kind": {
+          "default": "paragraph",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "doc_id",
+        "page_number",
+        "block_id",
+        "content_en"
+      ],
+      "title": "SearchDocument",
+      "type": "object"
+    }
+  },
+  "description": "Collection of search documents for a document.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "documents": {
+      "items": {
+        "$ref": "#/$defs/SearchDocument"
+      },
+      "title": "Documents",
+      "type": "array"
+    },
+    "total_documents": {
+      "default": 0,
+      "title": "Total Documents",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "doc_id"
+  ],
+  "title": "SearchIndex",
+  "type": "object"
+}

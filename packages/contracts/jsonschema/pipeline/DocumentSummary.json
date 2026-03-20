@@ -1,0 +1,54 @@
+{
+  "description": "Metadata summary for the document catalog.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "title_en": {
+      "title": "Title En",
+      "type": "string"
+    },
+    "title_ru": {
+      "title": "Title Ru",
+      "type": "string"
+    },
+    "page_count": {
+      "title": "Page Count",
+      "type": "integer"
+    },
+    "block_count": {
+      "default": 0,
+      "title": "Block Count",
+      "type": "integer"
+    },
+    "heading_count": {
+      "default": 0,
+      "title": "Heading Count",
+      "type": "integer"
+    },
+    "translation_coverage": {
+      "default": 0.0,
+      "title": "Translation Coverage",
+      "type": "number"
+    },
+    "source_locale": {
+      "default": "en",
+      "title": "Source Locale",
+      "type": "string"
+    },
+    "target_locale": {
+      "default": "ru",
+      "title": "Target Locale",
+      "type": "string"
+    }
+  },
+  "required": [
+    "doc_id",
+    "title_en",
+    "title_ru",
+    "page_count"
+  ],
+  "title": "DocumentSummary",
+  "type": "object"
+}
