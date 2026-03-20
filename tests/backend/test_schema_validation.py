@@ -32,14 +32,17 @@ from aeon_reader_pipeline.models.config_models import (
 )
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
+    DocumentFurnitureProfile,
     DrawingPrimitiveEvidence,
     FontSummary,
+    FurnitureCandidate,
     ImagePrimitiveEvidence,
     NormalizedBBox,
     PageRasterHandle,
     PrimitivePageEvidence,
     ResolvedPageIR,
     TablePrimitiveEvidence,
+    TemplateAssignment,
     TextPrimitiveEvidence,
 )
 from aeon_reader_pipeline.models.run_models import PipelineConfig
@@ -57,6 +60,7 @@ ARCH3_MODELS: list[tuple[str, type[Any]]] = [
     ("PrimitivePageEvidence", PrimitivePageEvidence),
     ("CanonicalPageEvidence", CanonicalPageEvidence),
     ("ResolvedPageIR", ResolvedPageIR),
+    ("DocumentFurnitureProfile", DocumentFurnitureProfile),
 ]
 
 
@@ -185,6 +189,50 @@ def _make_canonical_page_evidence(*, with_content: bool = False) -> CanonicalPag
         has_figures=with_content,
         has_callouts=False,
         furniture_fraction=0.05 if with_content else 0.0,
+        furniture_ids=["furn:header:000"] if with_content else [],
+        template_id="tpl:abc12345" if with_content else "",
+    )
+
+
+def _make_document_furniture_profile(*, with_candidates: bool = False) -> DocumentFurnitureProfile:
+    """Build a realistic DocumentFurnitureProfile fixture."""
+    candidates: list[FurnitureCandidate] = []
+    templates: list[TemplateAssignment] = []
+    if with_candidates:
+        candidates = [
+            FurnitureCandidate(
+                candidate_id="furn:header:000",
+                furniture_type="header",
+                bbox_norm=_make_bbox(x0=0.1, y0=0.02, x1=0.9, y1=0.06),
+                source_primitive_kind="text",
+                page_numbers=[1, 2, 3],
+                repetition_rate=1.0,
+                confidence=1.0,
+                text_sample="Chapter Title",
+            ),
+            FurnitureCandidate(
+                candidate_id="furn:page_number:001",
+                furniture_type="page_number",
+                bbox_norm=_make_bbox(x0=0.45, y0=0.96, x1=0.55, y1=0.99),
+                source_primitive_kind="text",
+                page_numbers=[1, 2, 3],
+                repetition_rate=1.0,
+                confidence=1.0,
+                text_sample="1",
+            ),
+        ]
+        templates = [
+            TemplateAssignment(
+                template_id="tpl:abc12345",
+                page_numbers=[1, 2, 3],
+                furniture_ids=["furn:header:000", "furn:page_number:001"],
+            ),
+        ]
+    return DocumentFurnitureProfile(
+        doc_id="test-doc",
+        total_pages_analyzed=3 if with_candidates else 0,
+        furniture_candidates=candidates,
+        templates=templates,
     )
 
 
@@ -357,6 +405,31 @@ class TestResolvedPageIRSchema:
             _validate_against_schema(payload, "ResolvedPageIR")
 
 
+class TestDocumentFurnitureProfileSchema:
+    """Validate DocumentFurnitureProfile against its checked-in JSON Schema."""
+
+    def test_minimal_payload_validates(self) -> None:
+        model = DocumentFurnitureProfile(doc_id="doc", total_pages_analyzed=0)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "DocumentFurnitureProfile")
+
+    def test_full_fixture_validates(self) -> None:
+        model = _make_document_furniture_profile(with_candidates=True)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "DocumentFurnitureProfile")
+
+    def test_round_trip_preserves_data(self) -> None:
+        original = _make_document_furniture_profile(with_candidates=True)
+        payload = original.model_dump(mode="json")
+        restored = DocumentFurnitureProfile.model_validate(payload)
+        assert restored == original
+
+    def test_missing_required_field_rejected(self) -> None:
+        payload = {"total_pages_analyzed": 5}
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_schema(payload, "DocumentFurnitureProfile")
+
+
 # ---------------------------------------------------------------------------
 # Cross-model: Pydantic schema ↔ checked-in JSON Schema consistency
 # ---------------------------------------------------------------------------
@@ -502,6 +575,19 @@ class TestPersistedArtifactValidation:
         assert model.page_number == 1
         assert model.primitive_evidence_hash != ""
 
+    def test_single_page_furniture_profile(self, tmp_path: Path) -> None:
+        """Persisted DocumentFurnitureProfile validates against schema."""
+        pdf = tmp_path / "source.pdf"
+        _create_test_pdf(pdf)
+        ctx = _make_stage_context(tmp_path, pdf)
+        _run_v3_pipeline(ctx)
+
+        raw = _read_artifact_json(ctx, "collect_evidence", "evidence/furniture_profile.json")
+        _validate_against_schema(raw, "DocumentFurnitureProfile")
+        model = DocumentFurnitureProfile.model_validate(raw)
+        assert model.doc_id == "test-doc"
+        assert model.total_pages_analyzed == 1
+
     def test_single_page_resolved_ir(self, tmp_path: Path) -> None:
         """Persisted ResolvedPageIR validates against schema."""
         pdf = tmp_path / "source.pdf"
@@ -526,11 +612,18 @@ class TestPersistedArtifactValidation:
         PPE = PrimitivePageEvidence
         CPE = CanonicalPageEvidence
         RIR = ResolvedPageIR
+        DFP = DocumentFurnitureProfile
         artifact_map: list[tuple[str, str, str, type[Any]]] = [
             ("extract_primitives", "evidence/p0001_primitive.json", "PrimitivePageEvidence", PPE),
             ("extract_primitives", "evidence/p0002_primitive.json", "PrimitivePageEvidence", PPE),
             ("collect_evidence", "evidence/p0001_canonical.json", "CanonicalPageEvidence", CPE),
             ("collect_evidence", "evidence/p0002_canonical.json", "CanonicalPageEvidence", CPE),
+            (
+                "collect_evidence",
+                "evidence/furniture_profile.json",
+                "DocumentFurnitureProfile",
+                DFP,
+            ),
             ("resolve_page_ir", "resolved/p0001.json", "ResolvedPageIR", RIR),
             ("resolve_page_ir", "resolved/p0002.json", "ResolvedPageIR", RIR),
         ]

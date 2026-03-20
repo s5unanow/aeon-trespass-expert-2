@@ -1,5 +1,5 @@
 {
-  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nFields for region graphs, reading order, asset occurrences, and\nsymbol candidates will be added by Phase 2 and Phase 3 issues\n(S5U-254 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
+  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nFields for region graphs, reading order, asset occurrences, and\nsymbol candidates will be added by Phase 2 and Phase 3 issues\n(S5U-255 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
   "properties": {
     "page_number": {
       "title": "Page Number",
@@ -48,6 +48,18 @@
       "minimum": 0.0,
       "title": "Furniture Fraction",
       "type": "number"
+    },
+    "furniture_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Furniture Ids",
+      "type": "array"
+    },
+    "template_id": {
+      "default": "",
+      "title": "Template Id",
+      "type": "string"
     }
   },
   "required": [

@@ -19,6 +19,7 @@ from aeon_reader_pipeline.models.config_models import (
 )
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
+    DocumentFurnitureProfile,
     ResolvedPageIR,
 )
 from aeon_reader_pipeline.models.ir_models import PageRecord
@@ -94,7 +95,7 @@ class TestStageRegistration:
     def test_collect_evidence_registration(self) -> None:
         stage = CollectEvidenceStage()
         assert stage.name == "collect_evidence"
-        assert stage.version == "0.1.0"
+        assert stage.version == "0.2.0"
 
     def test_resolve_page_ir_registration(self) -> None:
         stage = ResolvePageIRStage()
@@ -195,6 +196,46 @@ class TestV3Path:
         )
         assert record.page_number == 1
         assert len(record.blocks) > 0
+
+    def test_furniture_profile_emitted(self, tmp_path: Path) -> None:
+        """collect_evidence emits a DocumentFurnitureProfile artifact."""
+        pdf = tmp_path / "source.pdf"
+        _create_test_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        _run_extract(ctx)
+        CollectEvidenceStage().execute(ctx)
+
+        profile = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "collect_evidence",
+            "evidence/furniture_profile.json",
+            DocumentFurnitureProfile,
+        )
+        assert profile.doc_id == "test-doc"
+        assert profile.total_pages_analyzed == 1
+        # Single page → no furniture detected
+        assert profile.furniture_candidates == []
+
+    def test_canonical_has_furniture_fields(self, tmp_path: Path) -> None:
+        """Canonical evidence includes furniture_ids and template_id fields."""
+        pdf = tmp_path / "source.pdf"
+        _create_test_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        _run_extract(ctx)
+        CollectEvidenceStage().execute(ctx)
+
+        canonical = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            CanonicalPageEvidence,
+        )
+        # Single page: no furniture, empty fields
+        assert canonical.furniture_ids == []
+        assert canonical.template_id == ""
+        assert canonical.furniture_fraction == 0.0
 
     def test_has_tables_detected(self, tmp_path: Path) -> None:
         """Canonical evidence reflects table presence from primitives."""
