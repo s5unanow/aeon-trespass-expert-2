@@ -37,6 +37,49 @@
       "title": "NormalizedBBox",
       "type": "object"
     },
+    "PageReadingOrder": {
+      "description": "Linearised reading order for a single page.\n\nProduced from the PageRegionGraph by traversing bands top-to-bottom,\ncolumns left-to-right within each band, and emitting figures, tables,\nand callouts at their band position. Sidebars and callouts are tagged\nwith ``flow_role=\"aside\"``; full-width elements that interrupt a\nmulti-column flow are tagged ``flow_role=\"interruption\"``.\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_reading_order.json``",
+      "properties": {
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "doc_id": {
+          "title": "Doc Id",
+          "type": "string"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/ReadingOrderEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "total_regions": {
+          "default": 0,
+          "title": "Total Regions",
+          "type": "integer"
+        },
+        "unassigned_region_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unassigned Region Ids",
+          "type": "array"
+        },
+        "detection_version": {
+          "default": "0.1.0",
+          "title": "Detection Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "page_number",
+        "doc_id"
+      ],
+      "title": "PageReadingOrder",
+      "type": "object"
+    },
     "PageRegionGraph": {
       "description": "Region segmentation graph for a single page.\n\nProduced by collect_evidence after furniture subtraction. Contains\nspatial partitions with containment/adjacency relationships that\ndownstream stages (reading order, entity resolution) consume.\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_regions.json``",
       "properties": {
@@ -90,6 +133,81 @@
         "height_pt"
       ],
       "title": "PageRegionGraph",
+      "type": "object"
+    },
+    "ReadingOrderEntry": {
+      "description": "A single step in the linearised reading order.\n\nEach entry references a region from the PageRegionGraph and carries\nflow metadata so downstream stages know how to integrate the content.",
+      "properties": {
+        "sequence_index": {
+          "minimum": 0,
+          "title": "Sequence Index",
+          "type": "integer"
+        },
+        "region_id": {
+          "title": "Region Id",
+          "type": "string"
+        },
+        "kind_hint": {
+          "enum": [
+            "main_flow",
+            "column",
+            "band",
+            "sidebar",
+            "callout",
+            "figure",
+            "table",
+            "caption",
+            "decoration",
+            "furniture",
+            "unknown"
+          ],
+          "title": "Kind Hint",
+          "type": "string"
+        },
+        "flow_role": {
+          "default": "main",
+          "enum": [
+            "main",
+            "aside",
+            "interruption"
+          ],
+          "title": "Flow Role",
+          "type": "string"
+        },
+        "band_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Band Index"
+        },
+        "column_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column Index"
+        },
+        "confidence": {
+          "$ref": "#/$defs/RegionConfidence"
+        }
+      },
+      "required": [
+        "sequence_index",
+        "region_id",
+        "kind_hint"
+      ],
+      "title": "ReadingOrderEntry",
       "type": "object"
     },
     "RegionCandidate": {
@@ -246,7 +364,7 @@
       "type": "object"
     }
   },
-  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nRegion graph added by S5U-255 (Phase 2). Reading order, asset\noccurrences, and symbol candidates will be added by further\nPhase 2 and Phase 3 issues (S5U-256 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
+  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nRegion graph added by S5U-255 (Phase 2). Reading order added by\nS5U-256 (Phase 2). Asset occurrences and symbol candidates will\nbe added by Phase 3 issues (S5U-257 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
   "properties": {
     "page_number": {
       "title": "Page Number",
@@ -312,6 +430,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/PageRegionGraph"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reading_order": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PageReadingOrder"
         },
         {
           "type": "null"

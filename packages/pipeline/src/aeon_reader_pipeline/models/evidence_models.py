@@ -260,6 +260,53 @@ class PageRegionGraph(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Reading order (S5U-256)
+# ---------------------------------------------------------------------------
+
+FlowRole = Literal[
+    "main",
+    "aside",
+    "interruption",
+]
+
+
+class ReadingOrderEntry(BaseModel):
+    """A single step in the linearised reading order.
+
+    Each entry references a region from the PageRegionGraph and carries
+    flow metadata so downstream stages know how to integrate the content.
+    """
+
+    sequence_index: int = Field(ge=0)
+    region_id: str
+    kind_hint: RegionKind
+    flow_role: FlowRole = "main"
+    band_index: int | None = None
+    column_index: int | None = None
+    confidence: RegionConfidence = Field(default_factory=RegionConfidence)
+
+
+class PageReadingOrder(BaseModel):
+    """Linearised reading order for a single page.
+
+    Produced from the PageRegionGraph by traversing bands top-to-bottom,
+    columns left-to-right within each band, and emitting figures, tables,
+    and callouts at their band position. Sidebars and callouts are tagged
+    with ``flow_role="aside"``; full-width elements that interrupt a
+    multi-column flow are tagged ``flow_role="interruption"``.
+
+    Artifact path: ``{run}/evidence/p{page_number:04d}_reading_order.json``
+    """
+
+    page_number: int
+    doc_id: str
+    entries: list[ReadingOrderEntry] = Field(default_factory=list)
+    total_regions: int = 0
+    unassigned_region_ids: list[str] = Field(default_factory=list)
+    detection_version: str = "0.1.0"
+
+
+# ---------------------------------------------------------------------------
 # Canonical evidence — topology and entity analysis results
 # ---------------------------------------------------------------------------
 
@@ -271,9 +318,9 @@ class CanonicalPageEvidence(BaseModel):
     and asset/entity resolution. Contains page-level graph outputs
     that semantic block building consumes.
 
-    Region graph added by S5U-255 (Phase 2). Reading order, asset
-    occurrences, and symbol candidates will be added by further
-    Phase 2 and Phase 3 issues (S5U-256 through S5U-262).
+    Region graph added by S5U-255 (Phase 2). Reading order added by
+    S5U-256 (Phase 2). Asset occurrences and symbol candidates will
+    be added by Phase 3 issues (S5U-257 through S5U-262).
 
     Artifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``
     """
@@ -294,6 +341,7 @@ class CanonicalPageEvidence(BaseModel):
     template_id: str = ""
 
     region_graph: PageRegionGraph | None = None
+    reading_order: PageReadingOrder | None = None
 
 
 # ---------------------------------------------------------------------------
