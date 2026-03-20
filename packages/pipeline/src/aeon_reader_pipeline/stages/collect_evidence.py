@@ -59,6 +59,7 @@ class CollectEvidenceStage(BaseStage):
                 PrimitivePageEvidence,
             )
 
+            # Placeholders for fields refined by later phases (S5U-254+)
             canonical = CanonicalPageEvidence(
                 page_number=primitive.page_number,
                 doc_id=primitive.doc_id,

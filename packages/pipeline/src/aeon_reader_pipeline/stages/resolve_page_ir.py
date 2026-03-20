@@ -59,6 +59,7 @@ class ResolvePageIRStage(BaseStage):
                 CanonicalPageEvidence,
             )
 
+            # Placeholders for confidence scoring (S5U-263)
             resolved = ResolvedPageIR(
                 page_number=canonical.page_number,
                 doc_id=canonical.doc_id,

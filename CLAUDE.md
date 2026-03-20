@@ -123,12 +123,15 @@ All work is tracked in Linear (project ATE2). Check `mcp__linear__list_issues(pr
 
 Core pipeline (stages 00–08) and reader are functional. Remaining work covers reliability, testing, and polish — see Linear milestones for priorities.
 
-## Pipeline stages (14-stage order)
+## Pipeline stages (16-stage order)
 
 ```
-00_resolve → 01_ingest → 02_extract → 03_normalize → 04_resolve_assets →
-05_plan_translation → 06_translate → 07_merge → 08_enrich → 09_evaluate_qa →
-11_export → 12_build → 13_index → 14_release
+00_resolve → 01_ingest → 02_extract → 02a_evidence → 02b_resolve_ir →
+03_normalize → 04_resolve_assets → 05_plan_translation → 06_translate →
+07_merge → 08_enrich → 09_evaluate_qa → 11_export → 12_build →
+13_index → 14_release
 ```
+
+Stages 02a and 02b are Architecture 3 only (`architecture: "v3"`) — they skip automatically on v2 (default).
 
 Stage implementations go in `packages/pipeline/src/aeon_reader_pipeline/stages/`.
