@@ -95,7 +95,7 @@ class TestStageRegistration:
     def test_collect_evidence_registration(self) -> None:
         stage = CollectEvidenceStage()
         assert stage.name == "collect_evidence"
-        assert stage.version == "0.3.0"
+        assert stage.version == "0.4.0"
 
     def test_resolve_page_ir_registration(self) -> None:
         stage = ResolvePageIRStage()

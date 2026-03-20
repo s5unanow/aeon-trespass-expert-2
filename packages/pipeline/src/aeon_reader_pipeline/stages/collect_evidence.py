@@ -20,7 +20,7 @@ from aeon_reader_pipeline.utils.page_region_detection import segment_page_region
 from aeon_reader_pipeline.utils.reading_order import compute_reading_order
 
 STAGE_NAME = "collect_evidence"
-STAGE_VERSION = "0.3.0"
+STAGE_VERSION = "0.4.0"
 
 
 def _primitive_filename(page_number: int) -> str:

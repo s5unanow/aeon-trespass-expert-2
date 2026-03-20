@@ -85,7 +85,10 @@ def compute_reading_order(graph: PageRegionGraph) -> PageReadingOrder:
             (c for c in children if c.kind_hint in _INLINE_KINDS),
             key=lambda c: c.bbox.y0,
         )
-        asides = [c for c in children if c.kind_hint in _ASIDE_KINDS]
+        asides = sorted(
+            (c for c in children if c.kind_hint in _ASIDE_KINDS),
+            key=lambda c: c.bbox.y0,
+        )
 
         band_column_count = int(band.features.get("column_count", 1))
 
