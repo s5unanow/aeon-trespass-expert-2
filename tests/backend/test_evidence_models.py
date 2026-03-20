@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
     DrawingPrimitiveEvidence,
@@ -229,3 +232,49 @@ class TestResolvedPageIR:
         assert restored.render_mode == "facsimile"
         assert restored.fallback_image_ref == "p0001_fallback.png"
         assert restored.page_confidence == 0.2
+
+
+class TestValidationConstraints:
+    def test_normalized_bbox_rejects_out_of_range(self) -> None:
+        with pytest.raises(ValidationError):
+            NormalizedBBox(x0=-0.1, y0=0.0, x1=1.0, y1=1.0)
+        with pytest.raises(ValidationError):
+            NormalizedBBox(x0=0.0, y0=0.0, x1=1.5, y1=1.0)
+
+    def test_page_confidence_rejects_out_of_range(self) -> None:
+        with pytest.raises(ValidationError):
+            ResolvedPageIR(
+                page_number=1,
+                doc_id="d",
+                width_pt=100,
+                height_pt=100,
+                page_confidence=1.5,
+            )
+        with pytest.raises(ValidationError):
+            ResolvedPageIR(
+                page_number=1,
+                doc_id="d",
+                width_pt=100,
+                height_pt=100,
+                page_confidence=-0.1,
+            )
+
+    def test_furniture_fraction_rejects_out_of_range(self) -> None:
+        with pytest.raises(ValidationError):
+            CanonicalPageEvidence(
+                page_number=1,
+                doc_id="d",
+                width_pt=100,
+                height_pt=100,
+                furniture_fraction=2.0,
+            )
+
+    def test_invalid_render_mode_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            ResolvedPageIR(
+                page_number=1,
+                doc_id="d",
+                width_pt=100,
+                height_pt=100,
+                render_mode="invalid",  # type: ignore[arg-type]
+            )

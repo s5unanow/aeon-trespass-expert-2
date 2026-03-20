@@ -46,6 +46,8 @@
     },
     "page_confidence": {
       "default": 1.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
       "title": "Page Confidence",
       "type": "number"
     },

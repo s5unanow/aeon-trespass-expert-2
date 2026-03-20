@@ -26,10 +26,10 @@ class NormalizedBBox(BaseModel):
     Origin is top-left: (0, 0) = top-left corner, (1, 1) = bottom-right.
     """
 
-    x0: float
-    y0: float
-    x1: float
-    y1: float
+    x0: float = Field(ge=0.0, le=1.0)
+    y0: float = Field(ge=0.0, le=1.0)
+    x1: float = Field(ge=0.0, le=1.0)
+    y1: float = Field(ge=0.0, le=1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +146,7 @@ class CanonicalPageEvidence(BaseModel):
     has_tables: bool = False
     has_figures: bool = False
     has_callouts: bool = False
-    furniture_fraction: float = 0.0
+    furniture_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +176,7 @@ class ResolvedPageIR(BaseModel):
     render_mode: Literal["semantic", "hybrid", "facsimile"] = "semantic"
     fallback_image_ref: str | None = None
 
-    page_confidence: float = 1.0
+    page_confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     confidence_reasons: list[str] = Field(default_factory=list)
 
     source_pdf_sha256: str = ""
