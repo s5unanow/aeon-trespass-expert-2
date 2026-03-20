@@ -42,6 +42,7 @@ from aeon_reader_pipeline.models.enrich_models import (
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
     DocumentFurnitureProfile,
+    PageRegionGraph,
     PrimitivePageEvidence,
     ResolvedPageIR,
 )
@@ -55,11 +56,6 @@ from aeon_reader_pipeline.models.run_models import (
     ResolvedRunPlan,
     RunManifest,
     StageManifest,
-)
-from aeon_reader_pipeline.models.translation_models import (
-    TranslationPlan,
-    TranslationResult,
-    TranslationUnit,
 )
 from aeon_reader_pipeline.models.site_bundle_models import (
     BundleAssetEntry,
@@ -83,6 +79,11 @@ from aeon_reader_pipeline.models.site_bundle_models import (
     CatalogEntry,
     CatalogManifest,
     SiteBundleManifest,
+)
+from aeon_reader_pipeline.models.translation_models import (
+    TranslationPlan,
+    TranslationResult,
+    TranslationUnit,
 )
 
 # ── Paths ─────────────────────────────────────────────────────────────
@@ -150,6 +151,7 @@ _INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
     CanonicalPageEvidence,
     ResolvedPageIR,
     DocumentFurnitureProfile,
+    PageRegionGraph,
     # Semantic IR
     PageRecord,
     # Translation contracts

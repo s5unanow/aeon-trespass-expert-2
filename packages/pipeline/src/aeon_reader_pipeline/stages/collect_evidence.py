@@ -16,9 +16,10 @@ from aeon_reader_pipeline.utils.furniture_detection import (
     detect_furniture,
 )
 from aeon_reader_pipeline.utils.page_filter import pages_to_process
+from aeon_reader_pipeline.utils.page_region_detection import segment_page_regions
 
 STAGE_NAME = "collect_evidence"
-STAGE_VERSION = "0.2.0"
+STAGE_VERSION = "0.3.0"
 
 
 def _primitive_filename(page_number: int) -> str:
@@ -27,6 +28,10 @@ def _primitive_filename(page_number: int) -> str:
 
 def _canonical_filename(page_number: int) -> str:
     return f"evidence/p{page_number:04d}_canonical.json"
+
+
+def _regions_filename(page_number: int) -> str:
+    return f"evidence/p{page_number:04d}_regions.json"
 
 
 @register_stage
@@ -86,9 +91,31 @@ class CollectEvidenceStage(BaseStage):
             furniture_profile,
         )
 
-        # Pass 2: Build canonical evidence with furniture data
+        # Pass 2: Build region graphs and canonical evidence
         for primitive in all_primitives:
             pn = primitive.page_number
+            furn_ids = page_furn_ids.get(pn, [])
+
+            # Region segmentation (S5U-255)
+            region_graph = segment_page_regions(primitive, furniture_profile, furn_ids)
+
+            ctx.artifact_store.write_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                STAGE_NAME,
+                _regions_filename(pn),
+                region_graph,
+            )
+
+            # Estimate column count as max columns in any single band
+            estimated_columns = max(
+                (
+                    int(r.features.get("column_count", 1))
+                    for r in region_graph.regions
+                    if r.kind_hint == "band"
+                ),
+                default=1,
+            )
 
             canonical = CanonicalPageEvidence(
                 page_number=pn,
@@ -96,13 +123,14 @@ class CollectEvidenceStage(BaseStage):
                 width_pt=primitive.width_pt,
                 height_pt=primitive.height_pt,
                 primitive_evidence_hash=hash_model(primitive),
-                estimated_column_count=1,
+                estimated_column_count=estimated_columns,
                 has_tables=len(primitive.table_primitives) > 0,
                 has_figures=len(primitive.image_primitives) > 0,
                 has_callouts=False,
                 furniture_fraction=page_furn_frac.get(pn, 0.0),
-                furniture_ids=page_furn_ids.get(pn, []),
+                furniture_ids=furn_ids,
                 template_id=page_tpl_id.get(pn, ""),
+                region_graph=region_graph,
             )
 
             ctx.artifact_store.write_artifact(
@@ -120,6 +148,8 @@ class CollectEvidenceStage(BaseStage):
                 has_figures=canonical.has_figures,
                 furniture_fraction=canonical.furniture_fraction,
                 template_id=canonical.template_id,
+                region_count=len(region_graph.regions),
+                column_count=estimated_columns,
             )
 
         ctx.logger.info("collect_evidence_complete", pages=len(pages))

@@ -37,61 +37,6 @@
       "title": "NormalizedBBox",
       "type": "object"
     },
-    "PageRegionGraph": {
-      "description": "Region segmentation graph for a single page.\n\nProduced by collect_evidence after furniture subtraction. Contains\nspatial partitions with containment/adjacency relationships that\ndownstream stages (reading order, entity resolution) consume.\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_regions.json``",
-      "properties": {
-        "page_number": {
-          "title": "Page Number",
-          "type": "integer"
-        },
-        "doc_id": {
-          "title": "Doc Id",
-          "type": "string"
-        },
-        "width_pt": {
-          "title": "Width Pt",
-          "type": "number"
-        },
-        "height_pt": {
-          "title": "Height Pt",
-          "type": "number"
-        },
-        "regions": {
-          "items": {
-            "$ref": "#/$defs/RegionCandidate"
-          },
-          "title": "Regions",
-          "type": "array"
-        },
-        "edges": {
-          "items": {
-            "$ref": "#/$defs/RegionEdge"
-          },
-          "title": "Edges",
-          "type": "array"
-        },
-        "furniture_ids_excluded": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Furniture Ids Excluded",
-          "type": "array"
-        },
-        "detection_version": {
-          "default": "0.1.0",
-          "title": "Detection Version",
-          "type": "string"
-        }
-      },
-      "required": [
-        "page_number",
-        "doc_id",
-        "width_pt",
-        "height_pt"
-      ],
-      "title": "PageRegionGraph",
-      "type": "object"
-    },
     "RegionCandidate": {
       "description": "A spatial partition of a page with a semantic kind hint.\n\nRegions are geometric hypotheses — ``kind_hint`` may be refined\nby later entity resolution stages.",
       "properties": {
@@ -246,7 +191,7 @@
       "type": "object"
     }
   },
-  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nRegion graph added by S5U-255 (Phase 2). Reading order, asset\noccurrences, and symbol candidates will be added by further\nPhase 2 and Phase 3 issues (S5U-256 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
+  "description": "Region segmentation graph for a single page.\n\nProduced by collect_evidence after furniture subtraction. Contains\nspatial partitions with containment/adjacency relationships that\ndownstream stages (reading order, entity resolution) consume.\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_regions.json``",
   "properties": {
     "page_number": {
       "title": "Page Number",
@@ -264,60 +209,31 @@
       "title": "Height Pt",
       "type": "number"
     },
-    "primitive_evidence_hash": {
-      "default": "",
-      "title": "Primitive Evidence Hash",
-      "type": "string"
+    "regions": {
+      "items": {
+        "$ref": "#/$defs/RegionCandidate"
+      },
+      "title": "Regions",
+      "type": "array"
     },
-    "estimated_column_count": {
-      "default": 1,
-      "title": "Estimated Column Count",
-      "type": "integer"
+    "edges": {
+      "items": {
+        "$ref": "#/$defs/RegionEdge"
+      },
+      "title": "Edges",
+      "type": "array"
     },
-    "has_tables": {
-      "default": false,
-      "title": "Has Tables",
-      "type": "boolean"
-    },
-    "has_figures": {
-      "default": false,
-      "title": "Has Figures",
-      "type": "boolean"
-    },
-    "has_callouts": {
-      "default": false,
-      "title": "Has Callouts",
-      "type": "boolean"
-    },
-    "furniture_fraction": {
-      "default": 0.0,
-      "maximum": 1.0,
-      "minimum": 0.0,
-      "title": "Furniture Fraction",
-      "type": "number"
-    },
-    "furniture_ids": {
+    "furniture_ids_excluded": {
       "items": {
         "type": "string"
       },
-      "title": "Furniture Ids",
+      "title": "Furniture Ids Excluded",
       "type": "array"
     },
-    "template_id": {
-      "default": "",
-      "title": "Template Id",
+    "detection_version": {
+      "default": "0.1.0",
+      "title": "Detection Version",
       "type": "string"
-    },
-    "region_graph": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PageRegionGraph"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
     }
   },
   "required": [
@@ -326,6 +242,6 @@
     "width_pt",
     "height_pt"
   ],
-  "title": "CanonicalPageEvidence",
+  "title": "PageRegionGraph",
   "type": "object"
 }

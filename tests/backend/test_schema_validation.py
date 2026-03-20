@@ -39,7 +39,11 @@ from aeon_reader_pipeline.models.evidence_models import (
     ImagePrimitiveEvidence,
     NormalizedBBox,
     PageRasterHandle,
+    PageRegionGraph,
     PrimitivePageEvidence,
+    RegionCandidate,
+    RegionConfidence,
+    RegionEdge,
     ResolvedPageIR,
     TablePrimitiveEvidence,
     TemplateAssignment,
@@ -61,6 +65,7 @@ ARCH3_MODELS: list[tuple[str, type[Any]]] = [
     ("CanonicalPageEvidence", CanonicalPageEvidence),
     ("ResolvedPageIR", ResolvedPageIR),
     ("DocumentFurnitureProfile", DocumentFurnitureProfile),
+    ("PageRegionGraph", PageRegionGraph),
 ]
 
 
@@ -255,6 +260,64 @@ def _make_resolved_page_ir(
     )
 
 
+def _make_page_region_graph(*, with_columns: bool = False) -> PageRegionGraph:
+    """Build a realistic PageRegionGraph fixture."""
+    regions: list[RegionCandidate] = [
+        RegionCandidate(
+            region_id="reg:1:0",
+            kind_hint="band",
+            bbox=_make_bbox(x0=0.05, y0=0.08, x1=0.95, y1=0.90),
+            band_index=0,
+            source_evidence_ids=["txt-0001", "txt-0002"],
+            features={"primitive_count": 2, "column_count": 2 if with_columns else 1},
+            confidence=RegionConfidence(value=0.9, reasons=["horizontal_partition"]),
+        ),
+    ]
+    edges: list[RegionEdge] = []
+    if with_columns:
+        regions.extend(
+            [
+                RegionCandidate(
+                    region_id="reg:1:1",
+                    kind_hint="column",
+                    bbox=_make_bbox(x0=0.05, y0=0.08, x1=0.45, y1=0.90),
+                    parent_region_id="reg:1:0",
+                    band_index=0,
+                    column_index=0,
+                    source_evidence_ids=["txt-0001"],
+                    features={"text_count": 1},
+                    confidence=RegionConfidence(value=0.85, reasons=["gutter_detected"]),
+                ),
+                RegionCandidate(
+                    region_id="reg:1:2",
+                    kind_hint="column",
+                    bbox=_make_bbox(x0=0.55, y0=0.08, x1=0.95, y1=0.90),
+                    parent_region_id="reg:1:0",
+                    band_index=0,
+                    column_index=1,
+                    source_evidence_ids=["txt-0002"],
+                    features={"text_count": 1},
+                    confidence=RegionConfidence(value=0.85, reasons=["gutter_detected"]),
+                ),
+            ]
+        )
+        edges.extend(
+            [
+                RegionEdge(edge_type="contains", src_region_id="reg:1:0", dst_region_id="reg:1:1"),
+                RegionEdge(edge_type="contains", src_region_id="reg:1:0", dst_region_id="reg:1:2"),
+            ]
+        )
+    return PageRegionGraph(
+        page_number=1,
+        doc_id="test-doc",
+        width_pt=612.0,
+        height_pt=792.0,
+        regions=regions,
+        edges=edges,
+        furniture_ids_excluded=["furn:header:000"] if with_columns else [],
+    )
+
+
 # ---------------------------------------------------------------------------
 # Fixture-based schema validation: model → JSON → validate against schema
 # ---------------------------------------------------------------------------
@@ -428,6 +491,60 @@ class TestDocumentFurnitureProfileSchema:
         payload = {"total_pages_analyzed": 5}
         with pytest.raises(jsonschema.ValidationError):
             _validate_against_schema(payload, "DocumentFurnitureProfile")
+
+
+class TestPageRegionGraphSchema:
+    """Validate PageRegionGraph against its checked-in JSON Schema."""
+
+    def test_minimal_payload_validates(self) -> None:
+        model = PageRegionGraph(page_number=1, doc_id="doc", width_pt=612.0, height_pt=792.0)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "PageRegionGraph")
+
+    def test_single_band_validates(self) -> None:
+        model = _make_page_region_graph(with_columns=False)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "PageRegionGraph")
+
+    def test_full_fixture_with_columns_validates(self) -> None:
+        model = _make_page_region_graph(with_columns=True)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "PageRegionGraph")
+
+    def test_round_trip_preserves_data(self) -> None:
+        original = _make_page_region_graph(with_columns=True)
+        payload = original.model_dump(mode="json")
+        restored = PageRegionGraph.model_validate(payload)
+        assert restored == original
+
+    def test_missing_required_field_rejected(self) -> None:
+        payload = {"page_number": 1, "width_pt": 612.0, "height_pt": 792.0}
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_schema(payload, "PageRegionGraph")
+
+    def test_invalid_region_kind_rejected(self) -> None:
+        """Schema rejects an invalid region kind_hint value."""
+        model = _make_page_region_graph()
+        payload = model.model_dump(mode="json")
+        payload["regions"][0]["kind_hint"] = "invalid_kind"
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_schema(payload, "PageRegionGraph")
+
+    def test_confidence_out_of_range_rejected(self) -> None:
+        """Schema rejects confidence value > 1.0."""
+        model = _make_page_region_graph()
+        payload = model.model_dump(mode="json")
+        payload["regions"][0]["confidence"]["value"] = 1.5
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_schema(payload, "PageRegionGraph")
+
+    def test_invalid_edge_type_rejected(self) -> None:
+        """Schema rejects an invalid edge_type value."""
+        model = _make_page_region_graph(with_columns=True)
+        payload = model.model_dump(mode="json")
+        payload["edges"][0]["edge_type"] = "invalid_edge"
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_schema(payload, "PageRegionGraph")
 
 
 # ---------------------------------------------------------------------------
@@ -613,11 +730,14 @@ class TestPersistedArtifactValidation:
         CPE = CanonicalPageEvidence
         RIR = ResolvedPageIR
         DFP = DocumentFurnitureProfile
+        PRG = PageRegionGraph
         artifact_map: list[tuple[str, str, str, type[Any]]] = [
             ("extract_primitives", "evidence/p0001_primitive.json", "PrimitivePageEvidence", PPE),
             ("extract_primitives", "evidence/p0002_primitive.json", "PrimitivePageEvidence", PPE),
             ("collect_evidence", "evidence/p0001_canonical.json", "CanonicalPageEvidence", CPE),
             ("collect_evidence", "evidence/p0002_canonical.json", "CanonicalPageEvidence", CPE),
+            ("collect_evidence", "evidence/p0001_regions.json", "PageRegionGraph", PRG),
+            ("collect_evidence", "evidence/p0002_regions.json", "PageRegionGraph", PRG),
             (
                 "collect_evidence",
                 "evidence/furniture_profile.json",
