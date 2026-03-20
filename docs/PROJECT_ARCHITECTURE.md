@@ -91,7 +91,7 @@ TextPage.extractDICT() / extractRAWDICT() and related Page.get_text("dict" / "ra
 
 LLM integration layer
 
-Internal LlmGateway abstraction, with Google Gen AI Python SDK (google-genai) as the first concrete provider implementation.
+Internal LlmGateway abstraction, with Gemini CLI gateway as the concrete provider implementation.
 
 Reason:
 
@@ -2319,7 +2319,7 @@ class LlmProvider(Protocol):
 
 Concrete implementations:
 
-GeminiProvider (v1)
+GeminiCliGateway (v1)
 
 OpenAIProvider (optional later)
 

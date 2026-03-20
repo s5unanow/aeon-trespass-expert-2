@@ -141,7 +141,6 @@ pnpm --filter reader build
 
 ### Full end-to-end (costs money)
 ```bash
-export GOOGLE_API_KEY="..."
 uv run reader-pipeline run --doc aeon-trespass-core
 # Note the run_id from output
 uv run python scripts/sync_generated_bundle.py --run {run_id} --doc aeon-trespass-core
