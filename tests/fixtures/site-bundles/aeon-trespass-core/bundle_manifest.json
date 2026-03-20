@@ -1,12 +1,11 @@
 {
   "doc_id": "aeon-trespass-core",
+  "run_id": "fixture-run-001",
   "title_en": "Aeon Trespass: Core Rulebook",
   "title_ru": "Aeon Trespass: Fixture",
   "route_base": "/docs/aeon-trespass-core",
   "page_count": 5,
   "translation_coverage": 0.95,
   "qa_accepted": true,
-  "qa_score": 0.98,
-  "assets": [],
-  "generated_at": "2026-01-01T00:00:00Z"
+  "assets": []
 }

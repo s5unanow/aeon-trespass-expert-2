@@ -1,12 +1,11 @@
 {
   "doc_id": "fixture-odyssey",
+  "run_id": "fixture-run-002",
   "title_en": "Aeon Trespass: Odyssey",
   "title_ru": "Aeon Trespass: Одиссея",
   "route_base": "/docs/fixture-odyssey",
   "page_count": 2,
   "translation_coverage": 0.88,
   "qa_accepted": true,
-  "qa_score": 0.95,
-  "assets": [],
-  "generated_at": "2026-01-01T00:00:00Z"
+  "assets": []
 }
