@@ -7,13 +7,16 @@ from pydantic import ValidationError
 
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
+    DocumentFurnitureProfile,
     DrawingPrimitiveEvidence,
     FontSummary,
+    FurnitureCandidate,
     ImagePrimitiveEvidence,
     NormalizedBBox,
     PrimitivePageEvidence,
     ResolvedPageIR,
     TablePrimitiveEvidence,
+    TemplateAssignment,
     TextPrimitiveEvidence,
 )
 
@@ -147,6 +150,8 @@ class TestCanonicalPageEvidence:
         assert cpe.estimated_column_count == 1
         assert not cpe.has_tables
         assert cpe.furniture_fraction == 0.0
+        assert cpe.furniture_ids == []
+        assert cpe.template_id == ""
 
     def test_with_signals(self) -> None:
         cpe = CanonicalPageEvidence(
@@ -159,10 +164,14 @@ class TestCanonicalPageEvidence:
             has_tables=True,
             has_figures=True,
             furniture_fraction=0.15,
+            furniture_ids=["furn:header:000", "furn:footer:001"],
+            template_id="tpl:abc12345",
         )
         assert cpe.estimated_column_count == 2
         assert cpe.has_tables
         assert cpe.primitive_evidence_hash == "sha256:abc123"
+        assert len(cpe.furniture_ids) == 2
+        assert cpe.template_id == "tpl:abc12345"
 
     def test_json_roundtrip(self) -> None:
         cpe = CanonicalPageEvidence(
@@ -171,10 +180,14 @@ class TestCanonicalPageEvidence:
             width_pt=612.0,
             height_pt=792.0,
             has_callouts=True,
+            furniture_ids=["furn:header:000"],
+            template_id="tpl:test",
         )
         data = cpe.model_dump(mode="json")
         restored = CanonicalPageEvidence.model_validate(data)
         assert restored.has_callouts
+        assert restored.furniture_ids == ["furn:header:000"]
+        assert restored.template_id == "tpl:test"
 
 
 class TestResolvedPageIR:
@@ -278,3 +291,113 @@ class TestValidationConstraints:
                 height_pt=100,
                 render_mode="invalid",  # type: ignore[arg-type]
             )
+
+    def test_furniture_candidate_confidence_rejects_out_of_range(self) -> None:
+        with pytest.raises(ValidationError):
+            FurnitureCandidate(
+                candidate_id="furn:header:000",
+                furniture_type="header",
+                bbox_norm=NormalizedBBox(x0=0.1, y0=0.02, x1=0.9, y1=0.05),
+                source_primitive_kind="text",
+                confidence=1.5,
+            )
+
+    def test_furniture_candidate_repetition_rate_rejects_out_of_range(self) -> None:
+        with pytest.raises(ValidationError):
+            FurnitureCandidate(
+                candidate_id="furn:header:000",
+                furniture_type="header",
+                bbox_norm=NormalizedBBox(x0=0.1, y0=0.02, x1=0.9, y1=0.05),
+                source_primitive_kind="text",
+                repetition_rate=-0.1,
+            )
+
+
+class TestFurnitureCandidate:
+    def test_basic(self) -> None:
+        fc = FurnitureCandidate(
+            candidate_id="furn:header:000",
+            furniture_type="header",
+            bbox_norm=NormalizedBBox(x0=0.1, y0=0.02, x1=0.9, y1=0.05),
+            source_primitive_kind="text",
+            page_numbers=[1, 2, 3],
+            repetition_rate=1.0,
+            text_sample="Header Text",
+        )
+        assert fc.candidate_id == "furn:header:000"
+        assert fc.furniture_type == "header"
+        assert fc.page_numbers == [1, 2, 3]
+
+    def test_json_roundtrip(self) -> None:
+        fc = FurnitureCandidate(
+            candidate_id="furn:footer:001",
+            furniture_type="footer",
+            bbox_norm=NormalizedBBox(x0=0.1, y0=0.95, x1=0.9, y1=0.99),
+            source_primitive_kind="text",
+            page_numbers=[1, 2],
+            repetition_rate=0.8,
+            confidence=0.9,
+            text_sample="Footer",
+        )
+        data = fc.model_dump(mode="json")
+        restored = FurnitureCandidate.model_validate(data)
+        assert restored == fc
+
+
+class TestTemplateAssignment:
+    def test_basic(self) -> None:
+        ta = TemplateAssignment(
+            template_id="tpl:abc12345",
+            page_numbers=[1, 2, 3],
+            furniture_ids=["furn:header:000", "furn:footer:001"],
+            description="Standard body page",
+        )
+        assert ta.template_id == "tpl:abc12345"
+        assert len(ta.page_numbers) == 3
+
+    def test_json_roundtrip(self) -> None:
+        ta = TemplateAssignment(
+            template_id="tpl:xyz",
+            page_numbers=[1],
+            furniture_ids=["furn:header:000"],
+        )
+        data = ta.model_dump(mode="json")
+        restored = TemplateAssignment.model_validate(data)
+        assert restored == ta
+
+
+class TestDocumentFurnitureProfile:
+    def test_empty_profile(self) -> None:
+        profile = DocumentFurnitureProfile(
+            doc_id="test",
+            total_pages_analyzed=0,
+        )
+        assert profile.furniture_candidates == []
+        assert profile.templates == []
+        assert profile.detection_version == "0.1.0"
+
+    def test_json_roundtrip(self) -> None:
+        profile = DocumentFurnitureProfile(
+            doc_id="test",
+            total_pages_analyzed=5,
+            furniture_candidates=[
+                FurnitureCandidate(
+                    candidate_id="furn:header:000",
+                    furniture_type="header",
+                    bbox_norm=NormalizedBBox(x0=0.1, y0=0.02, x1=0.9, y1=0.05),
+                    source_primitive_kind="text",
+                    page_numbers=[1, 2, 3, 4, 5],
+                    repetition_rate=1.0,
+                ),
+            ],
+            templates=[
+                TemplateAssignment(
+                    template_id="tpl:abc",
+                    page_numbers=[1, 2, 3, 4, 5],
+                    furniture_ids=["furn:header:000"],
+                ),
+            ],
+        )
+        data = profile.model_dump(mode="json")
+        restored = DocumentFurnitureProfile.model_validate(data)
+        assert restored == profile

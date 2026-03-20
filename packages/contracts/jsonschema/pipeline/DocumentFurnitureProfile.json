@@ -1,0 +1,183 @@
+{
+  "$defs": {
+    "FurnitureCandidate": {
+      "description": "A primitive identified as document-level furniture (repeated across pages).",
+      "properties": {
+        "candidate_id": {
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "furniture_type": {
+          "enum": [
+            "header",
+            "footer",
+            "page_number",
+            "border",
+            "background_panel",
+            "divider",
+            "ornament"
+          ],
+          "title": "Furniture Type",
+          "type": "string"
+        },
+        "bbox_norm": {
+          "$ref": "#/$defs/NormalizedBBox"
+        },
+        "source_primitive_kind": {
+          "enum": [
+            "text",
+            "image",
+            "drawing"
+          ],
+          "title": "Source Primitive Kind",
+          "type": "string"
+        },
+        "page_numbers": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Page Numbers",
+          "type": "array"
+        },
+        "repetition_rate": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Repetition Rate",
+          "type": "number"
+        },
+        "confidence": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "text_sample": {
+          "default": "",
+          "title": "Text Sample",
+          "type": "string"
+        },
+        "content_hash": {
+          "default": "",
+          "title": "Content Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "furniture_type",
+        "bbox_norm",
+        "source_primitive_kind"
+      ],
+      "title": "FurnitureCandidate",
+      "type": "object"
+    },
+    "NormalizedBBox": {
+      "description": "Bounding box in normalized page-space coordinates [0, 1].\n\nOrigin is top-left: (0, 0) = top-left corner, (1, 1) = bottom-right.",
+      "properties": {
+        "x0": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X0",
+          "type": "number"
+        },
+        "y0": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y0",
+          "type": "number"
+        },
+        "x1": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X1",
+          "type": "number"
+        },
+        "y1": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y1",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x0",
+        "y0",
+        "x1",
+        "y1"
+      ],
+      "title": "NormalizedBBox",
+      "type": "object"
+    },
+    "TemplateAssignment": {
+      "description": "Assignment of pages to a detected page template/archetype.",
+      "properties": {
+        "template_id": {
+          "title": "Template Id",
+          "type": "string"
+        },
+        "page_numbers": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Page Numbers",
+          "type": "array"
+        },
+        "furniture_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Furniture Ids",
+          "type": "array"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template_id"
+      ],
+      "title": "TemplateAssignment",
+      "type": "object"
+    }
+  },
+  "description": "Document-level furniture detection results.\n\nProduced by collect_evidence once per document (not per page).\nConsumed by downstream stages to subtract furniture from content regions.\n\nArtifact path: ``{run}/evidence/furniture_profile.json``",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "total_pages_analyzed": {
+      "title": "Total Pages Analyzed",
+      "type": "integer"
+    },
+    "furniture_candidates": {
+      "items": {
+        "$ref": "#/$defs/FurnitureCandidate"
+      },
+      "title": "Furniture Candidates",
+      "type": "array"
+    },
+    "templates": {
+      "items": {
+        "$ref": "#/$defs/TemplateAssignment"
+      },
+      "title": "Templates",
+      "type": "array"
+    },
+    "detection_version": {
+      "default": "0.1.0",
+      "title": "Detection Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "doc_id",
+    "total_pages_analyzed"
+  ],
+  "title": "DocumentFurnitureProfile",
+  "type": "object"
+}

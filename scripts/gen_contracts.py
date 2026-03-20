@@ -41,6 +41,7 @@ from aeon_reader_pipeline.models.enrich_models import (
 )
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
+    DocumentFurnitureProfile,
     PrimitivePageEvidence,
     ResolvedPageIR,
 )
@@ -148,6 +149,7 @@ _INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
     PrimitivePageEvidence,
     CanonicalPageEvidence,
     ResolvedPageIR,
+    DocumentFurnitureProfile,
     # Semantic IR
     PageRecord,
     # Translation contracts

@@ -134,6 +134,60 @@ class PrimitivePageEvidence(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Furniture and template detection (S5U-254)
+# ---------------------------------------------------------------------------
+
+FurnitureType = Literal[
+    "header",
+    "footer",
+    "page_number",
+    "border",
+    "background_panel",
+    "divider",
+    "ornament",
+]
+
+
+class FurnitureCandidate(BaseModel):
+    """A primitive identified as document-level furniture (repeated across pages)."""
+
+    candidate_id: str
+    furniture_type: FurnitureType
+    bbox_norm: NormalizedBBox
+    source_primitive_kind: Literal["text", "image", "drawing"]
+    page_numbers: list[int] = Field(default_factory=list)
+    repetition_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    text_sample: str = ""
+    content_hash: str = ""
+
+
+class TemplateAssignment(BaseModel):
+    """Assignment of pages to a detected page template/archetype."""
+
+    template_id: str
+    page_numbers: list[int] = Field(default_factory=list)
+    furniture_ids: list[str] = Field(default_factory=list)
+    description: str = ""
+
+
+class DocumentFurnitureProfile(BaseModel):
+    """Document-level furniture detection results.
+
+    Produced by collect_evidence once per document (not per page).
+    Consumed by downstream stages to subtract furniture from content regions.
+
+    Artifact path: ``{run}/evidence/furniture_profile.json``
+    """
+
+    doc_id: str
+    total_pages_analyzed: int
+    furniture_candidates: list[FurnitureCandidate] = Field(default_factory=list)
+    templates: list[TemplateAssignment] = Field(default_factory=list)
+    detection_version: str = "0.1.0"
+
+
+# ---------------------------------------------------------------------------
 # Canonical evidence — topology and entity analysis results
 # ---------------------------------------------------------------------------
 
@@ -147,7 +201,7 @@ class CanonicalPageEvidence(BaseModel):
 
     Fields for region graphs, reading order, asset occurrences, and
     symbol candidates will be added by Phase 2 and Phase 3 issues
-    (S5U-254 through S5U-262).
+    (S5U-255 through S5U-262).
 
     Artifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``
     """
@@ -164,6 +218,8 @@ class CanonicalPageEvidence(BaseModel):
     has_figures: bool = False
     has_callouts: bool = False
     furniture_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
+    furniture_ids: list[str] = Field(default_factory=list)
+    template_id: str = ""
 
 
 # ---------------------------------------------------------------------------
