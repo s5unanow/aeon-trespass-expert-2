@@ -9,6 +9,7 @@ from aeon_reader_pipeline.utils.ids import (
     list_item_id,
     page_fingerprint,
     page_id,
+    primitive_id,
 )
 
 
@@ -62,6 +63,23 @@ class TestContentFingerprint:
         fp1 = content_fingerprint("hello")
         fp2 = content_fingerprint("world")
         assert fp1 != fp2
+
+
+class TestPrimitiveId:
+    def test_text_format(self) -> None:
+        assert primitive_id("text", 1, 3) == "text:p0001:003"
+
+    def test_image_format(self) -> None:
+        assert primitive_id("image", 2, 0) == "image:p0002:000"
+
+    def test_table_format(self) -> None:
+        assert primitive_id("table", 10, 1) == "table:p0010:001"
+
+    def test_drawing_format(self) -> None:
+        assert primitive_id("drawing", 1, 0) == "drawing:p0001:000"
+
+    def test_zero_padded(self) -> None:
+        assert primitive_id("text", 999, 99) == "text:p0999:099"
 
 
 class TestPageFingerprint:

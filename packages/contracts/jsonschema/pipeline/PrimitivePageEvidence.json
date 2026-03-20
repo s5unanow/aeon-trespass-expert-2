@@ -125,6 +125,52 @@
       "title": "NormalizedBBox",
       "type": "object"
     },
+    "PageRasterHandle": {
+      "description": "Reference for obtaining a page raster image.\n\nProvides downstream stages with an explicit handle to request page\nrasters instead of assuming they can re-open the PDF ad hoc.\nIf ``raster_path`` is set, a pre-rendered raster is available on disk.",
+      "properties": {
+        "source_pdf_sha256": {
+          "title": "Source Pdf Sha256",
+          "type": "string"
+        },
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "width_pt": {
+          "title": "Width Pt",
+          "type": "number"
+        },
+        "height_pt": {
+          "title": "Height Pt",
+          "type": "number"
+        },
+        "raster_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raster Path"
+        },
+        "default_dpi": {
+          "default": 150,
+          "title": "Default Dpi",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "source_pdf_sha256",
+        "page_number",
+        "width_pt",
+        "height_pt"
+      ],
+      "title": "PageRasterHandle",
+      "type": "object"
+    },
     "TablePrimitiveEvidence": {
       "description": "Provenance-tagged table primitive from extraction.",
       "properties": {
@@ -275,6 +321,17 @@
       "default": "pdfplumber",
       "title": "Extraction Method",
       "type": "string"
+    },
+    "raster_handle": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PageRasterHandle"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [
