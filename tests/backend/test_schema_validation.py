@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import jsonschema
 import pymupdf
@@ -190,7 +190,7 @@ def _make_canonical_page_evidence(*, with_content: bool = False) -> CanonicalPag
 
 def _make_resolved_page_ir(
     *,
-    render_mode: str = "semantic",
+    render_mode: Literal["semantic", "hybrid", "facsimile"] = "semantic",
 ) -> ResolvedPageIR:
     """Build a realistic ResolvedPageIR fixture."""
     return ResolvedPageIR(
@@ -199,7 +199,7 @@ def _make_resolved_page_ir(
         width_pt=612.0,
         height_pt=792.0,
         canonical_evidence_hash="sha256:def456",
-        render_mode=render_mode,  # type: ignore[arg-type]
+        render_mode=render_mode,
         fallback_image_ref="/img/p0001_fallback.png" if render_mode != "semantic" else None,
         page_confidence=0.85 if render_mode != "semantic" else 1.0,
         confidence_reasons=["low_text_density"] if render_mode != "semantic" else [],
