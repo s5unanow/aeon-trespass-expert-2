@@ -72,7 +72,7 @@ def _convert_text_block(
     """Convert a raw TextBlock to provenance-tagged evidence."""
     bbox_norm = normalize_bbox(block.bbox, width_pt, height_pt)
 
-    # Derive dominant font from first span
+    # Use first span as representative font for the block
     font_name = ""
     font_size = 0.0
     is_bold = False

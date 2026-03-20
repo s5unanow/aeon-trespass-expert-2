@@ -368,14 +368,27 @@ class ExtractPrimitivesStage(BaseStage):
                 )
 
                 # Emit provenance-tagged evidence with normalized coordinates
-                evidence = build_primitive_evidence(extracted)
-                ctx.artifact_store.write_artifact(
-                    ctx.run_id,
-                    ctx.doc_id,
-                    STAGE_NAME,
-                    _evidence_filename(page_number),
-                    evidence,
-                )
+                try:
+                    evidence = build_primitive_evidence(extracted)
+                    ctx.artifact_store.write_artifact(
+                        ctx.run_id,
+                        ctx.doc_id,
+                        STAGE_NAME,
+                        _evidence_filename(page_number),
+                        evidence,
+                    )
+                except Exception as exc:
+                    ctx.logger.warning(
+                        "evidence_emission_failed",
+                        page=page_number,
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
+                    ctx.errors.record(
+                        error_type=type(exc).__name__,
+                        message=f"Evidence emission failed: {exc}",
+                        page=page_number,
+                    )
 
                 ctx.logger.debug(
                     "page_extracted",
