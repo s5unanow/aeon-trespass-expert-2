@@ -188,6 +188,78 @@ class DocumentFurnitureProfile(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Region segmentation (S5U-255)
+# ---------------------------------------------------------------------------
+
+RegionKind = Literal[
+    "main_flow",
+    "column",
+    "band",
+    "sidebar",
+    "callout",
+    "figure",
+    "table",
+    "caption",
+    "decoration",
+    "furniture",
+    "unknown",
+]
+
+
+class RegionConfidence(BaseModel):
+    """Confidence score with supporting reasons."""
+
+    value: float = Field(default=1.0, ge=0.0, le=1.0)
+    reasons: list[str] = Field(default_factory=list)
+
+
+class RegionCandidate(BaseModel):
+    """A spatial partition of a page with a semantic kind hint.
+
+    Regions are geometric hypotheses — ``kind_hint`` may be refined
+    by later entity resolution stages.
+    """
+
+    region_id: str
+    kind_hint: RegionKind
+    bbox: NormalizedBBox
+    parent_region_id: str | None = None
+    band_index: int | None = None
+    column_index: int | None = None
+    source_evidence_ids: list[str] = Field(default_factory=list)
+    features: dict[str, float | int | str | bool] = Field(default_factory=dict)
+    confidence: RegionConfidence = Field(default_factory=RegionConfidence)
+
+
+class RegionEdge(BaseModel):
+    """A typed relationship between two regions in a page region graph."""
+
+    edge_type: Literal["contains", "overlaps", "adjacent_to", "interrupts"]
+    src_region_id: str
+    dst_region_id: str
+
+
+class PageRegionGraph(BaseModel):
+    """Region segmentation graph for a single page.
+
+    Produced by collect_evidence after furniture subtraction. Contains
+    spatial partitions with containment/adjacency relationships that
+    downstream stages (reading order, entity resolution) consume.
+
+    Artifact path: ``{run}/evidence/p{page_number:04d}_regions.json``
+    """
+
+    page_number: int
+    doc_id: str
+    width_pt: float
+    height_pt: float
+    regions: list[RegionCandidate] = Field(default_factory=list)
+    edges: list[RegionEdge] = Field(default_factory=list)
+    furniture_ids_excluded: list[str] = Field(default_factory=list)
+    detection_version: str = "0.1.0"
+
+
+# ---------------------------------------------------------------------------
 # Canonical evidence — topology and entity analysis results
 # ---------------------------------------------------------------------------
 
@@ -199,9 +271,9 @@ class CanonicalPageEvidence(BaseModel):
     and asset/entity resolution. Contains page-level graph outputs
     that semantic block building consumes.
 
-    Fields for region graphs, reading order, asset occurrences, and
-    symbol candidates will be added by Phase 2 and Phase 3 issues
-    (S5U-255 through S5U-262).
+    Region graph added by S5U-255 (Phase 2). Reading order, asset
+    occurrences, and symbol candidates will be added by further
+    Phase 2 and Phase 3 issues (S5U-256 through S5U-262).
 
     Artifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``
     """
@@ -220,6 +292,8 @@ class CanonicalPageEvidence(BaseModel):
     furniture_fraction: float = Field(default=0.0, ge=0.0, le=1.0)
     furniture_ids: list[str] = Field(default_factory=list)
     template_id: str = ""
+
+    region_graph: PageRegionGraph | None = None
 
 
 # ---------------------------------------------------------------------------
