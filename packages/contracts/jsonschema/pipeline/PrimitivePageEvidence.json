@@ -1,0 +1,280 @@
+{
+  "$defs": {
+    "DrawingPrimitiveEvidence": {
+      "description": "Provenance-tagged vector drawing primitive from extraction.",
+      "properties": {
+        "primitive_id": {
+          "title": "Primitive Id",
+          "type": "string"
+        },
+        "bbox_norm": {
+          "$ref": "#/$defs/NormalizedBBox"
+        },
+        "path_count": {
+          "default": 0,
+          "title": "Path Count",
+          "type": "integer"
+        },
+        "is_decorative": {
+          "default": false,
+          "title": "Is Decorative",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "primitive_id",
+        "bbox_norm"
+      ],
+      "title": "DrawingPrimitiveEvidence",
+      "type": "object"
+    },
+    "FontSummary": {
+      "description": "Aggregated font statistics for a page.",
+      "properties": {
+        "dominant_font": {
+          "default": "",
+          "title": "Dominant Font",
+          "type": "string"
+        },
+        "dominant_size": {
+          "default": 0.0,
+          "title": "Dominant Size",
+          "type": "number"
+        },
+        "unique_font_count": {
+          "default": 0,
+          "title": "Unique Font Count",
+          "type": "integer"
+        }
+      },
+      "title": "FontSummary",
+      "type": "object"
+    },
+    "ImagePrimitiveEvidence": {
+      "description": "Provenance-tagged image primitive from extraction.",
+      "properties": {
+        "primitive_id": {
+          "title": "Primitive Id",
+          "type": "string"
+        },
+        "bbox_norm": {
+          "$ref": "#/$defs/NormalizedBBox"
+        },
+        "content_hash": {
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "width_px": {
+          "default": 0,
+          "title": "Width Px",
+          "type": "integer"
+        },
+        "height_px": {
+          "default": 0,
+          "title": "Height Px",
+          "type": "integer"
+        },
+        "colorspace": {
+          "default": "",
+          "title": "Colorspace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "primitive_id",
+        "bbox_norm",
+        "content_hash"
+      ],
+      "title": "ImagePrimitiveEvidence",
+      "type": "object"
+    },
+    "NormalizedBBox": {
+      "description": "Bounding box in normalized page-space coordinates [0, 1].\n\nOrigin is top-left: (0, 0) = top-left corner, (1, 1) = bottom-right.",
+      "properties": {
+        "x0": {
+          "title": "X0",
+          "type": "number"
+        },
+        "y0": {
+          "title": "Y0",
+          "type": "number"
+        },
+        "x1": {
+          "title": "X1",
+          "type": "number"
+        },
+        "y1": {
+          "title": "Y1",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x0",
+        "y0",
+        "x1",
+        "y1"
+      ],
+      "title": "NormalizedBBox",
+      "type": "object"
+    },
+    "TablePrimitiveEvidence": {
+      "description": "Provenance-tagged table primitive from extraction.",
+      "properties": {
+        "primitive_id": {
+          "title": "Primitive Id",
+          "type": "string"
+        },
+        "bbox_norm": {
+          "$ref": "#/$defs/NormalizedBBox"
+        },
+        "rows": {
+          "default": 0,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "default": 0,
+          "title": "Cols",
+          "type": "integer"
+        },
+        "cell_count": {
+          "default": 0,
+          "title": "Cell Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "primitive_id",
+        "bbox_norm"
+      ],
+      "title": "TablePrimitiveEvidence",
+      "type": "object"
+    },
+    "TextPrimitiveEvidence": {
+      "description": "Provenance-tagged text primitive from extraction.",
+      "properties": {
+        "primitive_id": {
+          "title": "Primitive Id",
+          "type": "string"
+        },
+        "bbox_norm": {
+          "$ref": "#/$defs/NormalizedBBox"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "line_count": {
+          "default": 0,
+          "title": "Line Count",
+          "type": "integer"
+        },
+        "font_name": {
+          "default": "",
+          "title": "Font Name",
+          "type": "string"
+        },
+        "font_size": {
+          "default": 0.0,
+          "title": "Font Size",
+          "type": "number"
+        },
+        "is_bold": {
+          "default": false,
+          "title": "Is Bold",
+          "type": "boolean"
+        },
+        "is_italic": {
+          "default": false,
+          "title": "Is Italic",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "primitive_id",
+        "bbox_norm",
+        "text"
+      ],
+      "title": "TextPrimitiveEvidence",
+      "type": "object"
+    }
+  },
+  "description": "Immutable extraction evidence for a single page.\n\nProduced after extract_primitives. Contains provenance-tagged\nprimitives with normalized coordinates. This is the stable evidence\nlayer that downstream stages (region segmentation, reading order,\nasset resolution) consume -- never mutated after creation.\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_primitive.json``",
+  "properties": {
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "width_pt": {
+      "title": "Width Pt",
+      "type": "number"
+    },
+    "height_pt": {
+      "title": "Height Pt",
+      "type": "number"
+    },
+    "rotation": {
+      "default": 0,
+      "title": "Rotation",
+      "type": "integer"
+    },
+    "source_pdf_sha256": {
+      "default": "",
+      "title": "Source Pdf Sha256",
+      "type": "string"
+    },
+    "text_primitives": {
+      "items": {
+        "$ref": "#/$defs/TextPrimitiveEvidence"
+      },
+      "title": "Text Primitives",
+      "type": "array"
+    },
+    "image_primitives": {
+      "items": {
+        "$ref": "#/$defs/ImagePrimitiveEvidence"
+      },
+      "title": "Image Primitives",
+      "type": "array"
+    },
+    "table_primitives": {
+      "items": {
+        "$ref": "#/$defs/TablePrimitiveEvidence"
+      },
+      "title": "Table Primitives",
+      "type": "array"
+    },
+    "drawing_primitives": {
+      "items": {
+        "$ref": "#/$defs/DrawingPrimitiveEvidence"
+      },
+      "title": "Drawing Primitives",
+      "type": "array"
+    },
+    "font_summary": {
+      "$ref": "#/$defs/FontSummary"
+    },
+    "char_count": {
+      "default": 0,
+      "title": "Char Count",
+      "type": "integer"
+    },
+    "extraction_method": {
+      "default": "pdfplumber",
+      "title": "Extraction Method",
+      "type": "string"
+    }
+  },
+  "required": [
+    "page_number",
+    "doc_id",
+    "width_pt",
+    "height_pt"
+  ],
+  "title": "PrimitivePageEvidence",
+  "type": "object"
+}

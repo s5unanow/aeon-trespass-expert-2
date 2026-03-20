@@ -1,0 +1,59 @@
+{
+  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nFields for region graphs, reading order, asset occurrences, and\nsymbol candidates will be added by Phase 2 and Phase 3 issues\n(S5U-254 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
+  "properties": {
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "width_pt": {
+      "title": "Width Pt",
+      "type": "number"
+    },
+    "height_pt": {
+      "title": "Height Pt",
+      "type": "number"
+    },
+    "primitive_evidence_hash": {
+      "default": "",
+      "title": "Primitive Evidence Hash",
+      "type": "string"
+    },
+    "estimated_column_count": {
+      "default": 1,
+      "title": "Estimated Column Count",
+      "type": "integer"
+    },
+    "has_tables": {
+      "default": false,
+      "title": "Has Tables",
+      "type": "boolean"
+    },
+    "has_figures": {
+      "default": false,
+      "title": "Has Figures",
+      "type": "boolean"
+    },
+    "has_callouts": {
+      "default": false,
+      "title": "Has Callouts",
+      "type": "boolean"
+    },
+    "furniture_fraction": {
+      "default": 0.0,
+      "title": "Furniture Fraction",
+      "type": "number"
+    }
+  },
+  "required": [
+    "page_number",
+    "doc_id",
+    "width_pt",
+    "height_pt"
+  ],
+  "title": "CanonicalPageEvidence",
+  "type": "object"
+}

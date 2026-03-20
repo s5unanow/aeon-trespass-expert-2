@@ -39,6 +39,11 @@ from aeon_reader_pipeline.models.enrich_models import (
     SearchDocument,
     SearchIndex,
 )
+from aeon_reader_pipeline.models.evidence_models import (
+    CanonicalPageEvidence,
+    PrimitivePageEvidence,
+    ResolvedPageIR,
+)
 from aeon_reader_pipeline.models.extract_models import ExtractedPage
 from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
@@ -139,6 +144,10 @@ _INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
     # Ingest/extract contracts
     DocumentManifest,
     ExtractedPage,
+    # Evidence layer (Architecture 3)
+    PrimitivePageEvidence,
+    CanonicalPageEvidence,
+    ResolvedPageIR,
     # Semantic IR
     PageRecord,
     # Translation contracts
