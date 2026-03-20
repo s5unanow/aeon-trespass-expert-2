@@ -1,0 +1,40 @@
+# Release workflow — builds the reader and creates a GitHub release on tag push.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Install bundle data
+        run: |
+          if [ -f apps/reader/generated/catalog.json ]; then
+            echo "Using committed bundle data."
+          else
+            echo "No bundle data found — using fixture bundle."
+            rm -rf apps/reader/generated
+            mkdir -p apps/reader/generated
+            cp -r tests/fixtures/site-bundles/* apps/reader/generated/
+          fi
+      - run: pnpm --filter reader build
+      - name: Verify build output
+        run: test -f apps/reader/out/index.html || (echo "Build produced no index.html" && exit 1)
+      - name: Package static site
+        run: tar -czf reader-site.tar.gz -C apps/reader/out .
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: reader-site.tar.gz
+          generate_release_notes: true

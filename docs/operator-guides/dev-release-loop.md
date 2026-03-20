@@ -99,6 +99,43 @@ CI runs on every PR and push to main:
 - **frontend**: eslint, tsc, vitest, Next.js build
 - **e2e**: Playwright smoke tests against fixture bundle
 
+## Release and deploy
+
+The reader is a static site. The supported release mechanism is:
+
+1. **Run the pipeline** to produce a site bundle:
+   ```bash
+   reader-pipeline run --doc aeon-trespass-core
+   ```
+
+2. **Sync the bundle** to the reader's generated directory:
+   ```bash
+   rm -rf apps/reader/generated
+   mkdir -p apps/reader/generated
+   cp -r artifacts/runs/<run-id>/aeon-trespass-core/export/* apps/reader/generated/
+   ```
+
+3. **Build and deploy**:
+   ```bash
+   make deploy   # Builds to apps/reader/out/
+   ```
+
+   Upload `apps/reader/out/` to your static hosting provider.
+
+### Automated workflows
+
+- **Preview** (`preview.yml`): On every PR, builds the reader with fixture data and uploads the static site as a downloadable GitHub Actions artifact. Use this to review visual changes before merging.
+- **Release** (`release.yml`): On git tag push (`v*`), builds the reader with the committed bundle and creates a GitHub release with the static site attached.
+
+To cut a release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow will build the site and attach it to the GitHub release automatically.
+
 ## Rollback
 
 If a merged PR breaks something:
