@@ -96,7 +96,7 @@ The existing pipeline path (`extract_primitives → normalize_layout → resolve
 - You encounter `make test` failures in unrelated code that you cannot resolve
 - The ticket requires adding a new external dependency not in the current `pyproject.toml`
 
-**Escalation means:** set the issue to Blocked, add a comment explaining the specific blocker, and move to a different ready ticket. Do not improvise a workaround that violates these rules.
+**Escalation means:** add a comment on the Linear issue explaining the specific blocker, move the issue back to **Backlog**, and pick a different ready ticket. Do not improvise a workaround that violates these rules. (The team workflow statuses are: Backlog, Todo, In Progress, In Review, Done, Canceled, Duplicate — there is no "Blocked" status.)
 
 ---
 
