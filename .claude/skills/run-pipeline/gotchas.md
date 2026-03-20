@@ -37,7 +37,7 @@ Not all stages can be re-run independently:
 - The site bundle lives at `{run}/{doc_id}/11_export/site_bundle/{doc_id}/`.
 
 ## Common Failures
-- **`GOOGLE_API_KEY` not set** → Gemini provider raises immediately. Set it or use `--mock`/`--cli`.
+- **`GOOGLE_API_KEY` not set with `--sdk`** → Gemini SDK provider raises immediately. The default CLI gateway uses local cached credentials and does not need an API key. Use `--mock` for testing without any LLM calls.
 - **Rate limiting (429)** → Built-in retry with exponential backoff handles this. If persistent, reduce concurrency or wait.
 - **PDF not found** → Check `source_pdf` path in document config. It's relative to CWD.
 - **Stage already completed** → Pipeline skips it. Use `--cache-mode force_refresh` to re-run.

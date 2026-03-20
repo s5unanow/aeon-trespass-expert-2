@@ -38,7 +38,7 @@ def _setup_gateway(
 ) -> tuple[PipelineConfig, LlmGateway | None]:
     """Configure the LLM gateway and return (pipeline_config, gateway).
 
-    Returns a (possibly updated) pipeline_config to allow concurrency changes,
+    Returns pipeline_config unchanged (kept in tuple for interface stability)
     and the gateway instance (or None for dry-run).
     """
     from aeon_reader_pipeline.llm.base import LlmGateway, LlmResponse
@@ -77,6 +77,7 @@ def _setup_gateway(
         from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
 
         llm_gateway = GeminiCliGateway()
+        typer.echo("Using Gemini CLI gateway.")
 
     return pipeline_config, llm_gateway
 
