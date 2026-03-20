@@ -8,8 +8,9 @@ import type { Metadata } from "next";
  * Base URL for the site. Used in OG tags, sitemap, and canonical URLs.
  * Override via NEXT_PUBLIC_SITE_URL environment variable.
  */
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://aeon-trespass-reader.pages.dev";
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://aeon-trespass-reader.pages.dev"
+).replace(/\/$/, "");
 
 export const SITE_NAME = "Aeon Trespass Reader";
 export const SITE_DESCRIPTION =
@@ -42,7 +43,7 @@ export function jsonLd(data: Record<string, unknown>): React.ReactElement {
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
     />
   );
 }

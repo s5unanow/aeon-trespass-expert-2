@@ -58,9 +58,9 @@ export default async function DocLandingPage({
     <DocLayout manifest={manifest} navigation={navigation}>
       {jsonLd({
         "@context": "https://schema.org",
-        "@type": "Article",
+        "@type": "Book",
         name: manifest.title_en,
-        headline: manifest.title_ru || manifest.title_en,
+        alternateName: manifest.title_ru || manifest.title_en,
         inLanguage: "ru",
         url: `${SITE_URL}${docRoute(docId)}`,
         numberOfPages: manifest.page_count,
