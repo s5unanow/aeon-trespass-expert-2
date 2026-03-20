@@ -17,9 +17,10 @@ from aeon_reader_pipeline.utils.furniture_detection import (
 )
 from aeon_reader_pipeline.utils.page_filter import pages_to_process
 from aeon_reader_pipeline.utils.page_region_detection import segment_page_regions
+from aeon_reader_pipeline.utils.reading_order import compute_reading_order
 
 STAGE_NAME = "collect_evidence"
-STAGE_VERSION = "0.3.0"
+STAGE_VERSION = "0.4.0"
 
 
 def _primitive_filename(page_number: int) -> str:
@@ -32,6 +33,10 @@ def _canonical_filename(page_number: int) -> str:
 
 def _regions_filename(page_number: int) -> str:
     return f"evidence/p{page_number:04d}_regions.json"
+
+
+def _reading_order_filename(page_number: int) -> str:
+    return f"evidence/p{page_number:04d}_reading_order.json"
 
 
 @register_stage
@@ -107,6 +112,17 @@ class CollectEvidenceStage(BaseStage):
                 region_graph,
             )
 
+            # Reading order reconstruction (S5U-256)
+            reading_order = compute_reading_order(region_graph)
+
+            ctx.artifact_store.write_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                STAGE_NAME,
+                _reading_order_filename(pn),
+                reading_order,
+            )
+
             # Estimate column count as max columns in any single band
             estimated_columns = max(
                 (
@@ -131,6 +147,7 @@ class CollectEvidenceStage(BaseStage):
                 furniture_ids=furn_ids,
                 template_id=page_tpl_id.get(pn, ""),
                 region_graph=region_graph,
+                reading_order=reading_order,
             )
 
             ctx.artifact_store.write_artifact(
@@ -150,6 +167,7 @@ class CollectEvidenceStage(BaseStage):
                 template_id=canonical.template_id,
                 region_count=len(region_graph.regions),
                 column_count=estimated_columns,
+                reading_order_entries=len(reading_order.entries),
             )
 
         ctx.logger.info("collect_evidence_complete", pages=len(pages))
