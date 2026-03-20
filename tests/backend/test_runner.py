@@ -10,8 +10,8 @@ from aeon_reader_pipeline.stage_framework.registry import (
 )
 
 
-def test_stage_order_has_14_stages():
-    assert len(STAGE_ORDER) == 14
+def test_stage_order_has_16_stages():
+    assert len(STAGE_ORDER) == 16
 
 
 def test_get_all_stages_ordered():
@@ -38,10 +38,10 @@ def test_resolve_run_is_first_registered_stage():
 
 
 def test_filter_from_resolve_run_includes_all():
-    """Starting from resolve_run includes all 14 stages."""
+    """Starting from resolve_run includes all 16 stages."""
     stages = filter_stages(from_stage="resolve_run")
     assert stages == STAGE_ORDER
-    assert len(stages) == 14
+    assert len(stages) == 16
 
 
 def test_filter_stages_all():
@@ -63,7 +63,12 @@ def test_filter_stages_to():
 
 def test_filter_stages_from_to():
     stages = filter_stages(from_stage="extract_primitives", to_stage="normalize_layout")
-    assert stages == ["extract_primitives", "normalize_layout"]
+    assert stages == [
+        "extract_primitives",
+        "collect_evidence",
+        "resolve_page_ir",
+        "normalize_layout",
+    ]
 
 
 def test_filter_stages_only():

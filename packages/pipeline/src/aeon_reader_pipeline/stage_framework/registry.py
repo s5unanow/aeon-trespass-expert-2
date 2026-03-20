@@ -12,6 +12,8 @@ STAGE_ORDER: list[str] = [
     "resolve_run",
     "ingest_source",
     "extract_primitives",
+    "collect_evidence",
+    "resolve_page_ir",
     "normalize_layout",
     "resolve_assets_symbols",
     "plan_translation",

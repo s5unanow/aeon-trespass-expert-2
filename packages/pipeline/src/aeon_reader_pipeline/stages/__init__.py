@@ -4,6 +4,7 @@ Importing this package registers all implemented stages with the stage registry.
 """
 
 from aeon_reader_pipeline.stages.build_reader import BuildReaderStage
+from aeon_reader_pipeline.stages.collect_evidence import CollectEvidenceStage
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
 from aeon_reader_pipeline.stages.export_site_bundle import ExportSiteBundleStage
@@ -15,11 +16,13 @@ from aeon_reader_pipeline.stages.normalize_layout import NormalizeLayoutStage
 from aeon_reader_pipeline.stages.package_release import PackageReleaseStage
 from aeon_reader_pipeline.stages.plan_translation import PlanTranslationStage
 from aeon_reader_pipeline.stages.resolve_assets_symbols import ResolveAssetsSymbolsStage
+from aeon_reader_pipeline.stages.resolve_page_ir import ResolvePageIRStage
 from aeon_reader_pipeline.stages.resolve_run import ResolveRunStage
 from aeon_reader_pipeline.stages.translate_units import TranslateUnitsStage
 
 __all__ = [
     "BuildReaderStage",
+    "CollectEvidenceStage",
     "EnrichContentStage",
     "EvaluateQAStage",
     "ExportSiteBundleStage",
@@ -31,6 +34,7 @@ __all__ = [
     "PackageReleaseStage",
     "PlanTranslationStage",
     "ResolveAssetsSymbolsStage",
+    "ResolvePageIRStage",
     "ResolveRunStage",
     "TranslateUnitsStage",
 ]

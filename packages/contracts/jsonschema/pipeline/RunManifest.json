@@ -99,6 +99,15 @@
           "default": null,
           "title": "Baseline Run Ref"
         },
+        "architecture": {
+          "default": "v2",
+          "enum": [
+            "v2",
+            "v3"
+          ],
+          "title": "Architecture",
+          "type": "string"
+        },
         "translation_max_retries": {
           "default": 3,
           "minimum": 1,

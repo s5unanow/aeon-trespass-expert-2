@@ -154,6 +154,8 @@ _STAGE_PREFIXES: dict[str, str] = {
     "resolve_run": "00_resolve",
     "ingest_source": "01_ingest",
     "extract_primitives": "02_extract",
+    "collect_evidence": "02a_evidence",
+    "resolve_page_ir": "02b_resolve_ir",
     "normalize_layout": "03_normalize",
     "resolve_assets_symbols": "04_assets",
     "plan_translation": "05_translation_plan",
