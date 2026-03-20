@@ -1,0 +1,197 @@
+{
+  "$defs": {
+    "DocumentBuild": {
+      "description": "Build configuration for a document.",
+      "properties": {
+        "route_base": {
+          "title": "Route Base",
+          "type": "string"
+        },
+        "include_in_catalog": {
+          "default": true,
+          "title": "Include In Catalog",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "route_base"
+      ],
+      "title": "DocumentBuild",
+      "type": "object"
+    },
+    "DocumentNavigation": {
+      "description": "Navigation overrides.",
+      "properties": {
+        "toc_overrides": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Toc Overrides"
+        }
+      },
+      "title": "DocumentNavigation",
+      "type": "object"
+    },
+    "DocumentProfiles": {
+      "description": "Profile references for a document.",
+      "properties": {
+        "rules": {
+          "title": "Rules",
+          "type": "string"
+        },
+        "models": {
+          "title": "Models",
+          "type": "string"
+        },
+        "symbols": {
+          "title": "Symbols",
+          "type": "string"
+        },
+        "glossary": {
+          "title": "Glossary",
+          "type": "string"
+        },
+        "patches": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Patches"
+        }
+      },
+      "required": [
+        "rules",
+        "models",
+        "symbols",
+        "glossary"
+      ],
+      "title": "DocumentProfiles",
+      "type": "object"
+    },
+    "DocumentRender": {
+      "description": "Render configuration.",
+      "properties": {
+        "default_theme": {
+          "default": "light",
+          "title": "Default Theme",
+          "type": "string"
+        },
+        "figure_policy": {
+          "default": "inline",
+          "title": "Figure Policy",
+          "type": "string"
+        },
+        "page_label_offset": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Label Offset"
+        }
+      },
+      "title": "DocumentRender",
+      "type": "object"
+    },
+    "DocumentTitles": {
+      "description": "Localized document titles.",
+      "properties": {
+        "en": {
+          "title": "En",
+          "type": "string"
+        },
+        "ru": {
+          "title": "Ru",
+          "type": "string"
+        }
+      },
+      "required": [
+        "en",
+        "ru"
+      ],
+      "title": "DocumentTitles",
+      "type": "object"
+    }
+  },
+  "description": "Human-authored document declaration.",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "slug": {
+      "title": "Slug",
+      "type": "string"
+    },
+    "source_pdf": {
+      "title": "Source Pdf",
+      "type": "string"
+    },
+    "titles": {
+      "$ref": "#/$defs/DocumentTitles"
+    },
+    "edition": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Edition"
+    },
+    "source_locale": {
+      "default": "en",
+      "title": "Source Locale",
+      "type": "string"
+    },
+    "target_locale": {
+      "default": "ru",
+      "title": "Target Locale",
+      "type": "string"
+    },
+    "profiles": {
+      "$ref": "#/$defs/DocumentProfiles"
+    },
+    "build": {
+      "$ref": "#/$defs/DocumentBuild"
+    },
+    "navigation": {
+      "$ref": "#/$defs/DocumentNavigation"
+    },
+    "render": {
+      "$ref": "#/$defs/DocumentRender"
+    }
+  },
+  "required": [
+    "doc_id",
+    "slug",
+    "source_pdf",
+    "titles",
+    "profiles",
+    "build"
+  ],
+  "title": "DocumentConfig",
+  "type": "object"
+}

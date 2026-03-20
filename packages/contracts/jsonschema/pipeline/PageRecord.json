@@ -1,0 +1,749 @@
+{
+  "$defs": {
+    "CalloutBlock": {
+      "description": "Highlighted callout / sidebar / tip box.",
+      "properties": {
+        "kind": {
+          "const": "callout",
+          "default": "callout",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "callout_type": {
+          "default": "note",
+          "title": "Callout Type",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextRun"
+              },
+              {
+                "$ref": "#/$defs/SymbolRef"
+              },
+              {
+                "$ref": "#/$defs/GlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "CalloutBlock",
+      "type": "object"
+    },
+    "CaptionBlock": {
+      "description": "Figure or table caption.",
+      "properties": {
+        "kind": {
+          "const": "caption",
+          "default": "caption",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextRun"
+              },
+              {
+                "$ref": "#/$defs/SymbolRef"
+              },
+              {
+                "$ref": "#/$defs/GlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "parent_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Block Id"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "CaptionBlock",
+      "type": "object"
+    },
+    "DividerBlock": {
+      "description": "Horizontal rule or visual separator.",
+      "properties": {
+        "kind": {
+          "const": "divider",
+          "default": "divider",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "DividerBlock",
+      "type": "object"
+    },
+    "FigureBlock": {
+      "description": "Image or diagram reference.",
+      "properties": {
+        "kind": {
+          "const": "figure",
+          "default": "figure",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "asset_ref": {
+          "default": "",
+          "title": "Asset Ref",
+          "type": "string"
+        },
+        "alt_text": {
+          "default": "",
+          "title": "Alt Text",
+          "type": "string"
+        },
+        "caption_block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption Block Id"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "FigureBlock",
+      "type": "object"
+    },
+    "GlossaryRef": {
+      "description": "Reference to a glossary term.",
+      "properties": {
+        "kind": {
+          "const": "glossary_ref",
+          "default": "glossary_ref",
+          "title": "Kind",
+          "type": "string"
+        },
+        "term_id": {
+          "title": "Term Id",
+          "type": "string"
+        },
+        "surface_form": {
+          "title": "Surface Form",
+          "type": "string"
+        },
+        "ru_surface_form": {
+          "default": "",
+          "title": "Ru Surface Form",
+          "type": "string"
+        }
+      },
+      "required": [
+        "term_id",
+        "surface_form"
+      ],
+      "title": "GlossaryRef",
+      "type": "object"
+    },
+    "HeadingBlock": {
+      "description": "Section heading.",
+      "properties": {
+        "kind": {
+          "const": "heading",
+          "default": "heading",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "level": {
+          "default": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextRun"
+              },
+              {
+                "$ref": "#/$defs/SymbolRef"
+              },
+              {
+                "$ref": "#/$defs/GlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "anchor": {
+          "default": "",
+          "title": "Anchor",
+          "type": "string"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "HeadingBlock",
+      "type": "object"
+    },
+    "ListBlock": {
+      "description": "Ordered or unordered list container.",
+      "properties": {
+        "kind": {
+          "const": "list",
+          "default": "list",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "list_type": {
+          "default": "unordered",
+          "enum": [
+            "unordered",
+            "ordered"
+          ],
+          "title": "List Type",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/ListItemBlock"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "ListBlock",
+      "type": "object"
+    },
+    "ListItemBlock": {
+      "description": "Single item in a list.",
+      "properties": {
+        "kind": {
+          "const": "list_item",
+          "default": "list_item",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "bullet": {
+          "default": "",
+          "title": "Bullet",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextRun"
+              },
+              {
+                "$ref": "#/$defs/SymbolRef"
+              },
+              {
+                "$ref": "#/$defs/GlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "ListItemBlock",
+      "type": "object"
+    },
+    "PageAnchor": {
+      "description": "Named anchor on a page for cross-referencing.",
+      "properties": {
+        "anchor_id": {
+          "title": "Anchor Id",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor_id",
+        "block_id"
+      ],
+      "title": "PageAnchor",
+      "type": "object"
+    },
+    "ParagraphBlock": {
+      "description": "Normal text paragraph.",
+      "properties": {
+        "kind": {
+          "const": "paragraph",
+          "default": "paragraph",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/TextRun"
+              },
+              {
+                "$ref": "#/$defs/SymbolRef"
+              },
+              {
+                "$ref": "#/$defs/GlossaryRef"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "ParagraphBlock",
+      "type": "object"
+    },
+    "SymbolRef": {
+      "description": "Reference to a canonical symbol from a SymbolPack.",
+      "properties": {
+        "kind": {
+          "const": "symbol",
+          "default": "symbol",
+          "title": "Kind",
+          "type": "string"
+        },
+        "symbol_id": {
+          "title": "Symbol Id",
+          "type": "string"
+        },
+        "alt_text": {
+          "default": "",
+          "title": "Alt Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "symbol_id"
+      ],
+      "title": "SymbolRef",
+      "type": "object"
+    },
+    "TableBlock": {
+      "description": "Table with cell data.",
+      "properties": {
+        "kind": {
+          "const": "table",
+          "default": "table",
+          "title": "Kind",
+          "type": "string"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "rows": {
+          "default": 0,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "default": 0,
+          "title": "Cols",
+          "type": "integer"
+        },
+        "cells": {
+          "items": {
+            "$ref": "#/$defs/TableCell"
+          },
+          "title": "Cells",
+          "type": "array"
+        },
+        "source_block_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Block Index"
+        }
+      },
+      "required": [
+        "block_id"
+      ],
+      "title": "TableBlock",
+      "type": "object"
+    },
+    "TableCell": {
+      "description": "A single cell in a table.",
+      "properties": {
+        "row": {
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "title": "Col",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "row_span": {
+          "default": 1,
+          "title": "Row Span",
+          "type": "integer"
+        },
+        "col_span": {
+          "default": 1,
+          "title": "Col Span",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "text"
+      ],
+      "title": "TableCell",
+      "type": "object"
+    },
+    "TextRun": {
+      "description": "Plain text run with optional formatting.",
+      "properties": {
+        "kind": {
+          "const": "text",
+          "default": "text",
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "ru_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ru Text"
+        },
+        "bold": {
+          "default": false,
+          "title": "Bold",
+          "type": "boolean"
+        },
+        "italic": {
+          "default": false,
+          "title": "Italic",
+          "type": "boolean"
+        },
+        "monospace": {
+          "default": false,
+          "title": "Monospace",
+          "type": "boolean"
+        },
+        "font_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Font Name"
+        },
+        "font_size": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Font Size"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "TextRun",
+      "type": "object"
+    }
+  },
+  "description": "Canonical semantic representation of a single page.\n\nProduced by normalize_layout (03_normalize/pages/p0001.json).\nThis is the core IR — deterministic structure, no LLM output.",
+  "properties": {
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "width_pt": {
+      "title": "Width Pt",
+      "type": "number"
+    },
+    "height_pt": {
+      "title": "Height Pt",
+      "type": "number"
+    },
+    "render_mode": {
+      "default": "semantic",
+      "enum": [
+        "semantic",
+        "hybrid",
+        "facsimile"
+      ],
+      "title": "Render Mode",
+      "type": "string"
+    },
+    "fallback_image_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallback Image Ref"
+    },
+    "blocks": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/HeadingBlock"
+          },
+          {
+            "$ref": "#/$defs/ParagraphBlock"
+          },
+          {
+            "$ref": "#/$defs/ListBlock"
+          },
+          {
+            "$ref": "#/$defs/ListItemBlock"
+          },
+          {
+            "$ref": "#/$defs/FigureBlock"
+          },
+          {
+            "$ref": "#/$defs/CaptionBlock"
+          },
+          {
+            "$ref": "#/$defs/TableBlock"
+          },
+          {
+            "$ref": "#/$defs/CalloutBlock"
+          },
+          {
+            "$ref": "#/$defs/DividerBlock"
+          }
+        ]
+      },
+      "title": "Blocks",
+      "type": "array"
+    },
+    "anchors": {
+      "items": {
+        "$ref": "#/$defs/PageAnchor"
+      },
+      "title": "Anchors",
+      "type": "array"
+    },
+    "source_pdf_sha256": {
+      "default": "",
+      "title": "Source Pdf Sha256",
+      "type": "string"
+    },
+    "fingerprint": {
+      "default": "",
+      "title": "Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "page_number",
+    "doc_id",
+    "width_pt",
+    "height_pt"
+  ],
+  "title": "PageRecord",
+  "type": "object"
+}

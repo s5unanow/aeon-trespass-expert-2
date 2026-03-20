@@ -1,0 +1,212 @@
+{
+  "$defs": {
+    "RetryPolicy": {
+      "description": "Retry configuration.",
+      "properties": {
+        "max_attempts": {
+          "default": 3,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "backoff_seconds": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Backoff Seconds",
+          "type": "array"
+        }
+      },
+      "title": "RetryPolicy",
+      "type": "object"
+    },
+    "StageSelector": {
+      "description": "Stage filtering.",
+      "properties": {
+        "from_stage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From Stage"
+        },
+        "to_stage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To Stage"
+        },
+        "only": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Only"
+        },
+        "exclude": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exclude"
+        }
+      },
+      "title": "StageSelector",
+      "type": "object"
+    }
+  },
+  "description": "Runtime execution policy.",
+  "properties": {
+    "run_id": {
+      "title": "Run Id",
+      "type": "string"
+    },
+    "docs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Docs",
+      "type": "array"
+    },
+    "stages": {
+      "$ref": "#/$defs/StageSelector"
+    },
+    "cache_mode": {
+      "default": "read_write",
+      "enum": [
+        "read_write",
+        "read_only",
+        "write_only",
+        "off",
+        "force_refresh"
+      ],
+      "title": "Cache Mode",
+      "type": "string"
+    },
+    "strict_mode": {
+      "default": false,
+      "title": "Strict Mode",
+      "type": "boolean"
+    },
+    "skip_qa_gate": {
+      "default": false,
+      "title": "Skip Qa Gate",
+      "type": "boolean"
+    },
+    "max_workers": {
+      "default": 1,
+      "title": "Max Workers",
+      "type": "integer"
+    },
+    "llm_concurrency": {
+      "default": 1,
+      "title": "Llm Concurrency",
+      "type": "integer"
+    },
+    "retry_policy": {
+      "$ref": "#/$defs/RetryPolicy"
+    },
+    "artifact_root": {
+      "default": "artifacts",
+      "title": "Artifact Root",
+      "type": "string"
+    },
+    "source_only": {
+      "default": false,
+      "title": "Source Only",
+      "type": "boolean"
+    },
+    "page_filter": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Page Filter"
+    },
+    "release_channel": {
+      "default": "dev",
+      "enum": [
+        "dev",
+        "preview",
+        "prod"
+      ],
+      "title": "Release Channel",
+      "type": "string"
+    },
+    "baseline_run_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Baseline Run Ref"
+    },
+    "translation_max_retries": {
+      "default": 3,
+      "minimum": 1,
+      "title": "Translation Max Retries",
+      "type": "integer"
+    },
+    "max_nodes_per_unit": {
+      "default": 20,
+      "minimum": 1,
+      "title": "Max Nodes Per Unit",
+      "type": "integer"
+    },
+    "context_window_chars": {
+      "default": 200,
+      "minimum": 0,
+      "title": "Context Window Chars",
+      "type": "integer"
+    },
+    "progress_log_interval": {
+      "default": 50,
+      "minimum": 1,
+      "title": "Progress Log Interval",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "run_id"
+  ],
+  "title": "PipelineConfig",
+  "type": "object"
+}

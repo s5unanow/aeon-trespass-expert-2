@@ -1,0 +1,104 @@
+{
+  "description": "Model/provider/prompt configuration for LLM calls.",
+  "properties": {
+    "profile_id": {
+      "title": "Profile Id",
+      "type": "string"
+    },
+    "provider": {
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "fallback_provider": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallback Provider"
+    },
+    "fallback_model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallback Model"
+    },
+    "temperature": {
+      "default": 0.1,
+      "title": "Temperature",
+      "type": "number"
+    },
+    "top_p": {
+      "default": 0.9,
+      "title": "Top P",
+      "type": "number"
+    },
+    "max_output_tokens": {
+      "default": 4096,
+      "title": "Max Output Tokens",
+      "type": "integer"
+    },
+    "prompt_bundle": {
+      "default": "translate-v1",
+      "title": "Prompt Bundle",
+      "type": "string"
+    },
+    "max_retries": {
+      "default": 3,
+      "minimum": 1,
+      "title": "Max Retries",
+      "type": "integer"
+    },
+    "retry_base_delay": {
+      "default": 1.0,
+      "minimum": 0,
+      "title": "Retry Base Delay",
+      "type": "number"
+    },
+    "retry_max_delay": {
+      "default": 60.0,
+      "minimum": 0,
+      "title": "Retry Max Delay",
+      "type": "number"
+    },
+    "input_price_per_mtok": {
+      "default": 0.0,
+      "minimum": 0,
+      "title": "Input Price Per Mtok",
+      "type": "number"
+    },
+    "output_price_per_mtok": {
+      "default": 0.0,
+      "minimum": 0,
+      "title": "Output Price Per Mtok",
+      "type": "number"
+    },
+    "cli_timeout": {
+      "default": 180,
+      "minimum": 1,
+      "title": "Cli Timeout",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "profile_id",
+    "provider",
+    "model"
+  ],
+  "title": "ModelProfile",
+  "type": "object"
+}

@@ -23,9 +23,37 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from aeon_reader_pipeline.models.config_models import (
+    CatalogConfig,
+    DocumentConfig,
+    GlossaryPack,
+    ModelProfile,
+    PatchSet,
+    RuleProfile,
+    SymbolPack,
+)
 from aeon_reader_pipeline.models.enrich_models import (
+    DocumentSummary,
     NavEntry,
     NavigationTree,
+    SearchDocument,
+    SearchIndex,
+)
+from aeon_reader_pipeline.models.extract_models import ExtractedPage
+from aeon_reader_pipeline.models.ir_models import PageRecord
+from aeon_reader_pipeline.models.manifest_models import DocumentManifest
+from aeon_reader_pipeline.models.qa_models import QAIssue, QASummary
+from aeon_reader_pipeline.models.release_models import ReleaseManifest
+from aeon_reader_pipeline.models.run_models import (
+    PipelineConfig,
+    ResolvedRunPlan,
+    RunManifest,
+    StageManifest,
+)
+from aeon_reader_pipeline.models.translation_models import (
+    TranslationPlan,
+    TranslationResult,
+    TranslationUnit,
 )
 from aeon_reader_pipeline.models.site_bundle_models import (
     BundleAssetEntry,
@@ -55,6 +83,7 @@ from aeon_reader_pipeline.models.site_bundle_models import (
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 JSONSCHEMA_DIR = REPO_ROOT / "packages" / "contracts" / "jsonschema"
+INTERNAL_SCHEMA_DIR = JSONSCHEMA_DIR / "pipeline"
 TS_GENERATED_DIR = REPO_ROOT / "packages" / "contracts" / "typescript" / "src" / "generated"
 
 # ── Contract spec ─────────────────────────────────────────────────────
@@ -87,6 +116,44 @@ _EXPORT_MODELS: list[type[BaseModel]] = [
     NavigationTree,
     CatalogEntry,
     CatalogManifest,
+]
+
+# Phase 1 only: internal pipeline models for JSON Schema generation.
+# These get JSON Schema files but NOT TypeScript types — they live under
+# packages/contracts/jsonschema/pipeline/ and are consumed only by
+# Python-side schema validation and tests.
+_INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
+    # Config contracts
+    DocumentConfig,
+    ModelProfile,
+    RuleProfile,
+    SymbolPack,
+    GlossaryPack,
+    PatchSet,
+    CatalogConfig,
+    # Run/orchestration contracts
+    PipelineConfig,
+    ResolvedRunPlan,
+    RunManifest,
+    StageManifest,
+    # Ingest/extract contracts
+    DocumentManifest,
+    ExtractedPage,
+    # Semantic IR
+    PageRecord,
+    # Translation contracts
+    TranslationUnit,
+    TranslationResult,
+    TranslationPlan,
+    # QA contracts
+    QAIssue,
+    QASummary,
+    # Enrich contracts (not already in public exports)
+    SearchDocument,
+    SearchIndex,
+    DocumentSummary,
+    # Release
+    ReleaseManifest,
 ]
 
 # Union type aliases (name -> member model names)
@@ -142,13 +209,22 @@ _TS_SECTIONS: list[tuple[str, list[str], list[str]]] = [
 def generate_json_schema() -> None:
     """Write individual JSON Schema files for each exported model."""
     JSONSCHEMA_DIR.mkdir(parents=True, exist_ok=True)
+    INTERNAL_SCHEMA_DIR.mkdir(parents=True, exist_ok=True)
 
     for model in _EXPORT_MODELS:
         schema = model.model_json_schema(mode="serialization")
         name = model.__name__
         _atomic_write_json(JSONSCHEMA_DIR / f"{name}.json", schema)
 
-    print(f"  JSON Schema: {len(_EXPORT_MODELS)} files → {JSONSCHEMA_DIR}")
+    for model in _INTERNAL_SCHEMA_MODELS:
+        schema = model.model_json_schema(mode="serialization")
+        name = model.__name__
+        _atomic_write_json(INTERNAL_SCHEMA_DIR / f"{name}.json", schema)
+
+    total = len(_EXPORT_MODELS) + len(_INTERNAL_SCHEMA_MODELS)
+    print(f"  JSON Schema: {len(_EXPORT_MODELS)} public → {JSONSCHEMA_DIR}")
+    print(f"  JSON Schema: {len(_INTERNAL_SCHEMA_MODELS)} internal → {INTERNAL_SCHEMA_DIR}")
+    print(f"  JSON Schema: {total} total")
 
 
 # ── Phase 2: JSON Schema → TypeScript ────────────────────────────────

@@ -1,0 +1,216 @@
+{
+  "$defs": {
+    "OutlineEntry": {
+      "description": "Single entry from the PDF outline/table-of-contents.",
+      "properties": {
+        "level": {
+          "title": "Level",
+          "type": "integer"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "page_number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Number"
+        }
+      },
+      "required": [
+        "level",
+        "title"
+      ],
+      "title": "OutlineEntry",
+      "type": "object"
+    },
+    "PageDimensions": {
+      "description": "Physical page dimensions from PDF.",
+      "properties": {
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "width_pt": {
+          "title": "Width Pt",
+          "type": "number"
+        },
+        "height_pt": {
+          "title": "Height Pt",
+          "type": "number"
+        },
+        "rotation": {
+          "default": 0,
+          "title": "Rotation",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "page_number",
+        "width_pt",
+        "height_pt"
+      ],
+      "title": "PageDimensions",
+      "type": "object"
+    },
+    "SourceMetadata": {
+      "description": "Metadata extracted from the PDF document info dictionary.",
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "author": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Author"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject"
+        },
+        "creator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Creator"
+        },
+        "producer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Producer"
+        },
+        "creation_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Creation Date"
+        },
+        "modification_date": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modification Date"
+        },
+        "keywords": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Keywords"
+        }
+      },
+      "title": "SourceMetadata",
+      "type": "object"
+    }
+  },
+  "description": "Immutable manifest describing a source PDF.\n\nProduced by the ingest_source stage (01_ingest/document_manifest.json).",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "source_pdf_path": {
+      "title": "Source Pdf Path",
+      "type": "string"
+    },
+    "source_pdf_sha256": {
+      "title": "Source Pdf Sha256",
+      "type": "string"
+    },
+    "file_size_bytes": {
+      "title": "File Size Bytes",
+      "type": "integer"
+    },
+    "page_count": {
+      "title": "Page Count",
+      "type": "integer"
+    },
+    "metadata": {
+      "$ref": "#/$defs/SourceMetadata"
+    },
+    "page_dimensions": {
+      "items": {
+        "$ref": "#/$defs/PageDimensions"
+      },
+      "title": "Page Dimensions",
+      "type": "array"
+    },
+    "outline": {
+      "items": {
+        "$ref": "#/$defs/OutlineEntry"
+      },
+      "title": "Outline",
+      "type": "array"
+    }
+  },
+  "required": [
+    "doc_id",
+    "source_pdf_path",
+    "source_pdf_sha256",
+    "file_size_bytes",
+    "page_count"
+  ],
+  "title": "DocumentManifest",
+  "type": "object"
+}

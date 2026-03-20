@@ -1,0 +1,82 @@
+{
+  "$defs": {
+    "TranslatedNode": {
+      "description": "Single translated text node returned by the LLM.",
+      "properties": {
+        "inline_id": {
+          "title": "Inline Id",
+          "type": "string"
+        },
+        "ru_text": {
+          "title": "Ru Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "inline_id",
+        "ru_text"
+      ],
+      "title": "TranslatedNode",
+      "type": "object"
+    }
+  },
+  "description": "Validated result for a single translation unit.",
+  "properties": {
+    "unit_id": {
+      "title": "Unit Id",
+      "type": "string"
+    },
+    "translations": {
+      "items": {
+        "$ref": "#/$defs/TranslatedNode"
+      },
+      "title": "Translations",
+      "type": "array"
+    },
+    "provider": {
+      "default": "",
+      "title": "Provider",
+      "type": "string"
+    },
+    "model": {
+      "default": "",
+      "title": "Model",
+      "type": "string"
+    },
+    "prompt_bundle": {
+      "default": "",
+      "title": "Prompt Bundle",
+      "type": "string"
+    },
+    "source_fingerprint": {
+      "default": "",
+      "title": "Source Fingerprint",
+      "type": "string"
+    },
+    "result_fingerprint": {
+      "default": "",
+      "title": "Result Fingerprint",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "attempt": {
+      "default": 1,
+      "title": "Attempt",
+      "type": "integer"
+    },
+    "cached": {
+      "default": false,
+      "title": "Cached",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "unit_id"
+  ],
+  "title": "TranslationResult",
+  "type": "object"
+}

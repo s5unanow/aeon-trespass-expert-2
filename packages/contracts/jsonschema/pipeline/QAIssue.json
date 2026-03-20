@@ -1,0 +1,109 @@
+{
+  "$defs": {
+    "IssueLocation": {
+      "description": "Where an issue was found.",
+      "properties": {
+        "page_number": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Number"
+        },
+        "block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block Id"
+        },
+        "inline_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Inline Id"
+        },
+        "asset_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Asset Id"
+        }
+      },
+      "title": "IssueLocation",
+      "type": "object"
+    }
+  },
+  "description": "Single quality assurance finding.",
+  "properties": {
+    "issue_id": {
+      "default": "",
+      "title": "Issue Id",
+      "type": "string"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "severity": {
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "category": {
+      "title": "Category",
+      "type": "string"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "location": {
+      "$ref": "#/$defs/IssueLocation"
+    },
+    "details": {
+      "additionalProperties": true,
+      "title": "Details",
+      "type": "object"
+    },
+    "fingerprint": {
+      "default": "",
+      "title": "Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "rule_id",
+    "severity",
+    "category",
+    "message"
+  ],
+  "title": "QAIssue",
+  "type": "object"
+}

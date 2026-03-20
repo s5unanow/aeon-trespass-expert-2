@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "HeadingDetection": {
+      "description": "Heading detection configuration.",
+      "properties": {
+        "min_font_size_ratio": {
+          "default": 1.15,
+          "title": "Min Font Size Ratio",
+          "type": "number"
+        },
+        "max_heading_length": {
+          "default": 200,
+          "title": "Max Heading Length",
+          "type": "integer"
+        }
+      },
+      "title": "HeadingDetection",
+      "type": "object"
+    },
+    "ListDetection": {
+      "description": "List detection configuration.",
+      "properties": {
+        "bullet_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Bullet Patterns",
+          "type": "array"
+        }
+      },
+      "title": "ListDetection",
+      "type": "object"
+    },
+    "ParagraphRules": {
+      "description": "Paragraph validation rules.",
+      "properties": {
+        "max_length_warning": {
+          "default": 2000,
+          "title": "Max Length Warning",
+          "type": "integer"
+        },
+        "max_length_error": {
+          "default": 5000,
+          "title": "Max Length Error",
+          "type": "integer"
+        }
+      },
+      "title": "ParagraphRules",
+      "type": "object"
+    },
+    "QAGateConfig": {
+      "description": "Quality gate thresholds for the evaluate_qa stage.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "max_errors": {
+          "default": 0,
+          "title": "Max Errors",
+          "type": "integer"
+        },
+        "max_warnings": {
+          "default": 50,
+          "title": "Max Warnings",
+          "type": "integer"
+        }
+      },
+      "title": "QAGateConfig",
+      "type": "object"
+    },
+    "ReleaseRules": {
+      "description": "Release gate rules.",
+      "properties": {
+        "max_warnings": {
+          "default": 50,
+          "title": "Max Warnings",
+          "type": "integer"
+        },
+        "block_on_review": {
+          "default": false,
+          "title": "Block On Review",
+          "type": "boolean"
+        }
+      },
+      "title": "ReleaseRules",
+      "type": "object"
+    },
+    "SymbolDetection": {
+      "description": "Symbol detection configuration.",
+      "properties": {
+        "min_confidence": {
+          "default": 0.8,
+          "title": "Min Confidence",
+          "type": "number"
+        }
+      },
+      "title": "SymbolDetection",
+      "type": "object"
+    }
+  },
+  "description": "Thresholds and QA behavior configuration.",
+  "properties": {
+    "profile_id": {
+      "title": "Profile Id",
+      "type": "string"
+    },
+    "heading_detection": {
+      "$ref": "#/$defs/HeadingDetection"
+    },
+    "paragraph": {
+      "$ref": "#/$defs/ParagraphRules"
+    },
+    "list_detection": {
+      "$ref": "#/$defs/ListDetection"
+    },
+    "symbol_detection": {
+      "$ref": "#/$defs/SymbolDetection"
+    },
+    "release": {
+      "$ref": "#/$defs/ReleaseRules"
+    },
+    "qa_gate": {
+      "$ref": "#/$defs/QAGateConfig"
+    }
+  },
+  "required": [
+    "profile_id"
+  ],
+  "title": "RuleProfile",
+  "type": "object"
+}

@@ -1,0 +1,375 @@
+{
+  "$defs": {
+    "BBox": {
+      "description": "Bounding box in PDF points (x0, y0, x1, y1).",
+      "properties": {
+        "x0": {
+          "title": "X0",
+          "type": "number"
+        },
+        "y0": {
+          "title": "Y0",
+          "type": "number"
+        },
+        "x1": {
+          "title": "X1",
+          "type": "number"
+        },
+        "y1": {
+          "title": "Y1",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x0",
+        "y0",
+        "x1",
+        "y1"
+      ],
+      "title": "BBox",
+      "type": "object"
+    },
+    "FontInfo": {
+      "description": "Font metadata for a text span.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "number"
+        },
+        "flags": {
+          "default": 0,
+          "title": "Flags",
+          "type": "integer"
+        },
+        "color": {
+          "default": 0,
+          "title": "Color",
+          "type": "integer"
+        },
+        "is_bold": {
+          "default": false,
+          "title": "Is Bold",
+          "type": "boolean"
+        },
+        "is_italic": {
+          "default": false,
+          "title": "Is Italic",
+          "type": "boolean"
+        },
+        "is_monospace": {
+          "default": false,
+          "title": "Is Monospace",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "size"
+      ],
+      "title": "FontInfo",
+      "type": "object"
+    },
+    "RawImageInfo": {
+      "description": "Metadata about a raw image found on a page.",
+      "properties": {
+        "image_index": {
+          "title": "Image Index",
+          "type": "integer"
+        },
+        "xref": {
+          "title": "Xref",
+          "type": "integer"
+        },
+        "width": {
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "title": "Height",
+          "type": "integer"
+        },
+        "colorspace": {
+          "title": "Colorspace",
+          "type": "string"
+        },
+        "bpc": {
+          "title": "Bpc",
+          "type": "integer"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "content_hash": {
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "stored_as": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stored As"
+        }
+      },
+      "required": [
+        "image_index",
+        "xref",
+        "width",
+        "height",
+        "colorspace",
+        "bpc",
+        "bbox",
+        "content_hash"
+      ],
+      "title": "RawImageInfo",
+      "type": "object"
+    },
+    "RawTableCell": {
+      "description": "A single cell in a raw extracted table.",
+      "properties": {
+        "row": {
+          "title": "Row",
+          "type": "integer"
+        },
+        "col": {
+          "title": "Col",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "row_span": {
+          "default": 1,
+          "title": "Row Span",
+          "type": "integer"
+        },
+        "col_span": {
+          "default": 1,
+          "title": "Col Span",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "row",
+        "col",
+        "text"
+      ],
+      "title": "RawTableCell",
+      "type": "object"
+    },
+    "RawTableInfo": {
+      "description": "Raw table structure extracted from a PDF page.",
+      "properties": {
+        "table_index": {
+          "title": "Table Index",
+          "type": "integer"
+        },
+        "rows": {
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cols": {
+          "title": "Cols",
+          "type": "integer"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "cells": {
+          "items": {
+            "$ref": "#/$defs/RawTableCell"
+          },
+          "title": "Cells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "table_index",
+        "rows",
+        "cols",
+        "bbox"
+      ],
+      "title": "RawTableInfo",
+      "type": "object"
+    },
+    "TextBlock": {
+      "description": "A rectangular block of text composed of lines.",
+      "properties": {
+        "block_index": {
+          "title": "Block Index",
+          "type": "integer"
+        },
+        "lines": {
+          "items": {
+            "$ref": "#/$defs/TextLine"
+          },
+          "title": "Lines",
+          "type": "array"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "block_type": {
+          "default": "text",
+          "title": "Block Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "block_index",
+        "bbox"
+      ],
+      "title": "TextBlock",
+      "type": "object"
+    },
+    "TextLine": {
+      "description": "A line of text composed of spans.",
+      "properties": {
+        "spans": {
+          "items": {
+            "$ref": "#/$defs/TextSpan"
+          },
+          "title": "Spans",
+          "type": "array"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "writing_direction": {
+          "default": "ltr",
+          "title": "Writing Direction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bbox"
+      ],
+      "title": "TextLine",
+      "type": "object"
+    },
+    "TextSpan": {
+      "description": "A single contiguous run of text with uniform font.",
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "font": {
+          "$ref": "#/$defs/FontInfo"
+        },
+        "bbox": {
+          "$ref": "#/$defs/BBox"
+        },
+        "origin": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Origin"
+        }
+      },
+      "required": [
+        "text",
+        "font",
+        "bbox"
+      ],
+      "title": "TextSpan",
+      "type": "object"
+    }
+  },
+  "description": "Raw extraction output for a single PDF page.\n\nProduced by the extract_primitives stage (02_extract/pages/p0001.json).\nContains raw text structure and image references — no semantic inference.",
+  "properties": {
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "width_pt": {
+      "title": "Width Pt",
+      "type": "number"
+    },
+    "height_pt": {
+      "title": "Height Pt",
+      "type": "number"
+    },
+    "rotation": {
+      "default": 0,
+      "title": "Rotation",
+      "type": "integer"
+    },
+    "text_blocks": {
+      "items": {
+        "$ref": "#/$defs/TextBlock"
+      },
+      "title": "Text Blocks",
+      "type": "array"
+    },
+    "images": {
+      "items": {
+        "$ref": "#/$defs/RawImageInfo"
+      },
+      "title": "Images",
+      "type": "array"
+    },
+    "tables": {
+      "items": {
+        "$ref": "#/$defs/RawTableInfo"
+      },
+      "title": "Tables",
+      "type": "array"
+    },
+    "fonts_used": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Fonts Used",
+      "type": "array"
+    },
+    "char_count": {
+      "default": 0,
+      "title": "Char Count",
+      "type": "integer"
+    },
+    "source_pdf_sha256": {
+      "default": "",
+      "title": "Source Pdf Sha256",
+      "type": "string"
+    },
+    "doc_id": {
+      "default": "",
+      "title": "Doc Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "page_number",
+    "width_pt",
+    "height_pt"
+  ],
+  "title": "ExtractedPage",
+  "type": "object"
+}
