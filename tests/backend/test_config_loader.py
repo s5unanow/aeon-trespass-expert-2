@@ -63,7 +63,7 @@ def test_load_model_profile():
     profile = load_model_profile(CONFIGS_ROOT, "translate-default")
     assert isinstance(profile, ModelProfile)
     assert profile.profile_id == "translate-default"
-    assert profile.provider == "gemini"
+    assert profile.provider == "gemini-cli"
 
 
 def test_load_rule_profile():

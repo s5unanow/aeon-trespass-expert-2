@@ -191,9 +191,9 @@ class TranslateUnitsStage(BaseStage):
         # Get gateway from context, fall back to default provider
         gateway = ctx.llm_gateway
         if gateway is None:
-            from aeon_reader_pipeline.llm.gemini import GeminiProvider
+            from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
 
-            gateway = GeminiProvider()
+            gateway = GeminiCliGateway()
 
         # Set up translation memory
         cache_dir = ctx.artifact_store.cache_dir_for(STAGE_NAME, ctx.doc_id)
