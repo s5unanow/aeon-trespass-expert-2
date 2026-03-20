@@ -107,9 +107,15 @@ class CollectEvidenceStage(BaseStage):
                 region_graph,
             )
 
-            # Estimate column count from region graph
-            column_regions = [r for r in region_graph.regions if r.kind_hint == "column"]
-            estimated_columns = max(len(column_regions), 1)
+            # Estimate column count as max columns in any single band
+            estimated_columns = max(
+                (
+                    int(r.features.get("column_count", 1))
+                    for r in region_graph.regions
+                    if r.kind_hint == "band"
+                ),
+                default=1,
+            )
 
             canonical = CanonicalPageEvidence(
                 page_number=pn,

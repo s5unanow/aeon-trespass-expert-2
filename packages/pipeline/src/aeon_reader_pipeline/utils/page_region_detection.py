@@ -165,13 +165,19 @@ def segment_page_regions(
 
 
 class _PrimRef:
-    """Lightweight reference to a primitive's ID and bbox."""
+    """Lightweight reference to a primitive's ID, kind, and bbox."""
 
-    __slots__ = ("bbox", "primitive_id")
+    __slots__ = ("bbox", "kind", "primitive_id")
 
-    def __init__(self, primitive_id: str, bbox: NormalizedBBox) -> None:
+    def __init__(
+        self,
+        primitive_id: str,
+        bbox: NormalizedBBox,
+        kind: str,
+    ) -> None:
         self.primitive_id = primitive_id
         self.bbox = bbox
+        self.kind = kind
 
 
 class _Band:
@@ -227,19 +233,19 @@ def _filter_non_furniture_primitives(
 
     for tp in primitive.text_primitives:
         if not _overlaps_any_furniture(tp.bbox_norm, furniture_bboxes):
-            refs.append(_PrimRef(tp.primitive_id, tp.bbox_norm))
+            refs.append(_PrimRef(tp.primitive_id, tp.bbox_norm, "text"))
 
     for ip in primitive.image_primitives:
         if not _overlaps_any_furniture(ip.bbox_norm, furniture_bboxes):
-            refs.append(_PrimRef(ip.primitive_id, ip.bbox_norm))
+            refs.append(_PrimRef(ip.primitive_id, ip.bbox_norm, "image"))
 
     for tbp in primitive.table_primitives:
         if not _overlaps_any_furniture(tbp.bbox_norm, furniture_bboxes):
-            refs.append(_PrimRef(tbp.primitive_id, tbp.bbox_norm))
+            refs.append(_PrimRef(tbp.primitive_id, tbp.bbox_norm, "table"))
 
     for dp in primitive.drawing_primitives:
         if not dp.is_decorative and not _overlaps_any_furniture(dp.bbox_norm, furniture_bboxes):
-            refs.append(_PrimRef(dp.primitive_id, dp.bbox_norm))
+            refs.append(_PrimRef(dp.primitive_id, dp.bbox_norm, "drawing"))
 
     return refs
 
@@ -430,7 +436,7 @@ def _detect_figure_regions(
     """Detect figure candidate regions from image primitives in the band."""
     regions: list[RegionCandidate] = []
     for prim in band.prims:
-        if prim.primitive_id.startswith("img"):
+        if prim.kind == "image":
             region_id = f"reg:{page_number}:{counter}"
             counter += 1
             regions.append(
@@ -457,7 +463,7 @@ def _detect_table_regions(
     """Detect table candidate regions from table primitives in the band."""
     regions: list[RegionCandidate] = []
     for prim in band.prims:
-        if prim.primitive_id.startswith("tbl"):
+        if prim.kind == "table":
             region_id = f"reg:{page_number}:{counter}"
             counter += 1
             regions.append(
