@@ -31,12 +31,14 @@ Parent issue: `S5U-245`
 
 Goal: introduce evidence-layer contracts and split the stage DAG so semantic classification happens after evidence resolution.
 
-| Order | Issue | Title | Prerequisites | Type |
-|-------|-------|-------|---------------|------|
+| Order | Issue | Title | Blocked by (Linear) | Type |
+|-------|-------|-------|---------------------|------|
 | 1.1 | S5U-251 | Define `CanonicalPageEvidence`, `PrimitivePageEvidence`, `ResolvedPageIR` contracts | None | Contract |
-| 1.2 | S5U-253 | Introduce normalized coordinates, provenance IDs, raster-provider handles | S5U-251 | Contract + extraction |
+| 1.2 | S5U-253 | Introduce normalized coordinates, provenance IDs, raster-provider handles | None | Contract + extraction |
 | 1.3 | S5U-252 | Refactor the stage DAG for evidence → region → semantic flow | S5U-251, S5U-253 | Stage refactor |
 | 1.4 | S5U-276 | Add schema-validation test suite for persisted Architecture 3 artifacts | S5U-251 | Test |
+
+S5U-251 and S5U-253 can be worked in parallel.
 
 **Phase 1 exit criteria:** see [ARCH3_FIXTURE_CATALOG.md](ARCH3_FIXTURE_CATALOG.md).
 
@@ -44,11 +46,13 @@ Goal: introduce evidence-layer contracts and split the stage DAG so semantic cla
 
 Goal: deterministic region segmentation and reading-order reconstruction.
 
-| Order | Issue | Title | Prerequisites | Type |
-|-------|-------|-------|---------------|------|
-| 2.1 | S5U-254 | Implement document-level furniture and page-template detection | Phase 1 complete | Stage implementation |
-| 2.2 | S5U-255 | Emit `PageRegionGraph` with bands, containers, sidebars | S5U-254 | Stage implementation |
+| Order | Issue | Title | Blocked by (Linear) | Type |
+|-------|-------|-------|---------------------|------|
+| 2.1 | S5U-254 | Implement document-level furniture and page-template detection | None | Stage implementation |
+| 2.2 | S5U-255 | Emit `PageRegionGraph` with bands, containers, sidebars | None | Stage implementation |
 | 2.3 | S5U-256 | Implement `PageReadingOrder` for multi-column flow | S5U-255 | Stage implementation |
+
+S5U-254 and S5U-255 can be worked in parallel. S5U-256 requires S5U-255 (region graph).
 
 **Phase 2 exit criteria:** see [ARCH3_FIXTURE_CATALOG.md](ARCH3_FIXTURE_CATALOG.md).
 
@@ -56,26 +60,26 @@ Goal: deterministic region segmentation and reading-order reconstruction.
 
 Goal: document-wide asset catalog, symbol resolution, and entity linking.
 
-Two parallel tracks once Phase 2 is complete:
-
 **Track A — Asset catalog and symbols (S5U-248)**
 
-| Order | Issue | Title | Prerequisites | Type |
-|-------|-------|-------|---------------|------|
-| 3A.1 | S5U-257 | Build cross-page asset registry | Phase 2 complete | Stage implementation |
+| Order | Issue | Title | Blocked by (Linear) | Type |
+|-------|-------|-------|---------------------|------|
+| 3A.1 | S5U-257 | Build cross-page asset registry | None | Stage implementation |
 | 3A.2 | S5U-258 | Generate symbol candidates from text, raster, vector evidence | S5U-257 | Stage implementation |
-| 3A.3 | S5U-259 | Extend IR and bundle contracts with symbol anchor types | S5U-258 | Contract + export |
+| 3A.3 | S5U-259 | Extend IR and bundle contracts with symbol anchor types | None | Contract + export |
 | 3A.4 | S5U-277 | Add symbol evaluation harness | S5U-258 | Test |
+
+S5U-259 has no explicit Linear blockers — it can be worked once the anchor type design is clear, independently of the symbol detection pipeline.
 
 **Track B — Figures, tables, callouts (S5U-249)**
 
-| Order | Issue | Title | Prerequisites | Type |
-|-------|-------|-------|---------------|------|
-| 3B.1 | S5U-260 | Link figures and captions from local region/asset graphs | Phase 2 complete, S5U-257 | Stage implementation |
-| 3B.2 | S5U-261 | Scope table extraction to candidate regions | S5U-255 (regions) | Stage implementation |
-| 3B.3 | S5U-262 | Promote callout/container detection | S5U-255 (regions) | Stage implementation |
+| Order | Issue | Title | Blocked by (Linear) | Type |
+|-------|-------|-------|---------------------|------|
+| 3B.1 | S5U-260 | Link figures and captions from local region/asset graphs | S5U-255, S5U-257 | Stage implementation |
+| 3B.2 | S5U-261 | Scope table extraction to candidate regions | None | Stage implementation |
+| 3B.3 | S5U-262 | Promote callout/container detection | None | Stage implementation |
 
-Tracks A and B can run in parallel after S5U-257 lands. S5U-260 depends on the asset registry (S5U-257) for figure region grouping.
+S5U-261 and S5U-262 have no explicit Linear blockers. S5U-260 requires both the region graph (S5U-255) and the asset registry (S5U-257).
 
 **Phase 3 exit criteria:** see [ARCH3_FIXTURE_CATALOG.md](ARCH3_FIXTURE_CATALOG.md).
 
@@ -83,15 +87,20 @@ Tracks A and B can run in parallel after S5U-257 lands. S5U-260 depends on the a
 
 Goal: confidence-driven fallback, evaluation harnesses, goldens, and side-by-side migration.
 
-| Order | Issue | Title | Prerequisites | Type |
-|-------|-------|-------|---------------|------|
-| 4.1 | S5U-263 | Add page/block confidence contracts and fallback-routing policy | Phase 3 complete | Contract + routing |
-| 4.2 | S5U-278 | Implement extraction/entity QA rules, make blocking on fixtures | S5U-263 | QA rules |
-| 4.3 | S5U-264 | Create evidence/order/assets/entities overlays for debugging | S5U-263 | Review tooling |
-| 4.4 | S5U-265 | Create hard-page goldens and run Architecture 3 beside legacy | S5U-263, S5U-278 | Golden + migration |
-| 4.5 | S5U-280 | Add fallback-routing consistency tests | S5U-263 | Test |
-| 4.6 | S5U-290 | Add intermediate topology/entity golden harness | S5U-265 | Test |
-| 4.7 | S5U-279 | Add end-to-end hard-page fixture test (PDF → bundle → reader → search) | S5U-265 | Test |
+| Issue | Title | Blocked by (Linear) | Type |
+|-------|-------|---------------------|------|
+| S5U-263 | Add page/block confidence contracts and fallback-routing policy | None | Contract + routing |
+| S5U-264 | Create evidence/order/assets/entities overlays for debugging | None | Review tooling |
+| S5U-265 | Create hard-page goldens and run Architecture 3 beside legacy | None | Golden + migration |
+| S5U-278 | Implement extraction/entity QA rules, make blocking on fixtures | S5U-255, S5U-256, S5U-259, S5U-260, S5U-261, S5U-262 | QA rules |
+| S5U-280 | Add fallback-routing consistency tests | S5U-263 | Test |
+| S5U-290 | Add intermediate topology/entity golden harness | S5U-254, S5U-255, S5U-256, S5U-260, S5U-261, S5U-262 | Test |
+| S5U-279 | Add end-to-end hard-page fixture test (PDF → bundle → reader → search) | S5U-220, S5U-265 | Test |
+
+Phase 4 issues have heavy cross-phase dependencies:
+- S5U-278 and S5U-290 are blocked by most Phase 2/3 topology and entity issues — they cannot start until those are done.
+- S5U-279 depends on S5U-220 (real build/search/release stages, outside Architecture 3) and S5U-265.
+- S5U-263, S5U-264, and S5U-265 have no explicit Linear blockers and can start earlier if the design inputs are ready.
 
 **Phase 4 exit criteria:** see [ARCH3_FIXTURE_CATALOG.md](ARCH3_FIXTURE_CATALOG.md).
 
@@ -179,7 +188,7 @@ Stop and escalate (comment on the Linear issue, do not improvise) when:
 - `make test` failures are in unrelated code and cannot be resolved locally
 - The ticket requires adding a new external dependency
 
-Escalation means: set the issue status to **Blocked**, add a comment explaining the blocker, and move to a different ready ticket.
+Escalation means: add a comment on the Linear issue explaining the blocker, move the issue back to **Backlog**, and pick a different ready ticket. (The team workflow does not have a "Blocked" status — use comments to communicate blockers.)
 
 ---
 
@@ -187,22 +196,26 @@ Escalation means: set the issue status to **Blocked**, add a comment explaining 
 
 ```
 Phase 1: Evidence Contracts
-  S5U-251 ──→ S5U-253 ──→ S5U-252
+  S5U-251 ──→ S5U-252
+  S5U-253 ──→ S5U-252
   S5U-251 ──→ S5U-276
+  (S5U-251 and S5U-253 can be parallel)
 
 Phase 2: Page Topology
-  [Phase 1] ──→ S5U-254 ──→ S5U-255 ──→ S5U-256
+  S5U-255 ──→ S5U-256
+  (S5U-254 and S5U-255 can be parallel)
 
 Phase 3: Visual Assets & Entities
-  [Phase 2] ──→ S5U-257 ──→ S5U-258 ──→ S5U-259
-                 │                        S5U-258 ──→ S5U-277
-                 └──→ S5U-260
-  S5U-255 ──→ S5U-261
-  S5U-255 ──→ S5U-262
+  S5U-257 ──→ S5U-258 ──→ S5U-277
+  S5U-257 ──→ S5U-260
+  S5U-255 ──→ S5U-260
+  (S5U-259, S5U-261, S5U-262 have no explicit blockers)
 
 Phase 4: Hard-Page Rollout
-  [Phase 3] ──→ S5U-263 ──→ S5U-278 ──→ S5U-265 ──→ S5U-290
-                 │                                    S5U-265 ──→ S5U-279
-                 ├──→ S5U-264
-                 └──→ S5U-280
+  S5U-263 ──→ S5U-280
+  S5U-265 ──→ S5U-279
+  S5U-220 ──→ S5U-279
+  S5U-255, S5U-256, S5U-259, S5U-260, S5U-261, S5U-262 ──→ S5U-278
+  S5U-254, S5U-255, S5U-256, S5U-260, S5U-261, S5U-262 ──→ S5U-290
+  (S5U-263, S5U-264, S5U-265 have no explicit blockers)
 ```
