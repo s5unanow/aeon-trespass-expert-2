@@ -200,6 +200,29 @@ class TestDecorativeDrawingAsBorder:
         assert len(ornaments) == 1
 
 
+class TestDividerDetected:
+    def test_thin_wide_non_decorative_drawing_as_divider(self) -> None:
+        """A thin wide non-decorative drawing at the edge is a divider."""
+        pages = [
+            _make_page(
+                i,
+                text_primitives=[_body_text(i)],
+                drawing_primitives=[
+                    DrawingPrimitiveEvidence(
+                        primitive_id=f"drawing:p{i:04d}:000",
+                        bbox_norm=_bbox(0.05, 0.01, 0.95, 0.02),
+                        path_count=2,
+                        is_decorative=False,
+                    )
+                ],
+            )
+            for i in range(1, 6)
+        ]
+        profile = detect_furniture(pages)
+        dividers = [c for c in profile.furniture_candidates if c.furniture_type == "divider"]
+        assert len(dividers) == 1
+
+
 class TestNonRepeatedNotFurniture:
     def test_element_on_one_page_excluded(self) -> None:
         """An element appearing on only 1 of 5 pages is not furniture."""

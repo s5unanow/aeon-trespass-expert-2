@@ -102,7 +102,7 @@ def detect_furniture(
         candidate_idx += 1
 
     # Step 4: Assign templates
-    templates = _assign_templates(candidates, total_pages)
+    templates = _assign_templates(candidates)
 
     return DocumentFurnitureProfile(
         doc_id=doc_id,
@@ -371,22 +371,15 @@ def _classify_furniture_type(
             return "divider"
         return "border"
 
-    # Edge images
-    if representative.kind == "image":
-        area = _bbox_area(median_bbox)
-        if area > 0.3:
-            return "background_panel"
-        return "ornament"
-
-    # Fallback for top text
-    if is_top:
-        return "header"
-    return "footer"
+    # Edge images (only remaining kind)
+    area = _bbox_area(median_bbox)
+    if area > 0.3:
+        return "background_panel"
+    return "ornament"
 
 
 def _assign_templates(
     candidates: list[FurnitureCandidate],
-    total_pages: int,
 ) -> list[TemplateAssignment]:
     """Group pages into templates by their furniture sets."""
     if not candidates:
@@ -398,10 +391,9 @@ def _assign_templates(
         for pn in cand.page_numbers:
             page_furn_set[pn] = page_furn_set[pn] | {cand.candidate_id}
 
-    # Group pages by identical furniture sets
+    # Group pages by identical furniture sets (use actual page numbers, not range)
     set_to_pages: dict[frozenset[str], list[int]] = defaultdict(list)
-    for pn in range(1, total_pages + 1):
-        fset = page_furn_set.get(pn, frozenset())
+    for pn, fset in page_furn_set.items():
         if fset:
             set_to_pages[fset].append(pn)
 
