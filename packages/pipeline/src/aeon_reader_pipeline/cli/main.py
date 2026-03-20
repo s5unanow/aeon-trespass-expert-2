@@ -32,13 +32,13 @@ def _import_stages() -> None:
 def _setup_gateway(
     *,
     mock: bool,
-    cli: bool,
+    sdk: bool,
     dry_run: bool,
     pipeline_config: PipelineConfig,
 ) -> tuple[PipelineConfig, LlmGateway | None]:
     """Configure the LLM gateway and return (pipeline_config, gateway).
 
-    Returns a (possibly updated) pipeline_config to allow concurrency changes,
+    Returns pipeline_config unchanged (kept in tuple for interface stability)
     and the gateway instance (or None for dry-run).
     """
     from aeon_reader_pipeline.llm.base import LlmGateway, LlmResponse
@@ -68,16 +68,16 @@ def _setup_gateway(
 
         llm_gateway = _MockGateway()
         typer.echo("Using mock translation gateway.")
-    elif cli:
-        from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
-
-        llm_gateway = GeminiCliGateway()
-        pipeline_config = pipeline_config.model_copy(update={"llm_concurrency": 1})
-        typer.echo("Using Gemini CLI gateway (concurrency=1).")
-    elif not dry_run:
+    elif sdk:
         from aeon_reader_pipeline.llm.gemini import GeminiProvider
 
         llm_gateway = GeminiProvider()
+        typer.echo("Using Gemini SDK gateway.")
+    elif not dry_run:
+        from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
+
+        llm_gateway = GeminiCliGateway()
+        typer.echo("Using Gemini CLI gateway.")
 
     return pipeline_config, llm_gateway
 
@@ -200,7 +200,7 @@ def run(  # noqa: PLR0913
         help="Skip QA quality gate (allow low quality)",
     ),
     mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
-    cli: bool = typer.Option(False, help="Use Gemini CLI instead of SDK (no API key needed)"),
+    sdk: bool = typer.Option(False, "--sdk", help="Use Gemini Python SDK instead of CLI"),
     concurrency: int = typer.Option(5, help="LLM concurrency (parallel workers)"),
     dry_run: bool = typer.Option(
         False,
@@ -280,7 +280,7 @@ def run(  # noqa: PLR0913
     else:
         pipeline_config, llm_gateway = _setup_gateway(
             mock=mock,
-            cli=cli,
+            sdk=sdk,
             dry_run=dry_run,
             pipeline_config=pipeline_config,
         )
