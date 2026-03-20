@@ -28,8 +28,8 @@ uv run reader-pipeline run --doc aeon-trespass-core --from plan_translation --to
 # Force refresh cache (re-translate everything)
 uv run reader-pipeline run --doc aeon-trespass-core --cache-mode force_refresh
 
-# Use Gemini Python SDK instead of CLI (requires GOOGLE_API_KEY)
-uv run reader-pipeline run --doc aeon-trespass-core --sdk
+# Dry run — estimate cost without making LLM calls
+uv run reader-pipeline run --doc aeon-trespass-core --dry-run
 ```
 
 | Option | Default | Description |
@@ -42,7 +42,6 @@ uv run reader-pipeline run --doc aeon-trespass-core --sdk
 | `--cache-mode` | `read_write` | `read_write`, `read_only`, `write_only`, `off`, `force_refresh` |
 | `--strict` | `false` | Stricter validation |
 | `--mock` | `false` | Mock translations (no LLM) |
-| `--sdk` | `false` | Use Gemini Python SDK instead of CLI |
 
 **`inspect`** — Check a completed run:
 ```bash
@@ -56,11 +55,8 @@ uv run reader-pipeline list-stages
 
 ## Environment
 
-The default Gemini CLI gateway uses local cached credentials — no API key needed.
-
-```bash
-export GOOGLE_API_KEY="your-key"   # Only needed with --sdk flag
-```
+The Gemini CLI gateway uses local cached credentials — no API key needed.
+Run `gemini` once manually to set up credentials if not yet configured.
 
 ## Stage Names (exact values for --from / --to)
 
