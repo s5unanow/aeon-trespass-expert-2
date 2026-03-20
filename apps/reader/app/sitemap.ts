@@ -3,6 +3,8 @@ import { loadCatalog, loadBundleManifest } from "@/lib/bundle";
 import { catalogRoute, docRoute, pageRoute, glossaryRoute } from "@/lib/routes";
 import { SITE_URL } from "@/lib/seo";
 
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const catalog = loadCatalog();
   const entries: MetadataRoute.Sitemap = [];
