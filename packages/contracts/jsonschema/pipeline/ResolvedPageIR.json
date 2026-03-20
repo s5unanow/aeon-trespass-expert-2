@@ -1,0 +1,75 @@
+{
+  "description": "Fully resolved page IR ready for semantic block building.\n\nBridges evidence analysis and PageRecord construction. Contains\nthe resolved render mode, confidence signals, and provenance\nreferences that determine how semantic blocks are built.\n\nConfidence scoring details will be added by S5U-263.\n\nArtifact path: ``{run}/resolved/p{page_number:04d}.json``",
+  "properties": {
+    "page_number": {
+      "title": "Page Number",
+      "type": "integer"
+    },
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "width_pt": {
+      "title": "Width Pt",
+      "type": "number"
+    },
+    "height_pt": {
+      "title": "Height Pt",
+      "type": "number"
+    },
+    "canonical_evidence_hash": {
+      "default": "",
+      "title": "Canonical Evidence Hash",
+      "type": "string"
+    },
+    "render_mode": {
+      "default": "semantic",
+      "enum": [
+        "semantic",
+        "hybrid",
+        "facsimile"
+      ],
+      "title": "Render Mode",
+      "type": "string"
+    },
+    "fallback_image_ref": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fallback Image Ref"
+    },
+    "page_confidence": {
+      "default": 1.0,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Page Confidence",
+      "type": "number"
+    },
+    "confidence_reasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Confidence Reasons",
+      "type": "array"
+    },
+    "source_pdf_sha256": {
+      "default": "",
+      "title": "Source Pdf Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "page_number",
+    "doc_id",
+    "width_pt",
+    "height_pt"
+  ],
+  "title": "ResolvedPageIR",
+  "type": "object"
+}
