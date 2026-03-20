@@ -2,16 +2,42 @@
  * Document landing page — shows document info and entry point.
  */
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { docExists, listDocIds, loadBundleManifest, loadNavigation } from "@/lib/bundle";
-import { pageRoute, glossaryRoute } from "@/lib/routes";
+import { pageRoute, glossaryRoute, docRoute } from "@/lib/routes";
 import { DocLayout } from "@/components/DocLayout";
+import { SITE_URL, jsonLd } from "@/lib/seo";
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
   return listDocIds().map((docId) => ({ docId }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ docId: string }>;
+}): Promise<Metadata> {
+  const { docId } = await params;
+  if (!docExists(docId)) return {};
+  const manifest = loadBundleManifest(docId);
+  const title = manifest.title_ru || manifest.title_en;
+  const description = `${manifest.title_en} — ${Math.round(manifest.translation_coverage * 100)}% translated (${manifest.page_count} pages)`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}${docRoute(docId)}` },
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      locale: "ru_RU",
+    },
+    twitter: { card: "summary", title, description },
+  };
 }
 
 export default async function DocLandingPage({
@@ -30,6 +56,15 @@ export default async function DocLandingPage({
 
   return (
     <DocLayout manifest={manifest} navigation={navigation}>
+      {jsonLd({
+        "@context": "https://schema.org",
+        "@type": "Book",
+        name: manifest.title_en,
+        alternateName: manifest.title_ru || manifest.title_en,
+        inLanguage: "ru",
+        url: `${SITE_URL}${docRoute(docId)}`,
+        numberOfPages: manifest.page_count,
+      })}
       <div className="doc-landing">
         <h1>{manifest.title_en}</h1>
         {manifest.title_ru && <p className="doc-subtitle">{manifest.title_ru}</p>}

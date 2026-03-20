@@ -3,10 +3,10 @@ import "@/styles/globals.css";
 import "@/styles/theme.css";
 import { AppShell } from "@/components/AppShell";
 import { LocaleProvider } from "@/lib/locale";
+import { sharedMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Aeon Trespass Reader",
-  description: "Translated rulebook reader for Aeon Trespass",
+  ...sharedMetadata,
 };
 
 export default function RootLayout({
