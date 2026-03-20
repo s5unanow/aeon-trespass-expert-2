@@ -7,6 +7,7 @@ from pathlib import Path
 import pymupdf
 
 from aeon_reader_pipeline.config.hashing import hash_bytes
+from aeon_reader_pipeline.models.evidence_builder import build_primitive_evidence
 from aeon_reader_pipeline.models.extract_models import (
     BBox,
     ExtractedPage,
@@ -283,6 +284,11 @@ def _page_filename(page_number: int) -> str:
     return f"pages/p{page_number:04d}.json"
 
 
+def _evidence_filename(page_number: int) -> str:
+    """Generate the canonical per-page evidence filename."""
+    return f"evidence/p{page_number:04d}_primitive.json"
+
+
 @register_stage
 class ExtractPrimitivesStage(BaseStage):
     """Extract raw text blocks, images, and visual primitives from each page."""
@@ -360,6 +366,29 @@ class ExtractPrimitivesStage(BaseStage):
                     _page_filename(page_number),
                     extracted,
                 )
+
+                # Emit provenance-tagged evidence with normalized coordinates
+                try:
+                    evidence = build_primitive_evidence(extracted)
+                    ctx.artifact_store.write_artifact(
+                        ctx.run_id,
+                        ctx.doc_id,
+                        STAGE_NAME,
+                        _evidence_filename(page_number),
+                        evidence,
+                    )
+                except Exception as exc:
+                    ctx.logger.warning(
+                        "evidence_emission_failed",
+                        page=page_number,
+                        error=str(exc),
+                        error_type=type(exc).__name__,
+                    )
+                    ctx.errors.record(
+                        error_type=type(exc).__name__,
+                        message=f"Evidence emission failed: {exc}",
+                        page=page_number,
+                    )
 
                 ctx.logger.debug(
                     "page_extracted",

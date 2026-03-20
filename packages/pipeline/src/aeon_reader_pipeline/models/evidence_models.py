@@ -80,6 +80,22 @@ class DrawingPrimitiveEvidence(BaseModel):
     is_decorative: bool = False
 
 
+class PageRasterHandle(BaseModel):
+    """Reference for obtaining a page raster image.
+
+    Provides downstream stages with an explicit handle to request page
+    rasters instead of assuming they can re-open the PDF ad hoc.
+    If ``raster_path`` is set, a pre-rendered raster is available on disk.
+    """
+
+    source_pdf_sha256: str
+    page_number: int
+    width_pt: float
+    height_pt: float
+    raster_path: str | None = None
+    default_dpi: int = 150
+
+
 class FontSummary(BaseModel):
     """Aggregated font statistics for a page."""
 
@@ -114,6 +130,7 @@ class PrimitivePageEvidence(BaseModel):
     font_summary: FontSummary = Field(default_factory=FontSummary)
     char_count: int = 0
     extraction_method: str = "pdfplumber"
+    raster_handle: PageRasterHandle | None = None
 
 
 # ---------------------------------------------------------------------------

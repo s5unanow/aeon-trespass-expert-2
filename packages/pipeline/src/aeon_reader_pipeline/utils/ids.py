@@ -56,6 +56,16 @@ def inline_id(block_id_str: str, inline_index: int) -> str:
     return f"{block_id_str}:i{inline_index:03d}"
 
 
+def primitive_id(kind: str, page_number: int, index: int) -> str:
+    """Generate a stable provenance ID for an extraction primitive.
+
+    Format: ``{kind}:p{page_number:04d}:{index:03d}``
+
+    Examples: ``text:p0001:003``, ``image:p0002:000``, ``table:p0001:001``
+    """
+    return f"{kind}:p{page_number:04d}:{index:03d}"
+
+
 def _slugify(text: str) -> str:
     """Convert text to a URL-safe slug."""
     import re

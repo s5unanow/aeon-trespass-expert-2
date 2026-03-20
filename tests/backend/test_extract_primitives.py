@@ -18,6 +18,7 @@ from aeon_reader_pipeline.models.config_models import (
     RuleProfile,
     SymbolPack,
 )
+from aeon_reader_pipeline.models.evidence_models import PrimitivePageEvidence
 from aeon_reader_pipeline.models.extract_models import ExtractedPage
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.stage_framework.context import StageContext
@@ -238,6 +239,56 @@ class TestExtractPrimitives:
         stage = ExtractPrimitivesStage()
         assert stage.name == "extract_primitives"
         assert stage.version == "1.0.0"
+
+    def test_emits_primitive_evidence(self, tmp_path: Path) -> None:
+        """Extract emits PrimitivePageEvidence alongside ExtractedPage."""
+        pdf_path = tmp_path / "source.pdf"
+        _create_fixture_pdf(pdf_path, pages=2)
+        ctx = _make_context(tmp_path, pdf_path)
+        _run_ingest_and_extract(ctx)
+
+        for page_num in range(1, 3):
+            evidence = ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "extract_primitives",
+                f"evidence/p{page_num:04d}_primitive.json",
+                PrimitivePageEvidence,
+            )
+            assert evidence.page_number == page_num
+            assert evidence.doc_id == "test-doc"
+            assert evidence.extraction_method == "pymupdf"
+            assert len(evidence.text_primitives) > 0
+            # Provenance IDs follow the expected format
+            for tp in evidence.text_primitives:
+                assert tp.primitive_id.startswith(f"text:p{page_num:04d}:")
+                # Normalized coords are within [0, 1]
+                assert 0.0 <= tp.bbox_norm.x0 <= 1.0
+                assert 0.0 <= tp.bbox_norm.y0 <= 1.0
+            # Raster handle is attached
+            assert evidence.raster_handle is not None
+            assert evidence.raster_handle.page_number == page_num
+            assert len(evidence.raster_handle.source_pdf_sha256) == 64
+
+    def test_evidence_image_with_fixture(self, tmp_path: Path) -> None:
+        """Evidence includes image primitives when the PDF has images."""
+        pdf_path = tmp_path / "source.pdf"
+        _create_fixture_pdf(pdf_path, pages=1, with_image=True)
+        ctx = _make_context(tmp_path, pdf_path)
+        _run_ingest_and_extract(ctx)
+
+        evidence = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "extract_primitives",
+            "evidence/p0001_primitive.json",
+            PrimitivePageEvidence,
+        )
+        assert len(evidence.image_primitives) >= 1
+        ip = evidence.image_primitives[0]
+        assert ip.primitive_id.startswith("image:p0001:")
+        assert ip.content_hash != ""
+        assert 0.0 <= ip.bbox_norm.x0 <= 1.0
 
 
 class TestImageExtractionFailureLogging:
