@@ -76,5 +76,4 @@ class TestRun:
         output = _strip_ansi(result.output)
         assert "--doc" in output
         assert "--mock" in output
-        assert "--sdk" in output
         assert "--dry-run" in output

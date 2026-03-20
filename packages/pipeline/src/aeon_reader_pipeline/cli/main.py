@@ -32,18 +32,11 @@ def _import_stages() -> None:
 def _setup_gateway(
     *,
     mock: bool,
-    sdk: bool,
     dry_run: bool,
-    pipeline_config: PipelineConfig,
-) -> tuple[PipelineConfig, LlmGateway | None]:
-    """Configure the LLM gateway and return (pipeline_config, gateway).
-
-    Returns pipeline_config unchanged (kept in tuple for interface stability)
-    and the gateway instance (or None for dry-run).
-    """
+) -> LlmGateway | None:
+    """Configure and return the LLM gateway (or None for dry-run)."""
     from aeon_reader_pipeline.llm.base import LlmGateway, LlmResponse
 
-    llm_gateway: LlmGateway | None = None
     if mock:
 
         class _MockGateway(LlmGateway):
@@ -66,20 +59,16 @@ def _setup_gateway(
             def provider_name(self) -> str:
                 return "mock"
 
-        llm_gateway = _MockGateway()
         typer.echo("Using mock translation gateway.")
-    elif sdk:
-        from aeon_reader_pipeline.llm.gemini import GeminiProvider
+        return _MockGateway()
 
-        llm_gateway = GeminiProvider()
-        typer.echo("Using Gemini SDK gateway.")
-    elif not dry_run:
+    if not dry_run:
         from aeon_reader_pipeline.llm.gemini_cli import GeminiCliGateway
 
-        llm_gateway = GeminiCliGateway()
         typer.echo("Using Gemini CLI gateway.")
+        return GeminiCliGateway()
 
-    return pipeline_config, llm_gateway
+    return None
 
 
 @app.command()
@@ -200,7 +189,6 @@ def run(  # noqa: PLR0913
         help="Skip QA quality gate (allow low quality)",
     ),
     mock: bool = typer.Option(False, help="Use mock translation (no LLM calls)"),
-    sdk: bool = typer.Option(False, "--sdk", help="Use Gemini Python SDK instead of CLI"),
     concurrency: int = typer.Option(5, help="LLM concurrency (parallel workers)"),
     dry_run: bool = typer.Option(
         False,
@@ -275,15 +263,7 @@ def run(  # noqa: PLR0913
     )
 
     # Set up translation gateway
-    if source_only:
-        llm_gateway = None
-    else:
-        pipeline_config, llm_gateway = _setup_gateway(
-            mock=mock,
-            sdk=sdk,
-            dry_run=dry_run,
-            pipeline_config=pipeline_config,
-        )
+    llm_gateway = None if source_only else _setup_gateway(mock=mock, dry_run=dry_run)
 
     runner = PipelineRunner()
     cost_estimates: list[CostEstimate] = []
