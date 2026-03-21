@@ -826,6 +826,8 @@ DocumentConfig + PipelineConfig
   -> resolve_run
   -> ingest_source
   -> extract_primitives
+  -> collect_evidence (v3 only)
+  -> resolve_page_ir (v3 only)
   -> normalize_layout
   -> resolve_assets_symbols
   -> plan_translation
@@ -833,7 +835,7 @@ DocumentConfig + PipelineConfig
   -> merge_localization
   -> enrich_content
   -> evaluate_qa
-  -> apply_safe_fixes (optional)
+  -> apply_safe_fixes (not implemented — see Stage 10 below)
   -> export_site_bundle
   -> build_reader
   -> index_search
@@ -1037,6 +1039,76 @@ Persist
 02_extract/assets/...
 
 02_extract/manifest.json
+
+Stage 2a — collect_evidence (v3 only)
+
+Skips automatically when `architecture` is not `"v3"`.
+
+Input contract
+
+ExtractedPage (from stage 2)
+
+Output contract
+
+CanonicalPageEvidence
+
+PrimitivePageEvidence
+
+Responsibilities
+
+build normalized page metadata and primitive evidence from extraction artifacts
+
+subtract document furniture before downstream topology
+
+emit canonical summary flags from post-furniture outputs
+
+Deterministic vs LLM
+
+deterministic
+
+Persist
+
+02a_evidence/pages/p0001.json
+
+02a_evidence/manifest.json
+
+Stage 2b — resolve_page_ir (v3 only)
+
+Skips automatically when `architecture` is not `"v3"`.
+
+Input contract
+
+CanonicalPageEvidence
+
+PrimitivePageEvidence
+
+DocumentFurnitureProfile
+
+PageRegionGraph
+
+PageReadingOrder
+
+DocumentAssetRegistry
+
+Output contract
+
+ResolvedPageIR
+
+Responsibilities
+
+resolve page regions, reading order, assets, entities, and confidence from evidence
+
+produce a semantic-ready intermediate representation for downstream block building
+
+Deterministic vs LLM
+
+deterministic
+
+Persist
+
+02b_resolve_ir/pages/p0001.json
+
+02b_resolve_ir/manifest.json
 
 Stage 3 — normalize_layout
 
@@ -1555,7 +1627,7 @@ Persist
 09_qa/delta.json
 
 derived markdown/html reports
-Stage 10 — apply_safe_fixes (optional)
+Stage 10 — apply_safe_fixes (planned, not in registry)
 
 Input contract
 
@@ -4842,7 +4914,7 @@ Outputs
 
 evaluate_qa
 
-Epic 012 — Safe autofix and patch suggestions
+Epic 012 — Safe autofix and patch suggestions (planned, not implemented)
 
 Tasks
 
@@ -4856,7 +4928,7 @@ audit log
 
 Outputs
 
-apply_safe_fixes
+apply_safe_fixes (planned)
 
 Epic 013 — Site bundle export
 
@@ -5022,6 +5094,8 @@ Initial folder/file skeleton
 │  │     │  ├─ resolve_run.py
 │  │     │  ├─ ingest_source.py
 │  │     │  ├─ extract_primitives.py
+│  │     │  ├─ collect_evidence.py
+│  │     │  ├─ resolve_page_ir.py
 │  │     │  ├─ normalize_layout.py
 │  │     │  ├─ resolve_assets_symbols.py
 │  │     │  ├─ plan_translation.py
@@ -5029,8 +5103,11 @@ Initial folder/file skeleton
 │  │     │  ├─ merge_localization.py
 │  │     │  ├─ enrich_content.py
 │  │     │  ├─ evaluate_qa.py
-│  │     │  ├─ apply_safe_fixes.py
-│  │     │  └─ export_site_bundle.py
+│  │     │  ├─ confidence.py
+│  │     │  ├─ export_site_bundle.py
+│  │     │  ├─ build_reader.py
+│  │     │  ├─ index_search.py
+│  │     │  └─ package_release.py
 │  │     ├─ qa/
 │  │     │  ├─ rules/
 │  │     │  ├─ engine.py
