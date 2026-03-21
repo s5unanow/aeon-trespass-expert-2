@@ -538,7 +538,15 @@ def _build_callout_block(
     callout_content: list[InlineNode] = []
     for midx in sorted(member_indices):
         for member_block in blocks_by_source.get(midx, []):
-            if hasattr(member_block, "content"):
+            if isinstance(member_block, ListBlock):
+                for item in member_block.items:
+                    if callout_content:
+                        callout_content.append(TextRun(text="\n"))
+                    bullet_prefix = f"{item.bullet} " if item.bullet else ""
+                    if bullet_prefix:
+                        callout_content.append(TextRun(text=bullet_prefix))
+                    callout_content.extend(item.content)
+            elif hasattr(member_block, "content"):
                 callout_content.extend(member_block.content)
     if not callout_content:
         return None
