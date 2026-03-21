@@ -63,6 +63,10 @@ class ResolvePageIRStage(BaseStage):
             confidence, reasons = score_page_confidence(canonical)
             render_mode = route_page(confidence)
 
+            fallback_ref: str | None = None
+            if render_mode != "semantic":
+                fallback_ref = f"p{canonical.page_number:04d}_fallback.png"
+
             resolved = ResolvedPageIR(
                 page_number=canonical.page_number,
                 doc_id=canonical.doc_id,
@@ -70,6 +74,7 @@ class ResolvePageIRStage(BaseStage):
                 height_pt=canonical.height_pt,
                 canonical_evidence_hash=hash_model(canonical),
                 render_mode=render_mode,
+                fallback_image_ref=fallback_ref,
                 page_confidence=confidence,
                 confidence_reasons=reasons,
             )
