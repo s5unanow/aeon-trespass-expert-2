@@ -238,7 +238,7 @@ class TestV3Path:
         assert canonical.furniture_fraction == 0.0
 
     def test_has_tables_detected(self, tmp_path: Path) -> None:
-        """Canonical evidence reflects table presence from primitives."""
+        """Canonical evidence reflects table presence from region graph."""
         pdf = tmp_path / "source.pdf"
         # Simple PDF without tables
         _create_test_pdf(pdf)
@@ -254,6 +254,33 @@ class TestV3Path:
             CanonicalPageEvidence,
         )
         assert canonical.has_tables is False
+
+    def test_summary_flags_derived_from_region_graph(self, tmp_path: Path) -> None:
+        """Summary flags are derived from region graph, not raw primitive counts."""
+        pdf = tmp_path / "source.pdf"
+        _create_test_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        _run_extract(ctx)
+        CollectEvidenceStage().execute(ctx)
+
+        canonical = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            CanonicalPageEvidence,
+        )
+        # Text-only PDF: no figure/table/callout regions in graph
+        assert canonical.has_figures is False
+        assert canonical.has_tables is False
+        assert canonical.has_callouts is False
+
+        # Verify consistency: region graph should have no figure/table/callout regions
+        assert canonical.region_graph is not None
+        region_kinds = {r.kind_hint for r in canonical.region_graph.regions}
+        assert ("figure" in region_kinds) == canonical.has_figures
+        assert ("table" in region_kinds) == canonical.has_tables
+        assert ("callout" in region_kinds) == canonical.has_callouts
 
     def test_evidence_hashes_are_deterministic(self, tmp_path: Path) -> None:
         """Running twice produces the same hashes."""
