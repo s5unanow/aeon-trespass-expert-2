@@ -1,0 +1,204 @@
+{
+  "edges": [
+    {
+      "dst_region_id": "reg:2:2",
+      "edge_type": "contains",
+      "src_region_id": "reg:2:1"
+    },
+    {
+      "dst_region_id": "reg:2:3",
+      "edge_type": "contains",
+      "src_region_id": "reg:2:1"
+    },
+    {
+      "dst_region_id": "reg:2:5",
+      "edge_type": "contains",
+      "src_region_id": "reg:2:4"
+    },
+    {
+      "dst_region_id": "reg:2:1",
+      "edge_type": "adjacent_to",
+      "src_region_id": "reg:2:0"
+    },
+    {
+      "dst_region_id": "reg:2:4",
+      "edge_type": "adjacent_to",
+      "src_region_id": "reg:2:1"
+    }
+  ],
+  "furniture_ids_excluded": [],
+  "height_pt": 792.0,
+  "page_number": 2,
+  "regions": [
+    {
+      "band_index": 0,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.03,
+        "y1": 0.07
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 1
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:2:0",
+      "source_evidence_ids": [
+        "text:p0002:000"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.12,
+        "y1": 0.21
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 2,
+        "primitive_count": 4
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:2:1",
+      "source_evidence_ids": [
+        "text:p0002:001",
+        "text:p0002:003",
+        "text:p0002:002",
+        "text:p0002:004"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.22,
+        "y0": 0.12,
+        "y1": 0.21
+      },
+      "column_index": 0,
+      "confidence": {
+        "reasons": [
+          "narrow_column_sidebar"
+        ],
+        "value": 0.7
+      },
+      "features": {
+        "text_count": 2
+      },
+      "kind_hint": "sidebar",
+      "parent_region_id": "reg:2:1",
+      "region_id": "reg:2:2",
+      "source_evidence_ids": [
+        "text:p0002:001",
+        "text:p0002:002"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.3,
+        "x1": 0.95,
+        "y0": 0.12,
+        "y1": 0.21
+      },
+      "column_index": 1,
+      "confidence": {
+        "reasons": [
+          "gutter_detected"
+        ],
+        "value": 0.85
+      },
+      "features": {
+        "text_count": 2
+      },
+      "kind_hint": "column",
+      "parent_region_id": "reg:2:1",
+      "region_id": "reg:2:3",
+      "source_evidence_ids": [
+        "text:p0002:003",
+        "text:p0002:004"
+      ]
+    },
+    {
+      "band_index": 2,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.28,
+        "y1": 0.5
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 5
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:2:4",
+      "source_evidence_ids": [
+        "text:p0002:005",
+        "drawing:p0002:000",
+        "text:p0002:006",
+        "text:p0002:007",
+        "text:p0002:008"
+      ]
+    },
+    {
+      "band_index": 2,
+      "bbox": {
+        "x0": 0.1,
+        "x1": 0.9,
+        "y0": 0.34,
+        "y1": 0.5
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "drawing_encloses_text",
+          "multiple_text_blocks",
+          "dense_text_content"
+        ],
+        "value": 0.75
+      },
+      "features": {
+        "area_fraction": 0.128,
+        "enclosed_text_count": 3,
+        "text_density": 0.7125
+      },
+      "kind_hint": "callout",
+      "parent_region_id": "reg:2:4",
+      "region_id": "reg:2:5",
+      "source_evidence_ids": [
+        "drawing:p0002:000",
+        "text:p0002:006",
+        "text:p0002:007",
+        "text:p0002:008"
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}

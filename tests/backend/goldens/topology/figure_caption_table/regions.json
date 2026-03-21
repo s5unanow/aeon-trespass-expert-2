@@ -1,0 +1,314 @@
+{
+  "edges": [
+    {
+      "dst_region_id": "reg:3:2",
+      "edge_type": "contains",
+      "src_region_id": "reg:3:1"
+    },
+    {
+      "dst_region_id": "reg:3:3",
+      "edge_type": "contains",
+      "src_region_id": "reg:3:1"
+    },
+    {
+      "dst_region_id": "reg:3:4",
+      "edge_type": "contains",
+      "src_region_id": "reg:3:1"
+    },
+    {
+      "dst_region_id": "reg:3:6",
+      "edge_type": "contains",
+      "src_region_id": "reg:3:5"
+    },
+    {
+      "dst_region_id": "reg:3:9",
+      "edge_type": "contains",
+      "src_region_id": "reg:3:8"
+    },
+    {
+      "dst_region_id": "reg:3:1",
+      "edge_type": "adjacent_to",
+      "src_region_id": "reg:3:0"
+    },
+    {
+      "dst_region_id": "reg:3:5",
+      "edge_type": "adjacent_to",
+      "src_region_id": "reg:3:1"
+    },
+    {
+      "dst_region_id": "reg:3:7",
+      "edge_type": "adjacent_to",
+      "src_region_id": "reg:3:5"
+    },
+    {
+      "dst_region_id": "reg:3:8",
+      "edge_type": "adjacent_to",
+      "src_region_id": "reg:3:7"
+    }
+  ],
+  "furniture_ids_excluded": [],
+  "height_pt": 792.0,
+  "page_number": 3,
+  "regions": [
+    {
+      "band_index": 0,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.02,
+        "y1": 0.06
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 1
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:3:0",
+      "source_evidence_ids": [
+        "text:p0003:000"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.9,
+        "y0": 0.09,
+        "y1": 0.22
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 2,
+        "primitive_count": 3
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:3:1",
+      "source_evidence_ids": [
+        "image:p0003:000",
+        "text:p0003:001",
+        "text:p0003:002"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.45,
+        "y0": 0.1,
+        "y1": 0.19
+      },
+      "column_index": 0,
+      "confidence": {
+        "reasons": [
+          "gutter_detected"
+        ],
+        "value": 0.85
+      },
+      "features": {
+        "text_count": 2
+      },
+      "kind_hint": "column",
+      "parent_region_id": "reg:3:1",
+      "region_id": "reg:3:2",
+      "source_evidence_ids": [
+        "text:p0003:001",
+        "text:p0003:002"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.5,
+        "x1": 0.9,
+        "y0": 0.09,
+        "y1": 0.22
+      },
+      "column_index": 1,
+      "confidence": {
+        "reasons": [
+          "gutter_detected"
+        ],
+        "value": 0.85
+      },
+      "features": {
+        "text_count": 1
+      },
+      "kind_hint": "column",
+      "parent_region_id": "reg:3:1",
+      "region_id": "reg:3:3",
+      "source_evidence_ids": [
+        "image:p0003:000"
+      ]
+    },
+    {
+      "band_index": 1,
+      "bbox": {
+        "x0": 0.5,
+        "x1": 0.9,
+        "y0": 0.09,
+        "y1": 0.22
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "image_primitive"
+        ],
+        "value": 0.8
+      },
+      "features": {},
+      "kind_hint": "figure",
+      "parent_region_id": "reg:3:1",
+      "region_id": "reg:3:4",
+      "source_evidence_ids": [
+        "image:p0003:000"
+      ]
+    },
+    {
+      "band_index": 2,
+      "bbox": {
+        "x0": 0.1,
+        "x1": 0.9,
+        "y0": 0.26,
+        "y1": 0.52
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 2
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:3:5",
+      "source_evidence_ids": [
+        "image:p0003:001",
+        "text:p0003:003"
+      ]
+    },
+    {
+      "band_index": 2,
+      "bbox": {
+        "x0": 0.1,
+        "x1": 0.9,
+        "y0": 0.26,
+        "y1": 0.46
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "image_primitive"
+        ],
+        "value": 0.8
+      },
+      "features": {},
+      "kind_hint": "figure",
+      "parent_region_id": "reg:3:5",
+      "region_id": "reg:3:6",
+      "source_evidence_ids": [
+        "image:p0003:001"
+      ]
+    },
+    {
+      "band_index": 3,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.55,
+        "y1": 0.59
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 1
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:3:7",
+      "source_evidence_ids": [
+        "text:p0003:004"
+      ]
+    },
+    {
+      "band_index": 4,
+      "bbox": {
+        "x0": 0.1,
+        "x1": 0.9,
+        "y0": 0.65,
+        "y1": 0.85
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 1
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:3:8",
+      "source_evidence_ids": [
+        "table:p0003:000"
+      ]
+    },
+    {
+      "band_index": 4,
+      "bbox": {
+        "x0": 0.1,
+        "x1": 0.9,
+        "y0": 0.65,
+        "y1": 0.85
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "table_primitive",
+          "strategy:lines_strict",
+          "multi_row_col"
+        ],
+        "value": 0.95
+      },
+      "features": {
+        "cols": 3,
+        "extraction_strategy": "lines_strict",
+        "rows": 4
+      },
+      "kind_hint": "table",
+      "parent_region_id": "reg:3:8",
+      "region_id": "reg:3:9",
+      "source_evidence_ids": [
+        "table:p0003:000"
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}

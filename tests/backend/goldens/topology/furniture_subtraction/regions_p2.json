@@ -1,0 +1,40 @@
+{
+  "edges": [],
+  "furniture_ids_excluded": [
+    "furn:header:000",
+    "furn:page_number:001"
+  ],
+  "height_pt": 792.0,
+  "page_number": 2,
+  "regions": [
+    {
+      "band_index": 0,
+      "bbox": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.1,
+        "y1": 0.26
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 3
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:2:0",
+      "source_evidence_ids": [
+        "text:p0002:002",
+        "text:p0002:003",
+        "text:p0002:004"
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}
