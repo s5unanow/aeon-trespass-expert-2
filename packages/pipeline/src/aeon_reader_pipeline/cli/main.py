@@ -559,40 +559,38 @@ def generate_overlays(
     page_filter = _parse_pages_option(pages)
     store = ArtifactStore(artifact_root.resolve())
 
-    pdf_doc = pymupdf.open(str(pdf))
-    total_pages = pdf_doc.page_count
-
-    target_pages = page_filter if page_filter else list(range(1, total_pages + 1))
-
     written = 0
-    for page_num in target_pages:
-        if page_num < 1 or page_num > total_pages:
-            typer.echo(f"  Skipping page {page_num} (out of range)")
-            continue
+    with pymupdf.open(str(pdf)) as pdf_doc:
+        total_pages = pdf_doc.page_count
+        target_pages = page_filter if page_filter else list(range(1, total_pages + 1))
 
-        page = pdf_doc.load_page(page_num - 1)  # 0-indexed
+        for page_num in target_pages:
+            if page_num < 1 or page_num > total_pages:
+                typer.echo(f"  Skipping page {page_num} (out of range)")
+                continue
 
-        try:
-            page_overlays = _generate_page_overlays(
-                page=page,
-                page_number=page_num,
-                overlay_types=overlay_set,
-                store=store,
-                run_id=run_id,
-                doc_id=doc,
-                dpi=dpi,
-            )
-        except FileNotFoundError as exc:
-            typer.echo(f"  Page {page_num}: missing artifact — {exc}")
-            continue
+            page = pdf_doc.load_page(page_num - 1)  # 0-indexed
 
-        for overlay_type, png_bytes in page_overlays.items():
-            sub_path = f"debug/overlays/p{page_num:04d}_{overlay_type}.png"
-            out = store.write_debug_bytes(run_id, doc, sub_path, png_bytes)
-            written += 1
-            typer.echo(f"  {out}")
+            try:
+                page_overlays = _generate_page_overlays(
+                    page=page,
+                    page_number=page_num,
+                    overlay_types=overlay_set,
+                    store=store,
+                    run_id=run_id,
+                    doc_id=doc,
+                    dpi=dpi,
+                )
+            except FileNotFoundError as exc:
+                typer.echo(f"  Page {page_num}: missing artifact — {exc}")
+                continue
 
-    pdf_doc.close()
+            for overlay_type, png_bytes in page_overlays.items():
+                sub_path = f"debug/overlays/p{page_num:04d}_{overlay_type}.png"
+                out = store.write_debug_bytes(run_id, doc, sub_path, png_bytes)
+                written += 1
+                typer.echo(f"  {out}")
+
     typer.echo(f"\nGenerated {written} overlay(s).")
 
 

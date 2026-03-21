@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         PageRegionGraph,
         PageSymbolCandidates,
         PrimitivePageEvidence,
+        ReadingOrderEntry,
         ResolvedPageIR,
     )
 
@@ -212,6 +213,7 @@ def render_reading_order_overlay(
     region_map = {r.region_id: r for r in region_graph.regions}
 
     centroids: list[pymupdf.Point] = []
+    matched_entries: list[ReadingOrderEntry] = []
     entries = sorted(reading_order.entries, key=lambda e: e.sequence_index)
 
     for entry in entries:
@@ -223,6 +225,7 @@ def render_reading_order_overlay(
         cy = (rect.y0 + rect.y1) / 2
         center = pymupdf.Point(cx, cy)
         centroids.append(center)
+        matched_entries.append(entry)
 
         color = _FLOW_COLORS.get(entry.flow_role, (0.5, 0.5, 0.5))
 
@@ -239,8 +242,7 @@ def render_reading_order_overlay(
     for i in range(len(centroids) - 1):
         p1 = centroids[i]
         p2 = centroids[i + 1]
-        entry = entries[i + 1]
-        color = _FLOW_COLORS.get(entry.flow_role, (0.5, 0.5, 0.5))
+        color = _FLOW_COLORS.get(matched_entries[i + 1].flow_role, (0.5, 0.5, 0.5))
         page.draw_line(p1, p2, color=color, width=0.6, dashes="[2 1]")
 
     return _render_page(page, dpi)
