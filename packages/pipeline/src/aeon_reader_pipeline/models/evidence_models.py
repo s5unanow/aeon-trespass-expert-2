@@ -307,6 +307,69 @@ class PageReadingOrder(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Asset registry (S5U-257)
+# ---------------------------------------------------------------------------
+
+AssetKind = Literal["raster", "vector_cluster", "unresolved_visual"]
+
+OccurrenceContext = Literal[
+    "inline",
+    "figure",
+    "decoration",
+    "list_marker",
+    "legend",
+    "unknown",
+]
+
+
+class AssetOccurrence(BaseModel):
+    """A single occurrence of an asset on a specific page."""
+
+    occurrence_id: str
+    page_number: int
+    bbox_norm: NormalizedBBox
+    source_primitive_id: str
+    context_hint: OccurrenceContext = "unknown"
+
+
+class AssetClass(BaseModel):
+    """A deduplicated asset identity across the document.
+
+    Rasters use ``content_hash`` for exact identity. Vector clusters
+    use ``path_count`` and position fingerprints for fuzzy identity.
+    """
+
+    asset_class_id: str
+    kind: AssetKind
+    content_hash: str = ""
+    width_px: int = 0
+    height_px: int = 0
+    colorspace: str = ""
+    path_count: int = 0
+    occurrence_count: int = 0
+    page_numbers: list[int] = Field(default_factory=list)
+    occurrences: list[AssetOccurrence] = Field(default_factory=list)
+    is_furniture: bool = False
+
+
+class DocumentAssetRegistry(BaseModel):
+    """Document-level asset registry.
+
+    Produced by collect_evidence once per document. Tracks every
+    visual asset class and its occurrences across pages, enabling
+    cross-page deduplication, symbol detection, and figure grouping.
+
+    Artifact path: ``{run}/evidence/asset_registry.json``
+    """
+
+    doc_id: str
+    total_pages_analyzed: int
+    asset_classes: list[AssetClass] = Field(default_factory=list)
+    total_occurrences: int = 0
+    detection_version: str = "0.1.0"
+
+
+# ---------------------------------------------------------------------------
 # Canonical evidence — topology and entity analysis results
 # ---------------------------------------------------------------------------
 
@@ -319,8 +382,8 @@ class CanonicalPageEvidence(BaseModel):
     that semantic block building consumes.
 
     Region graph added by S5U-255 (Phase 2). Reading order added by
-    S5U-256 (Phase 2). Asset occurrences and symbol candidates will
-    be added by Phase 3 issues (S5U-257 through S5U-262).
+    S5U-256 (Phase 2). Asset registry added by S5U-257 (Phase 3).
+    Symbol candidates will be added by S5U-258 through S5U-262.
 
     Artifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``
     """
@@ -342,6 +405,7 @@ class CanonicalPageEvidence(BaseModel):
 
     region_graph: PageRegionGraph | None = None
     reading_order: PageReadingOrder | None = None
+    asset_occurrence_ids: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------

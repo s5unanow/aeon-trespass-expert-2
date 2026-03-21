@@ -31,7 +31,10 @@ from aeon_reader_pipeline.models.config_models import (
     SymbolPack,
 )
 from aeon_reader_pipeline.models.evidence_models import (
+    AssetClass,
+    AssetOccurrence,
     CanonicalPageEvidence,
+    DocumentAssetRegistry,
     DocumentFurnitureProfile,
     DrawingPrimitiveEvidence,
     FontSummary,
@@ -65,6 +68,7 @@ ARCH3_MODELS: list[tuple[str, type[Any]]] = [
     ("CanonicalPageEvidence", CanonicalPageEvidence),
     ("ResolvedPageIR", ResolvedPageIR),
     ("DocumentFurnitureProfile", DocumentFurnitureProfile),
+    ("DocumentAssetRegistry", DocumentAssetRegistry),
     ("PageRegionGraph", PageRegionGraph),
 ]
 
@@ -238,6 +242,68 @@ def _make_document_furniture_profile(*, with_candidates: bool = False) -> Docume
         total_pages_analyzed=3 if with_candidates else 0,
         furniture_candidates=candidates,
         templates=templates,
+    )
+
+
+def _make_document_asset_registry(*, with_assets: bool = False) -> DocumentAssetRegistry:
+    """Build a realistic DocumentAssetRegistry fixture."""
+    asset_classes: list[AssetClass] = []
+    total_occurrences = 0
+    if with_assets:
+        asset_classes = [
+            AssetClass(
+                asset_class_id="asset:raster:000",
+                kind="raster",
+                content_hash="sha256:abc123def456",
+                width_px=400,
+                height_px=300,
+                colorspace="RGB",
+                occurrence_count=2,
+                page_numbers=[1, 2],
+                occurrences=[
+                    AssetOccurrence(
+                        occurrence_id="asset:raster:000:p0001:00",
+                        page_number=1,
+                        bbox_norm=_make_bbox(y0=0.25, y1=0.55),
+                        source_primitive_id="img-0001",
+                        context_hint="figure",
+                    ),
+                    AssetOccurrence(
+                        occurrence_id="asset:raster:000:p0002:00",
+                        page_number=2,
+                        bbox_norm=_make_bbox(y0=0.30, y1=0.60),
+                        source_primitive_id="img-0002",
+                        context_hint="figure",
+                    ),
+                ],
+            ),
+            AssetClass(
+                asset_class_id="asset:raster:001",
+                kind="raster",
+                content_hash="sha256:smallicon",
+                width_px=32,
+                height_px=32,
+                colorspace="RGB",
+                occurrence_count=1,
+                page_numbers=[1],
+                occurrences=[
+                    AssetOccurrence(
+                        occurrence_id="asset:raster:001:p0001:00",
+                        page_number=1,
+                        bbox_norm=_make_bbox(x0=0.1, y0=0.1, x1=0.12, y1=0.12),
+                        source_primitive_id="img-0003",
+                        context_hint="inline",
+                    ),
+                ],
+                is_furniture=False,
+            ),
+        ]
+        total_occurrences = 3
+    return DocumentAssetRegistry(
+        doc_id="test-doc",
+        total_pages_analyzed=3 if with_assets else 0,
+        asset_classes=asset_classes,
+        total_occurrences=total_occurrences,
     )
 
 
@@ -493,6 +559,31 @@ class TestDocumentFurnitureProfileSchema:
             _validate_against_schema(payload, "DocumentFurnitureProfile")
 
 
+class TestDocumentAssetRegistrySchema:
+    """Validate DocumentAssetRegistry against its checked-in JSON Schema."""
+
+    def test_minimal_payload_validates(self) -> None:
+        model = DocumentAssetRegistry(doc_id="doc", total_pages_analyzed=0)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "DocumentAssetRegistry")
+
+    def test_full_fixture_validates(self) -> None:
+        model = _make_document_asset_registry(with_assets=True)
+        payload = model.model_dump(mode="json")
+        _validate_against_schema(payload, "DocumentAssetRegistry")
+
+    def test_round_trip_preserves_data(self) -> None:
+        original = _make_document_asset_registry(with_assets=True)
+        payload = original.model_dump(mode="json")
+        restored = DocumentAssetRegistry.model_validate(payload)
+        assert restored == original
+
+    def test_missing_required_field_rejected(self) -> None:
+        payload = {"total_pages_analyzed": 5}
+        with pytest.raises(jsonschema.ValidationError):
+            _validate_against_schema(payload, "DocumentAssetRegistry")
+
+
 class TestPageRegionGraphSchema:
     """Validate PageRegionGraph against its checked-in JSON Schema."""
 
@@ -705,6 +796,19 @@ class TestPersistedArtifactValidation:
         assert model.doc_id == "test-doc"
         assert model.total_pages_analyzed == 1
 
+    def test_single_page_asset_registry(self, tmp_path: Path) -> None:
+        """Persisted DocumentAssetRegistry validates against schema."""
+        pdf = tmp_path / "source.pdf"
+        _create_test_pdf(pdf)
+        ctx = _make_stage_context(tmp_path, pdf)
+        _run_v3_pipeline(ctx)
+
+        raw = _read_artifact_json(ctx, "collect_evidence", "evidence/asset_registry.json")
+        _validate_against_schema(raw, "DocumentAssetRegistry")
+        model = DocumentAssetRegistry.model_validate(raw)
+        assert model.doc_id == "test-doc"
+        assert model.total_pages_analyzed == 1
+
     def test_single_page_resolved_ir(self, tmp_path: Path) -> None:
         """Persisted ResolvedPageIR validates against schema."""
         pdf = tmp_path / "source.pdf"
@@ -730,6 +834,7 @@ class TestPersistedArtifactValidation:
         CPE = CanonicalPageEvidence
         RIR = ResolvedPageIR
         DFP = DocumentFurnitureProfile
+        DAR = DocumentAssetRegistry
         PRG = PageRegionGraph
         artifact_map: list[tuple[str, str, str, type[Any]]] = [
             ("extract_primitives", "evidence/p0001_primitive.json", "PrimitivePageEvidence", PPE),
@@ -743,6 +848,12 @@ class TestPersistedArtifactValidation:
                 "evidence/furniture_profile.json",
                 "DocumentFurnitureProfile",
                 DFP,
+            ),
+            (
+                "collect_evidence",
+                "evidence/asset_registry.json",
+                "DocumentAssetRegistry",
+                DAR,
             ),
             ("resolve_page_ir", "resolved/p0001.json", "ResolvedPageIR", RIR),
             ("resolve_page_ir", "resolved/p0002.json", "ResolvedPageIR", RIR),
