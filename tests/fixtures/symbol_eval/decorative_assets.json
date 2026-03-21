@@ -1,0 +1,6 @@
+{
+  "fixture_id": "decorative_assets",
+  "description": "Decorative board-tile/art assets that must not become semantic symbols",
+  "expected_semantic": [],
+  "forbidden_decorative": ["border-ornament", "tile-bg"]
+}

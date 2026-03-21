@@ -1,0 +1,10 @@
+{
+  "fixture_id": "dense_mixed_icons",
+  "description": "Dense icon page with multiple symbol types and detection sources",
+  "expected_semantic": [
+    {"symbol_id": "sword-icon", "evidence_source": "text_token", "count": 1},
+    {"symbol_id": "fire-icon", "evidence_source": "raster_hash", "count": 1},
+    {"symbol_id": "star-icon", "evidence_source": "vector_signature", "count": 1}
+  ],
+  "forbidden_decorative": ["border-ornament"]
+}
