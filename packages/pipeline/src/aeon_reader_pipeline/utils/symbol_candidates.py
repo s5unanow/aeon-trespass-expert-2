@@ -57,6 +57,11 @@ def generate_page_candidates(
     Runs four independent detectors (text token, raster hash, vector
     signature, dingbat) and assigns deterministic candidate IDs.
 
+    Note: detectors run independently, so one evidence primitive may
+    produce multiple candidates (e.g. a dingbat that also matches a
+    text token). This is intentional — classified and unclassified
+    candidates are both preserved for downstream review.
+
     Args:
         primitive: The page's primitive evidence.
         registry: Document-wide asset registry.

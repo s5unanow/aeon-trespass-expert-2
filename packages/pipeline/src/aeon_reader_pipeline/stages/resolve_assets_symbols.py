@@ -143,8 +143,9 @@ def _apply_evidence_candidates(
     if not page_cands.candidates:
         return record
 
-    # Collect classified non-text-token symbols above threshold
-    evidence_symbols: dict[str, str] = {}
+    # Collect classified non-text-token symbols above threshold.
+    # Use highest-confidence candidate when multiple match the same primitive.
+    evidence_symbols: dict[str, tuple[str, float]] = {}
     for cand in page_cands.candidates:
         if (
             cand.is_classified
@@ -153,7 +154,12 @@ def _apply_evidence_candidates(
             and cand.symbol_id
             and cand.source_primitive_id
         ):
-            evidence_symbols[cand.source_primitive_id] = cand.symbol_id
+            existing = evidence_symbols.get(cand.source_primitive_id)
+            if existing is None or cand.confidence > existing[1]:
+                evidence_symbols[cand.source_primitive_id] = (
+                    cand.symbol_id,
+                    cand.confidence,
+                )
 
     if not evidence_symbols:
         return record
@@ -161,10 +167,12 @@ def _apply_evidence_candidates(
     new_blocks: list[Block] = []
     for block in record.blocks:
         if isinstance(block, FigureBlock) and block.asset_ref:
-            # Check if this figure's asset matches a classified symbol
-            for prim_id, sym_id in evidence_symbols.items():
+            for prim_id, (sym_id, _conf) in evidence_symbols.items():
                 if prim_id in (block.asset_ref, block.block_id):
-                    block = block.model_copy(update={"alt_text": f"[symbol:{sym_id}]"})
+                    # Preserve existing alt_text, prepend symbol tag
+                    existing_alt = block.alt_text or ""
+                    alt = f"[symbol:{sym_id}] {existing_alt}".strip()
+                    block = block.model_copy(update={"alt_text": alt})
                     break
         new_blocks.append(block)
 
