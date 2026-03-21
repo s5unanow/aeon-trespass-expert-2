@@ -10,6 +10,9 @@ import structlog
 import typer
 
 if TYPE_CHECKING:
+    import pymupdf
+
+    from aeon_reader_pipeline.io.artifact_store import ArtifactStore
     from aeon_reader_pipeline.llm.base import LlmGateway
     from aeon_reader_pipeline.models.config_models import ModelProfile
     from aeon_reader_pipeline.models.run_models import CostEstimate, PipelineConfig
@@ -353,6 +356,242 @@ def inspect(
     except FileNotFoundError:
         typer.echo(f"Run not found: {run_id}", err=True)
         raise typer.Exit(1) from None
+
+
+_OVERLAY_TYPES = frozenset(
+    {
+        "primitives",
+        "furniture",
+        "regions",
+        "reading_order",
+        "assets",
+        "symbols",
+        "figure_caption",
+        "confidence",
+    }
+)
+
+
+def _generate_page_overlays(
+    *,
+    page: pymupdf.Page,
+    page_number: int,
+    overlay_types: set[str],
+    store: ArtifactStore,
+    run_id: str,
+    doc_id: str,
+    dpi: int,
+) -> dict[str, bytes]:
+    """Generate requested overlays for a single page.
+
+    Returns a mapping of overlay type -> PNG bytes.
+    Each overlay is rendered on a fresh copy of the page annotations.
+    """
+    import pymupdf as _pymupdf
+
+    from aeon_reader_pipeline.models.evidence_models import (
+        DocumentAssetRegistry,
+        DocumentFurnitureProfile,
+        PageReadingOrder,
+        PageRegionGraph,
+        PageSymbolCandidates,
+        PrimitivePageEvidence,
+        ResolvedPageIR,
+    )
+    from aeon_reader_pipeline.utils.overlays import (
+        render_assets_overlay,
+        render_confidence_overlay,
+        render_figure_caption_overlay,
+        render_furniture_overlay,
+        render_primitives_overlay,
+        render_reading_order_overlay,
+        render_regions_overlay,
+        render_symbols_overlay,
+    )
+
+    results: dict[str, bytes] = {}
+    src_doc = page.parent
+    page_idx = page.number
+
+    def _fresh_page() -> _pymupdf.Page:
+        """Re-open the page from the same document to avoid stacked annotations."""
+        return src_doc.load_page(page_idx)  # type: ignore[no-any-return]
+
+    if "primitives" in overlay_types:
+        evidence = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            f"evidence/p{page_number:04d}_primitive.json",
+            PrimitivePageEvidence,
+        )
+        results["primitives"] = render_primitives_overlay(_fresh_page(), evidence, dpi)
+
+    if "furniture" in overlay_types:
+        profile = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            "evidence/furniture_profile.json",
+            DocumentFurnitureProfile,
+        )
+        results["furniture"] = render_furniture_overlay(_fresh_page(), profile, page_number, dpi)
+
+    if "regions" in overlay_types:
+        region_graph = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            f"evidence/p{page_number:04d}_regions.json",
+            PageRegionGraph,
+        )
+        results["regions"] = render_regions_overlay(_fresh_page(), region_graph, dpi)
+
+    if "reading_order" in overlay_types:
+        region_graph = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            f"evidence/p{page_number:04d}_regions.json",
+            PageRegionGraph,
+        )
+        reading_order = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            f"evidence/p{page_number:04d}_reading_order.json",
+            PageReadingOrder,
+        )
+        results["reading_order"] = render_reading_order_overlay(
+            _fresh_page(),
+            region_graph,
+            reading_order,
+            dpi,
+        )
+
+    if "assets" in overlay_types:
+        registry = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            "evidence/asset_registry.json",
+            DocumentAssetRegistry,
+        )
+        results["assets"] = render_assets_overlay(_fresh_page(), registry, page_number, dpi)
+
+    if "symbols" in overlay_types:
+        sym_cands = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            f"evidence/p{page_number:04d}_symbol_candidates.json",
+            PageSymbolCandidates,
+        )
+        results["symbols"] = render_symbols_overlay(_fresh_page(), sym_cands, dpi)
+
+    if "figure_caption" in overlay_types:
+        from aeon_reader_pipeline.models.evidence_models import PageFigureCaptionLinks
+
+        region_graph = store.read_artifact(
+            run_id,
+            doc_id,
+            "collect_evidence",
+            f"evidence/p{page_number:04d}_regions.json",
+            PageRegionGraph,
+        )
+        fig_links = store.read_artifact(
+            run_id,
+            doc_id,
+            "resolve_assets_symbols",
+            f"pages/p{page_number:04d}_figure_caption_links.json",
+            PageFigureCaptionLinks,
+        )
+        results["figure_caption"] = render_figure_caption_overlay(
+            _fresh_page(),
+            region_graph,
+            fig_links.links,
+            dpi,
+        )
+
+    if "confidence" in overlay_types:
+        resolved = store.read_artifact(
+            run_id,
+            doc_id,
+            "resolve_page_ir",
+            f"p{page_number:04d}.json",
+            ResolvedPageIR,
+        )
+        results["confidence"] = render_confidence_overlay(_fresh_page(), resolved, dpi)
+
+    return results
+
+
+@app.command("generate-overlays")
+def generate_overlays(
+    run_id: str = typer.Argument(..., help="Run ID containing evidence artifacts"),
+    doc: str = typer.Option(..., help="Document ID"),
+    pdf: Path = typer.Option(..., help="Source PDF path"),  # noqa: B008
+    artifact_root: Path = typer.Option(  # noqa: B008
+        Path("artifacts"), help="Artifact root"
+    ),
+    pages: str | None = typer.Option(None, "--pages", help="Page filter (e.g. '1-5', '1,3,8')"),
+    overlays: str = typer.Option(
+        "primitives,regions,reading_order",
+        help=f"Comma-separated overlay types: {','.join(sorted(_OVERLAY_TYPES))}",
+    ),
+    dpi: int = typer.Option(150, help="Render DPI"),
+) -> None:
+    """Generate debug overlay PNGs for evidence artifacts."""
+    import pymupdf
+
+    from aeon_reader_pipeline.io.artifact_store import ArtifactStore
+
+    if not pdf.exists():
+        typer.echo(f"Error: PDF not found: {pdf}", err=True)
+        raise typer.Exit(1)
+
+    overlay_set = {s.strip() for s in overlays.split(",")}
+    unknown = overlay_set - _OVERLAY_TYPES
+    if unknown:
+        typer.echo(f"Error: unknown overlay types: {unknown}", err=True)
+        raise typer.Exit(1)
+
+    page_filter = _parse_pages_option(pages)
+    store = ArtifactStore(artifact_root.resolve())
+
+    written = 0
+    with pymupdf.open(str(pdf)) as pdf_doc:
+        total_pages = pdf_doc.page_count
+        target_pages = page_filter if page_filter else list(range(1, total_pages + 1))
+
+        for page_num in target_pages:
+            if page_num < 1 or page_num > total_pages:
+                typer.echo(f"  Skipping page {page_num} (out of range)")
+                continue
+
+            page = pdf_doc.load_page(page_num - 1)  # 0-indexed
+
+            try:
+                page_overlays = _generate_page_overlays(
+                    page=page,
+                    page_number=page_num,
+                    overlay_types=overlay_set,
+                    store=store,
+                    run_id=run_id,
+                    doc_id=doc,
+                    dpi=dpi,
+                )
+            except FileNotFoundError as exc:
+                typer.echo(f"  Page {page_num}: missing artifact — {exc}")
+                continue
+
+            for overlay_type, png_bytes in page_overlays.items():
+                sub_path = f"debug/overlays/p{page_num:04d}_{overlay_type}.png"
+                out = store.write_debug_bytes(run_id, doc, sub_path, png_bytes)
+                written += 1
+                typer.echo(f"  {out}")
+
+    typer.echo(f"\nGenerated {written} overlay(s).")
 
 
 if __name__ == "__main__":

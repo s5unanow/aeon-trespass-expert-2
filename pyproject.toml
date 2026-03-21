@@ -70,6 +70,10 @@ module = "aeon_reader_pipeline.stages.*"
 disallow_untyped_calls = false
 
 [[tool.mypy.overrides]]
+module = ["aeon_reader_pipeline.utils.overlays", "aeon_reader_pipeline.cli.main"]
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
 
