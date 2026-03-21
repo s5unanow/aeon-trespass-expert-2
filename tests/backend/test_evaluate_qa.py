@@ -155,4 +155,4 @@ class TestEvaluateQAStage:
     def test_stage_registration(self) -> None:
         stage = EvaluateQAStage()
         assert stage.name == "evaluate_qa"
-        assert stage.version == "1.0.0"
+        assert stage.version == "1.1.0"
