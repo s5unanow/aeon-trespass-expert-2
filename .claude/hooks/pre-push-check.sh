@@ -7,7 +7,7 @@ if ! echo "$CLAUDE_TOOL_INPUT" | grep -q 'git push'; then
   exit 0
 fi
 
-cd /Users/s5una/projects/aeon-trespass-expert-2
+cd "$(git rev-parse --show-toplevel)"
 
 BRANCH=$(git branch --show-current)
 if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
