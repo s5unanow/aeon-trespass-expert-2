@@ -43,6 +43,7 @@ review/
 !.claude/hooks/
 !.claude/prompts/
 !.claude/skills/
+!.claude/rules/
 *.swp
 *.swo
 
