@@ -76,6 +76,16 @@ def asset_occurrence_id(class_id: str, page_number: int, index: int) -> str:
     return f"{class_id}:p{page_number:04d}:{index:02d}"
 
 
+def symbol_candidate_id(page_number: int, index: int) -> str:
+    """Generate a symbol candidate ID.
+
+    Format: ``sym:p{page_number:04d}:{index:03d}``
+
+    Examples: ``sym:p0001:000``, ``sym:p0003:012``
+    """
+    return f"sym:p{page_number:04d}:{index:03d}"
+
+
 def primitive_id(kind: str, page_number: int, index: int) -> str:
     """Generate a stable provenance ID for an extraction primitive.
 

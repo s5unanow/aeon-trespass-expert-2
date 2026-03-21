@@ -454,6 +454,13 @@
       },
       "title": "Asset Occurrence Ids",
       "type": "array"
+    },
+    "symbol_candidate_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Symbol Candidate Ids",
+      "type": "array"
     }
   },
   "required": [
