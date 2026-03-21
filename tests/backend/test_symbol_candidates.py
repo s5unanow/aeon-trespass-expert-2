@@ -22,11 +22,11 @@ from aeon_reader_pipeline.models.evidence_models import (
 )
 from aeon_reader_pipeline.utils.ids import symbol_candidate_id
 from aeon_reader_pipeline.utils.symbol_candidates import (
-    infer_bbox_anchor,
-    infer_text_anchor,
     build_symbol_summary,
     compute_page_symbol_ids,
     generate_page_candidates,
+    infer_bbox_anchor,
+    infer_text_anchor,
 )
 
 # ---------------------------------------------------------------------------
