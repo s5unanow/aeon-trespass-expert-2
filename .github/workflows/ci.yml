@@ -17,6 +17,7 @@ jobs:
       - run: uv run ruff check packages/pipeline/src tests/backend
       - run: uv run ruff format --check packages/pipeline/src tests/backend
       - run: uv run mypy --strict packages/pipeline/src
+      - run: uv run lint-imports
       - name: Security lint (bandit)
         run: uv run bandit -c pyproject.toml -r packages/pipeline/src
         continue-on-error: true
