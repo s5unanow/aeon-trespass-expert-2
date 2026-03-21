@@ -1,0 +1,10 @@
+{
+  "fixture_id": "inline_stat_icons",
+  "description": "Inline stat/resource icons detected via text tokens in body text",
+  "expected_semantic": [
+    {"symbol_id": "sword-icon", "evidence_source": "text_token", "count": 2},
+    {"symbol_id": "shield-icon", "evidence_source": "text_token", "count": 1},
+    {"symbol_id": "mana-icon", "evidence_source": "raster_hash", "count": 1}
+  ],
+  "forbidden_decorative": []
+}
