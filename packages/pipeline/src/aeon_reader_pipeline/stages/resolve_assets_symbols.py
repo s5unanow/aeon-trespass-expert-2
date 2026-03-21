@@ -13,7 +13,6 @@ from aeon_reader_pipeline.models.evidence_models import (
 )
 from aeon_reader_pipeline.models.ir_models import (
     Block,
-    CaptionBlock,
     FigureBlock,
     InlineNode,
     PageRecord,
@@ -54,27 +53,6 @@ class AssetManifest(BaseModel):
 
     doc_id: str
     assets: list[ResolvedAsset] = Field(default_factory=list)
-
-
-def _link_figures_to_captions(record: PageRecord) -> dict[str, str]:
-    """Link figure blocks to their nearest following caption block.
-
-    Returns a mapping of figure_block_id → caption_block_id.
-    Legacy v2 helper — prefer ``link_figures_captions_sequential``
-    or ``link_figures_captions_spatial`` which also produce linkage
-    artifacts with confidence metadata.
-    """
-    links: dict[str, str] = {}
-    blocks = record.blocks
-    for i, block in enumerate(blocks):
-        if isinstance(block, FigureBlock):
-            # Look for a caption block immediately after
-            for j in range(i + 1, min(i + 3, len(blocks))):
-                candidate = blocks[j]
-                if isinstance(candidate, CaptionBlock):
-                    links[block.block_id] = candidate.block_id
-                    break
-    return links
 
 
 def _resolve_symbols_in_page(

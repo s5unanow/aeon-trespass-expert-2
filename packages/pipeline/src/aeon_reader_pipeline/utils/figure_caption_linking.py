@@ -25,9 +25,7 @@ from aeon_reader_pipeline.models.ir_models import (
     PageRecord,
     TextRun,
 )
-
-# Caption text detection patterns (shared with normalize_layout)
-_CAPTION_PREFIXES = ("figure ", "fig. ", "fig ", "table ", "diagram ")
+from aeon_reader_pipeline.utils.normalization import is_caption_text as _is_caption_text
 
 # Scoring thresholds
 _MAX_Y_DISTANCE = 0.30  # Max vertical gap (normalised) to consider linking
@@ -253,11 +251,6 @@ def _y_distance(fig: NormalizedBBox, cap: NormalizedBBox) -> float:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
-
-
-def _is_caption_text(text: str) -> bool:
-    """Check if text looks like a figure/table caption."""
-    return text.lower().strip().startswith(_CAPTION_PREFIXES)
 
 
 def _resolve_block_ids(
