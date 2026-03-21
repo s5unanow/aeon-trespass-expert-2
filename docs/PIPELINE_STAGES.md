@@ -1,10 +1,12 @@
 # Pipeline stages (16-stage order)
 
+Canonical order defined in `stage_framework/registry.py` (single source of truth).
+
 ```
-00_resolve → 01_ingest → 02_extract → 02a_evidence → 02b_resolve_ir →
-03_normalize → 04_resolve_assets → 05_plan_translation → 06_translate →
-07_merge → 08_enrich → 09_evaluate_qa → 11_export → 12_build →
-13_index → 14_release
+00_resolve_run → 01_ingest_source → 02_extract_primitives → 02a_collect_evidence → 02b_resolve_page_ir →
+03_normalize_layout → 04_resolve_assets_symbols → 05_plan_translation → 06_translate_units →
+07_merge_localization → 08_enrich_content → 09_evaluate_qa → 11_export_site_bundle →
+12_build_reader → 13_index_search → 14_package_release
 ```
 
 Stages 02a and 02b are Architecture 3 only (`architecture: "v3"`) — they skip automatically on v2 (default).
