@@ -5,7 +5,10 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from aeon_reader_pipeline.models.evidence_models import (
+    CanonicalPageEvidence,
+    PageFigureCaptionLinks,
     PageSymbolCandidates,
+    PrimitivePageEvidence,
     SymbolAnchorType,
 )
 from aeon_reader_pipeline.models.ir_models import (
@@ -21,9 +24,14 @@ from aeon_reader_pipeline.models.manifest_models import DocumentManifest
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
+from aeon_reader_pipeline.utils.figure_caption_linking import (
+    apply_links_to_blocks,
+    link_figures_captions_sequential,
+    link_figures_captions_spatial,
+)
 
 STAGE_NAME = "resolve_assets_symbols"
-STAGE_VERSION = "1.1.0"
+STAGE_VERSION = "1.2.0"
 
 
 class ResolvedAsset(BaseModel):
@@ -52,6 +60,9 @@ def _link_figures_to_captions(record: PageRecord) -> dict[str, str]:
     """Link figure blocks to their nearest following caption block.
 
     Returns a mapping of figure_block_id → caption_block_id.
+    Legacy v2 helper — prefer ``link_figures_captions_sequential``
+    or ``link_figures_captions_spatial`` which also produce linkage
+    artifacts with confidence metadata.
     """
     links: dict[str, str] = {}
     blocks = record.blocks
@@ -219,25 +230,18 @@ class ResolveAssetsSymbolsStage(BaseStage):
                 PageRecord,
             )
 
-            # Link figures to captions
-            fig_caption_links = _link_figures_to_captions(record)
+            # Link figures to captions — spatial (v3) or sequential (v2)
+            fig_cap_links = self._compute_figure_caption_links(ctx, record, page_num, is_v3)
+            record = apply_links_to_blocks(record, fig_cap_links)
 
-            # Update figure blocks with caption links
-            new_blocks = []
-            for block in record.blocks:
-                if isinstance(block, FigureBlock) and block.block_id in fig_caption_links:
-                    block = block.model_copy(
-                        update={"caption_block_id": fig_caption_links[block.block_id]}
-                    )
-                if isinstance(block, CaptionBlock):
-                    # Find parent figure
-                    for fig_id, cap_id in fig_caption_links.items():
-                        if cap_id == block.block_id:
-                            block = block.model_copy(update={"parent_block_id": fig_id})
-                            break
-                new_blocks.append(block)
-
-            record = record.model_copy(update={"blocks": new_blocks})
+            # Persist linkage artifact for review
+            ctx.artifact_store.write_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                STAGE_NAME,
+                f"pages/p{page_num:04d}_figure_caption_links.json",
+                fig_cap_links,
+            )
 
             # Resolve symbol tokens in text
             record = _resolve_symbols_in_page(record, symbol_tokens)
@@ -279,6 +283,8 @@ class ResolveAssetsSymbolsStage(BaseStage):
                 "page_resolved",
                 page=page_num,
                 assets=len([b for b in record.blocks if isinstance(b, FigureBlock)]),
+                fig_caption_links=len(fig_cap_links.links),
+                link_method=fig_cap_links.method,
             )
 
         # Write asset manifest
@@ -296,3 +302,31 @@ class ResolveAssetsSymbolsStage(BaseStage):
             pages=manifest.page_count,
             total_assets=len(all_assets),
         )
+
+    def _compute_figure_caption_links(
+        self,
+        ctx: StageContext,
+        record: PageRecord,
+        page_num: int,
+        is_v3: bool,
+    ) -> PageFigureCaptionLinks:
+        """Choose spatial or sequential linking based on architecture."""
+        if is_v3:
+            canonical = ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "collect_evidence",
+                f"evidence/p{page_num:04d}_canonical.json",
+                CanonicalPageEvidence,
+            )
+            if canonical.region_graph is not None:
+                primitive = ctx.artifact_store.read_artifact(
+                    ctx.run_id,
+                    ctx.doc_id,
+                    "collect_evidence",
+                    f"evidence/p{page_num:04d}_primitive.json",
+                    PrimitivePageEvidence,
+                )
+                return link_figures_captions_spatial(canonical.region_graph, primitive, record)
+
+        return link_figures_captions_sequential(record)
