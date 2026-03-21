@@ -39,6 +39,11 @@ class FigureCaptionLinkageRule:
                 continue
 
             block_ids = {block.block_id for block in record.blocks}
+            entity_block_ids = {
+                block.block_id
+                for block in record.blocks
+                if isinstance(block, (FigureBlock, TableBlock))
+            }
 
             for block in record.blocks:
                 if (
@@ -61,26 +66,40 @@ class FigureCaptionLinkageRule:
                             ),
                         )
                     )
-                if (
-                    isinstance(block, CaptionBlock)
-                    and block.parent_block_id
-                    and block.parent_block_id not in block_ids
-                ):
-                    issues.append(
-                        QAIssue(
-                            rule_id=self.rule_id,
-                            severity="error",
-                            category=self.category,
-                            message=(
-                                f"CaptionBlock '{block.block_id}' references"
-                                f" missing parent '{block.parent_block_id}'"
-                            ),
-                            location=IssueLocation(
-                                page_number=record.page_number,
-                                block_id=block.block_id,
-                            ),
+                if isinstance(block, CaptionBlock) and block.parent_block_id:
+                    if block.parent_block_id not in block_ids:
+                        issues.append(
+                            QAIssue(
+                                rule_id=self.rule_id,
+                                severity="error",
+                                category=self.category,
+                                message=(
+                                    f"CaptionBlock '{block.block_id}' references"
+                                    f" missing parent '{block.parent_block_id}'"
+                                ),
+                                location=IssueLocation(
+                                    page_number=record.page_number,
+                                    block_id=block.block_id,
+                                ),
+                            )
                         )
-                    )
+                    elif block.parent_block_id not in entity_block_ids:
+                        issues.append(
+                            QAIssue(
+                                rule_id=self.rule_id,
+                                severity="error",
+                                category=self.category,
+                                message=(
+                                    f"CaptionBlock '{block.block_id}' parent"
+                                    f" '{block.parent_block_id}' is not a"
+                                    f" FigureBlock or TableBlock"
+                                ),
+                                location=IssueLocation(
+                                    page_number=record.page_number,
+                                    block_id=block.block_id,
+                                ),
+                            )
+                        )
         return issues
 
 

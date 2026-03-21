@@ -313,6 +313,31 @@ class TestFigureCaptionLinkageRule:
         rule = FigureCaptionLinkageRule()
         assert rule.check([page], None) == []
 
+    def test_caption_parent_wrong_block_type(self) -> None:
+        page = _page(
+            [
+                ParagraphBlock(block_id="p1", content=[TextRun(text="text")]),
+                CaptionBlock(block_id="cap1", parent_block_id="p1"),
+            ]
+        )
+        rule = FigureCaptionLinkageRule()
+        issues = rule.check([page], None)
+        assert len(issues) == 1
+        assert issues[0].severity == "error"
+        assert "not a FigureBlock or TableBlock" in issues[0].message
+
+    def test_caption_parent_table_ok(self) -> None:
+        page = _page(
+            [
+                TableBlock(
+                    block_id="t1", rows=1, cols=1, cells=[TableCell(row=0, col=0, text="A")]
+                ),
+                CaptionBlock(block_id="cap1", parent_block_id="t1"),
+            ]
+        )
+        rule = FigureCaptionLinkageRule()
+        assert rule.check([page], None) == []
+
     def test_skips_facsimile_pages(self) -> None:
         page = _page(
             [FigureBlock(block_id="fig1", caption_block_id="cap_gone")],
