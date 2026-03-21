@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 from aeon_reader_pipeline.config.patch_applier import apply_patches
-from aeon_reader_pipeline.models.extract_models import ExtractedPage, TextBlock
+from aeon_reader_pipeline.models.evidence_models import (
+    CanonicalPageEvidence,
+    NormalizedBBox,
+    RegionCandidate,
+)
+from aeon_reader_pipeline.models.extract_models import BBox, ExtractedPage, TextBlock
 from aeon_reader_pipeline.models.ir_models import (
     Block,
+    CalloutBlock,
     CaptionBlock,
     FigureBlock,
     HeadingBlock,
@@ -470,6 +476,138 @@ def _clean_block_content(blocks: list[Block]) -> list[Block]:
     return result
 
 
+def _normalize_extract_bbox(
+    bbox: BBox,
+    width_pt: float,
+    height_pt: float,
+) -> NormalizedBBox:
+    """Convert a PDF-point BBox to normalized [0,1] coordinates."""
+    return NormalizedBBox(
+        x0=max(0.0, min(1.0, bbox.x0 / width_pt)) if width_pt > 0 else 0.0,
+        y0=max(0.0, min(1.0, bbox.y0 / height_pt)) if height_pt > 0 else 0.0,
+        x1=max(0.0, min(1.0, bbox.x1 / width_pt)) if width_pt > 0 else 0.0,
+        y1=max(0.0, min(1.0, bbox.y1 / height_pt)) if height_pt > 0 else 0.0,
+    )
+
+
+def _bbox_center_within(inner: NormalizedBBox, outer: NormalizedBBox) -> bool:
+    """Check if the center of inner bbox falls within outer bbox."""
+    cx = (inner.x0 + inner.x1) / 2
+    cy = (inner.y0 + inner.y1) / 2
+    return outer.x0 <= cx <= outer.x1 and outer.y0 <= cy <= outer.y1
+
+
+def _assign_blocks_to_callouts(
+    page: ExtractedPage,
+    callout_regions: list[RegionCandidate],
+) -> tuple[dict[str, list[int]], set[int]]:
+    """Map callout regions to text block indices by spatial containment.
+
+    Returns (callout_members, wrapped_indices) where callout_members
+    maps region_id → list of block indices, and wrapped_indices is the
+    union of all matched block indices.
+    """
+    block_norm_bboxes: dict[int, NormalizedBBox] = {}
+    for tb in page.text_blocks:
+        block_norm_bboxes[tb.block_index] = _normalize_extract_bbox(
+            tb.bbox, page.width_pt, page.height_pt
+        )
+
+    callout_members: dict[str, list[int]] = {}
+    wrapped_indices: set[int] = set()
+    for region in callout_regions:
+        members = [
+            idx
+            for idx, norm_bbox in block_norm_bboxes.items()
+            if _bbox_center_within(norm_bbox, region.bbox)
+        ]
+        if members:
+            callout_members[region.region_id] = members
+            wrapped_indices.update(members)
+    return callout_members, wrapped_indices
+
+
+def _build_callout_block(
+    member_indices: list[int],
+    blocks_by_source: dict[int, list[Block]],
+    doc_id: str,
+    page_number: int,
+) -> CalloutBlock | None:
+    """Collect content from member blocks into a single CalloutBlock."""
+    callout_content: list[InlineNode] = []
+    for midx in sorted(member_indices):
+        for member_block in blocks_by_source.get(midx, []):
+            if hasattr(member_block, "content"):
+                callout_content.extend(member_block.content)
+    if not callout_content:
+        return None
+    bid = block_id(doc_id, page_number, min(member_indices), "callout")
+    return CalloutBlock(
+        block_id=bid,
+        callout_type="note",
+        content=callout_content,
+        source_block_index=min(member_indices),
+    )
+
+
+def _wrap_callout_blocks(
+    blocks: list[Block],
+    page: ExtractedPage,
+    callout_regions: list[RegionCandidate],
+    doc_id: str,
+) -> list[Block]:
+    """Wrap blocks that fall within callout regions into CalloutBlocks.
+
+    Uses spatial overlap between ExtractedPage text block bboxes and
+    callout region bboxes to identify which blocks belong to a callout.
+    Matched blocks are collected into a single CalloutBlock per region;
+    unmatched blocks pass through unchanged.
+    """
+    if not callout_regions:
+        return blocks
+
+    callout_members, wrapped_indices = _assign_blocks_to_callouts(page, callout_regions)
+    if not wrapped_indices:
+        return blocks
+
+    # Build index of source_block_index → classified blocks
+    blocks_by_source: dict[int, list[Block]] = {}
+    for block in blocks:
+        src_idx = getattr(block, "source_block_index", None)
+        if src_idx is not None:
+            blocks_by_source.setdefault(src_idx, []).append(block)
+
+    # Build result: insert CalloutBlocks at first occurrence, skip wrapped blocks
+    result: list[Block] = []
+    emitted_callouts: set[str] = set()
+    for block in blocks:
+        src_idx = getattr(block, "source_block_index", None)
+        if src_idx is not None and src_idx in wrapped_indices:
+            region_id = _find_callout_for_block(src_idx, callout_members, emitted_callouts)
+            if region_id is not None:
+                emitted_callouts.add(region_id)
+                cb = _build_callout_block(
+                    callout_members[region_id], blocks_by_source, doc_id, page.page_number
+                )
+                if cb is not None:
+                    result.append(cb)
+            continue
+        result.append(block)
+    return result
+
+
+def _find_callout_for_block(
+    src_idx: int,
+    callout_members: dict[str, list[int]],
+    emitted: set[str],
+) -> str | None:
+    """Find the callout region that contains this block index, if not yet emitted."""
+    for region_id, member_indices in callout_members.items():
+        if src_idx in member_indices and region_id not in emitted:
+            return region_id
+    return None
+
+
 def _build_anchors(blocks: list[Block]) -> list[PageAnchor]:
     """Extract anchors from heading blocks."""
     anchors: list[PageAnchor] = []
@@ -504,6 +642,28 @@ class NormalizeLayoutStage(BaseStage):
     version = STAGE_VERSION
     description = "Classify extracted blocks into headings, paragraphs, lists, figures, captions"
 
+    def _load_callout_regions(
+        self,
+        ctx: StageContext,
+        page_number: int,
+    ) -> list[RegionCandidate]:
+        """Load callout regions from canonical evidence (v3 only)."""
+        if ctx.pipeline_config.architecture != "v3":
+            return []
+        try:
+            canonical = ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "collect_evidence",
+                f"evidence/p{page_number:04d}_canonical.json",
+                CanonicalPageEvidence,
+            )
+        except FileNotFoundError:
+            return []
+        if not canonical.has_callouts or canonical.region_graph is None:
+            return []
+        return [r for r in canonical.region_graph.regions if r.kind_hint == "callout"]
+
     def execute(self, ctx: StageContext) -> None:
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
@@ -530,6 +690,12 @@ class NormalizeLayoutStage(BaseStage):
             blocks = _classify_blocks(extracted, ctx)
             blocks = _merge_small_paragraphs(blocks)
             blocks = _clean_block_content(blocks)
+
+            # Wrap blocks within callout regions (v3 evidence-driven)
+            callout_regions = self._load_callout_regions(ctx, page_num)
+            if callout_regions:
+                blocks = _wrap_callout_blocks(blocks, extracted, callout_regions, ctx.doc_id)
+
             anchors = _build_anchors(blocks)
             fp = page_fingerprint(_blocks_text_for_fingerprint(blocks), page_num)
 

@@ -749,3 +749,102 @@ class TestRegionIdsUnique:
         graph = segment_page_regions(page, _empty_furniture(), [])
         ids = [r.region_id for r in graph.regions]
         assert len(ids) == len(set(ids))
+
+
+class TestDegenerateTableReclassification:
+    def test_degenerate_table_with_high_text_overlap_becomes_callout(self) -> None:
+        """A 1x1 table covering mostly text is reclassified as a callout."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-a",
+                    bbox_norm=_bbox(0.12, 0.12, 0.88, 0.17),
+                    text="Text inside the box",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-b",
+                    bbox_norm=_bbox(0.12, 0.18, 0.88, 0.23),
+                    text="More text inside the box",
+                ),
+            ],
+            table_primitives=[
+                TablePrimitiveEvidence(
+                    primitive_id="tbl-box",
+                    bbox_norm=_bbox(0.10, 0.10, 0.90, 0.25),
+                    rows=1,
+                    cols=1,
+                    cell_count=1,
+                    extraction_strategy="default",
+                    area_fraction=0.12,
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        callouts = [r for r in graph.regions if r.kind_hint == "callout"]
+        tables = [r for r in graph.regions if r.kind_hint == "table"]
+        assert len(callouts) == 1, "Degenerate table should be reclassified as callout"
+        assert len(tables) == 0, "No table should remain"
+        assert callouts[0].features.get("original_kind") == "table"
+
+    def test_real_table_not_reclassified(self) -> None:
+        """A well-formed table with actual data is not reclassified."""
+        page = _make_page(
+            table_primitives=[
+                TablePrimitiveEvidence(
+                    primitive_id="tbl-real",
+                    bbox_norm=_bbox(0.10, 0.10, 0.90, 0.30),
+                    rows=3,
+                    cols=4,
+                    cell_count=12,
+                    extraction_strategy="lines_strict",
+                    area_fraction=0.16,
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        tables = [r for r in graph.regions if r.kind_hint == "table"]
+        callouts = [r for r in graph.regions if r.kind_hint == "callout"]
+        assert len(tables) == 1, "Well-formed table should remain a table"
+        assert len(callouts) == 0
+
+
+class TestCalloutFeatures:
+    def test_callout_region_has_container_features(self) -> None:
+        """Callout regions carry enclosed_text_count and area_fraction."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-inside-1",
+                    bbox_norm=_bbox(0.15, 0.25, 0.85, 0.28),
+                    text="Line one",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-inside-2",
+                    bbox_norm=_bbox(0.15, 0.29, 0.85, 0.32),
+                    text="Line two",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-inside-3",
+                    bbox_norm=_bbox(0.15, 0.33, 0.85, 0.36),
+                    text="Line three",
+                ),
+            ],
+            drawing_primitives=[
+                DrawingPrimitiveEvidence(
+                    primitive_id="drw-box",
+                    bbox_norm=_bbox(0.10, 0.20, 0.90, 0.40),
+                    path_count=4,
+                    is_decorative=False,
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        callouts = [r for r in graph.regions if r.kind_hint == "callout"]
+        assert len(callouts) == 1
+        features = callouts[0].features
+        assert features["enclosed_text_count"] == 3
+        assert features["area_fraction"] > 0
+        assert features["text_density"] > 0
+        # Multiple text blocks should boost confidence above base 0.6
+        assert callouts[0].confidence.value > 0.6
+        assert "multiple_text_blocks" in callouts[0].confidence.reasons
