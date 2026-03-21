@@ -364,7 +364,7 @@
       "type": "object"
     }
   },
-  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nRegion graph added by S5U-255 (Phase 2). Reading order added by\nS5U-256 (Phase 2). Asset occurrences and symbol candidates will\nbe added by Phase 3 issues (S5U-257 through S5U-262).\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
+  "description": "Canonical page evidence after topology and entity analysis.\n\nProduced after region segmentation, reading-order reconstruction,\nand asset/entity resolution. Contains page-level graph outputs\nthat semantic block building consumes.\n\nRegion graph added by S5U-255 (Phase 2). Reading order added by\nS5U-256 (Phase 2). Asset registry added by S5U-257 (Phase 3).\nSymbol candidates will be added by S5U-258 through S5U-262.\n\nArtifact path: ``{run}/evidence/p{page_number:04d}_canonical.json``",
   "properties": {
     "page_number": {
       "title": "Page Number",
@@ -447,6 +447,13 @@
         }
       ],
       "default": null
+    },
+    "asset_occurrence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Asset Occurrence Ids",
+      "type": "array"
     }
   },
   "required": [

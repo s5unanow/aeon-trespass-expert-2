@@ -56,6 +56,26 @@ def inline_id(block_id_str: str, inline_index: int) -> str:
     return f"{block_id_str}:i{inline_index:03d}"
 
 
+def asset_class_id(kind: str, index: int) -> str:
+    """Generate a document-wide asset class ID.
+
+    Format: ``asset:{kind}:{index:03d}``
+
+    Examples: ``asset:raster:000``, ``asset:vector_cluster:003``
+    """
+    return f"asset:{kind}:{index:03d}"
+
+
+def asset_occurrence_id(class_id: str, page_number: int, index: int) -> str:
+    """Generate an asset occurrence ID on a specific page.
+
+    Format: ``{class_id}:p{page_number:04d}:{index:02d}``
+
+    Examples: ``asset:raster:000:p0001:00``
+    """
+    return f"{class_id}:p{page_number:04d}:{index:02d}"
+
+
 def primitive_id(kind: str, page_number: int, index: int) -> str:
     """Generate a stable provenance ID for an extraction primitive.
 

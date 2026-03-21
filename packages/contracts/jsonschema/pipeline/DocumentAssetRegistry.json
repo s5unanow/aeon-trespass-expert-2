@@ -1,0 +1,189 @@
+{
+  "$defs": {
+    "AssetClass": {
+      "description": "A deduplicated asset identity across the document.\n\nRasters use ``content_hash`` for exact identity. Vector clusters\nuse ``path_count`` and position fingerprints for fuzzy identity.",
+      "properties": {
+        "asset_class_id": {
+          "title": "Asset Class Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "raster",
+            "vector_cluster",
+            "unresolved_visual"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "content_hash": {
+          "default": "",
+          "title": "Content Hash",
+          "type": "string"
+        },
+        "width_px": {
+          "default": 0,
+          "title": "Width Px",
+          "type": "integer"
+        },
+        "height_px": {
+          "default": 0,
+          "title": "Height Px",
+          "type": "integer"
+        },
+        "colorspace": {
+          "default": "",
+          "title": "Colorspace",
+          "type": "string"
+        },
+        "path_count": {
+          "default": 0,
+          "title": "Path Count",
+          "type": "integer"
+        },
+        "occurrence_count": {
+          "default": 0,
+          "title": "Occurrence Count",
+          "type": "integer"
+        },
+        "page_numbers": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Page Numbers",
+          "type": "array"
+        },
+        "occurrences": {
+          "items": {
+            "$ref": "#/$defs/AssetOccurrence"
+          },
+          "title": "Occurrences",
+          "type": "array"
+        },
+        "is_furniture": {
+          "default": false,
+          "title": "Is Furniture",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "asset_class_id",
+        "kind"
+      ],
+      "title": "AssetClass",
+      "type": "object"
+    },
+    "AssetOccurrence": {
+      "description": "A single occurrence of an asset on a specific page.",
+      "properties": {
+        "occurrence_id": {
+          "title": "Occurrence Id",
+          "type": "string"
+        },
+        "page_number": {
+          "title": "Page Number",
+          "type": "integer"
+        },
+        "bbox_norm": {
+          "$ref": "#/$defs/NormalizedBBox"
+        },
+        "source_primitive_id": {
+          "title": "Source Primitive Id",
+          "type": "string"
+        },
+        "context_hint": {
+          "default": "unknown",
+          "enum": [
+            "inline",
+            "figure",
+            "decoration",
+            "list_marker",
+            "legend",
+            "unknown"
+          ],
+          "title": "Context Hint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "occurrence_id",
+        "page_number",
+        "bbox_norm",
+        "source_primitive_id"
+      ],
+      "title": "AssetOccurrence",
+      "type": "object"
+    },
+    "NormalizedBBox": {
+      "description": "Bounding box in normalized page-space coordinates [0, 1].\n\nOrigin is top-left: (0, 0) = top-left corner, (1, 1) = bottom-right.",
+      "properties": {
+        "x0": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X0",
+          "type": "number"
+        },
+        "y0": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y0",
+          "type": "number"
+        },
+        "x1": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "X1",
+          "type": "number"
+        },
+        "y1": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Y1",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x0",
+        "y0",
+        "x1",
+        "y1"
+      ],
+      "title": "NormalizedBBox",
+      "type": "object"
+    }
+  },
+  "description": "Document-level asset registry.\n\nProduced by collect_evidence once per document. Tracks every\nvisual asset class and its occurrences across pages, enabling\ncross-page deduplication, symbol detection, and figure grouping.\n\nArtifact path: ``{run}/evidence/asset_registry.json``",
+  "properties": {
+    "doc_id": {
+      "title": "Doc Id",
+      "type": "string"
+    },
+    "total_pages_analyzed": {
+      "title": "Total Pages Analyzed",
+      "type": "integer"
+    },
+    "asset_classes": {
+      "items": {
+        "$ref": "#/$defs/AssetClass"
+      },
+      "title": "Asset Classes",
+      "type": "array"
+    },
+    "total_occurrences": {
+      "default": 0,
+      "title": "Total Occurrences",
+      "type": "integer"
+    },
+    "detection_version": {
+      "default": "0.1.0",
+      "title": "Detection Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "doc_id",
+    "total_pages_analyzed"
+  ],
+  "title": "DocumentAssetRegistry",
+  "type": "object"
+}

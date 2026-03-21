@@ -6,7 +6,10 @@ import pytest
 from pydantic import ValidationError
 
 from aeon_reader_pipeline.models.evidence_models import (
+    AssetClass,
+    AssetOccurrence,
     CanonicalPageEvidence,
+    DocumentAssetRegistry,
     DocumentFurnitureProfile,
     DrawingPrimitiveEvidence,
     FontSummary,
@@ -364,6 +367,154 @@ class TestTemplateAssignment:
         data = ta.model_dump(mode="json")
         restored = TemplateAssignment.model_validate(data)
         assert restored == ta
+
+
+class TestAssetOccurrence:
+    def test_basic(self) -> None:
+        occ = AssetOccurrence(
+            occurrence_id="asset:raster:000:p0001:00",
+            page_number=1,
+            bbox_norm=NormalizedBBox(x0=0.1, y0=0.1, x1=0.5, y1=0.5),
+            source_primitive_id="image:p0001:000",
+            context_hint="figure",
+        )
+        assert occ.occurrence_id == "asset:raster:000:p0001:00"
+        assert occ.context_hint == "figure"
+
+    def test_json_roundtrip(self) -> None:
+        occ = AssetOccurrence(
+            occurrence_id="asset:raster:001:p0002:01",
+            page_number=2,
+            bbox_norm=NormalizedBBox(x0=0.2, y0=0.3, x1=0.8, y1=0.7),
+            source_primitive_id="image:p0002:001",
+            context_hint="inline",
+        )
+        data = occ.model_dump(mode="json")
+        restored = AssetOccurrence.model_validate(data)
+        assert restored == occ
+
+
+class TestAssetClass:
+    def test_raster_class(self) -> None:
+        ac = AssetClass(
+            asset_class_id="asset:raster:000",
+            kind="raster",
+            content_hash="abc123",
+            width_px=640,
+            height_px=480,
+            colorspace="RGB",
+            occurrence_count=3,
+            page_numbers=[1, 2, 3],
+        )
+        assert ac.kind == "raster"
+        assert ac.occurrence_count == 3
+        assert not ac.is_furniture
+
+    def test_vector_cluster_class(self) -> None:
+        ac = AssetClass(
+            asset_class_id="asset:vector_cluster:000",
+            kind="vector_cluster",
+            path_count=5,
+            occurrence_count=2,
+            page_numbers=[1, 3],
+        )
+        assert ac.kind == "vector_cluster"
+        assert ac.path_count == 5
+
+    def test_json_roundtrip(self) -> None:
+        ac = AssetClass(
+            asset_class_id="asset:raster:002",
+            kind="raster",
+            content_hash="xyz789",
+            width_px=100,
+            height_px=100,
+            occurrence_count=1,
+            page_numbers=[5],
+            occurrences=[
+                AssetOccurrence(
+                    occurrence_id="asset:raster:002:p0005:00",
+                    page_number=5,
+                    bbox_norm=NormalizedBBox(x0=0.1, y0=0.1, x1=0.3, y1=0.3),
+                    source_primitive_id="image:p0005:000",
+                ),
+            ],
+            is_furniture=True,
+        )
+        data = ac.model_dump(mode="json")
+        restored = AssetClass.model_validate(data)
+        assert restored == ac
+
+
+class TestDocumentAssetRegistry:
+    def test_empty_registry(self) -> None:
+        registry = DocumentAssetRegistry(
+            doc_id="test",
+            total_pages_analyzed=0,
+        )
+        assert registry.asset_classes == []
+        assert registry.total_occurrences == 0
+        assert registry.detection_version == "0.1.0"
+
+    def test_json_roundtrip(self) -> None:
+        registry = DocumentAssetRegistry(
+            doc_id="test",
+            total_pages_analyzed=3,
+            asset_classes=[
+                AssetClass(
+                    asset_class_id="asset:raster:000",
+                    kind="raster",
+                    content_hash="abc",
+                    occurrence_count=2,
+                    page_numbers=[1, 2],
+                    occurrences=[
+                        AssetOccurrence(
+                            occurrence_id="asset:raster:000:p0001:00",
+                            page_number=1,
+                            bbox_norm=NormalizedBBox(x0=0.1, y0=0.1, x1=0.5, y1=0.5),
+                            source_primitive_id="image:p0001:000",
+                        ),
+                        AssetOccurrence(
+                            occurrence_id="asset:raster:000:p0002:00",
+                            page_number=2,
+                            bbox_norm=NormalizedBBox(x0=0.1, y0=0.1, x1=0.5, y1=0.5),
+                            source_primitive_id="image:p0002:000",
+                        ),
+                    ],
+                ),
+            ],
+            total_occurrences=2,
+        )
+        data = registry.model_dump(mode="json")
+        restored = DocumentAssetRegistry.model_validate(data)
+        assert restored == registry
+
+
+class TestCanonicalPageEvidenceAssetFields:
+    def test_asset_occurrence_ids_default_empty(self) -> None:
+        cpe = CanonicalPageEvidence(page_number=1, doc_id="test", width_pt=612.0, height_pt=792.0)
+        assert cpe.asset_occurrence_ids == []
+
+    def test_with_asset_occurrence_ids(self) -> None:
+        cpe = CanonicalPageEvidence(
+            page_number=1,
+            doc_id="test",
+            width_pt=612.0,
+            height_pt=792.0,
+            asset_occurrence_ids=["asset:raster:000:p0001:00", "asset:raster:001:p0001:00"],
+        )
+        assert len(cpe.asset_occurrence_ids) == 2
+
+    def test_json_roundtrip_with_assets(self) -> None:
+        cpe = CanonicalPageEvidence(
+            page_number=1,
+            doc_id="test",
+            width_pt=612.0,
+            height_pt=792.0,
+            asset_occurrence_ids=["asset:raster:000:p0001:00"],
+        )
+        data = cpe.model_dump(mode="json")
+        restored = CanonicalPageEvidence.model_validate(data)
+        assert restored.asset_occurrence_ids == ["asset:raster:000:p0001:00"]
 
 
 class TestDocumentFurnitureProfile:

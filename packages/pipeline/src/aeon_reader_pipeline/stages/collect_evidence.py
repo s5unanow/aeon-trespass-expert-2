@@ -11,6 +11,10 @@ from aeon_reader_pipeline.models.manifest_models import DocumentManifest
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
+from aeon_reader_pipeline.utils.asset_registry import (
+    build_asset_registry,
+    compute_page_assets,
+)
 from aeon_reader_pipeline.utils.furniture_detection import (
     compute_page_furniture,
     detect_furniture,
@@ -20,7 +24,7 @@ from aeon_reader_pipeline.utils.page_region_detection import segment_page_region
 from aeon_reader_pipeline.utils.reading_order import compute_reading_order
 
 STAGE_NAME = "collect_evidence"
-STAGE_VERSION = "0.4.0"
+STAGE_VERSION = "0.5.0"
 
 
 def _primitive_filename(page_number: int) -> str:
@@ -91,10 +95,26 @@ class CollectEvidenceStage(BaseStage):
             templates=len(furniture_profile.templates),
         )
 
+        # Cross-page asset registry (S5U-257)
+        asset_registry = build_asset_registry(all_primitives, furniture_profile)
+        ctx.artifact_store.write_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            STAGE_NAME,
+            "evidence/asset_registry.json",
+            asset_registry,
+        )
+        ctx.logger.info(
+            "asset_registry_built",
+            asset_classes=len(asset_registry.asset_classes),
+            total_occurrences=asset_registry.total_occurrences,
+        )
+
         # Build per-page lookups
         page_furn_ids, page_tpl_id, page_furn_frac = compute_page_furniture(
             furniture_profile,
         )
+        page_asset_occ_ids = compute_page_assets(asset_registry)
 
         # Pass 2: Build region graphs and canonical evidence
         for primitive in all_primitives:
@@ -148,6 +168,7 @@ class CollectEvidenceStage(BaseStage):
                 template_id=page_tpl_id.get(pn, ""),
                 region_graph=region_graph,
                 reading_order=reading_order,
+                asset_occurrence_ids=page_asset_occ_ids.get(pn, []),
             )
 
             ctx.artifact_store.write_artifact(

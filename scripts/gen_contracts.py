@@ -41,6 +41,7 @@ from aeon_reader_pipeline.models.enrich_models import (
 )
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
+    DocumentAssetRegistry,
     DocumentFurnitureProfile,
     PageRegionGraph,
     PrimitivePageEvidence,
@@ -151,6 +152,7 @@ _INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
     CanonicalPageEvidence,
     ResolvedPageIR,
     DocumentFurnitureProfile,
+    DocumentAssetRegistry,
     PageRegionGraph,
     # Semantic IR
     PageRecord,
