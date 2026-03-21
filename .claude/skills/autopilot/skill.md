@@ -32,19 +32,25 @@ git checkout main && git pull
 git checkout -b s5unanow/s5u-XXX-short-description
 ```
 
-### 4. Implement
-- Read the issue description carefully
+### 4. Verify Acceptance Criteria
+The issue **must** have an explicit "Acceptance Criteria" or "Definition of done" section before implementation begins.
+- If the issue lacks acceptance criteria, **stop and ask the user** to add them
+- Alternatively, draft acceptance criteria based on the issue description and present them for user approval before proceeding
+- Do not guess what "done" looks like — it must be written down
+
+### 5. Implement
+- Read the issue description and acceptance criteria carefully
 - Explore relevant code before making changes
 - Commit early and often with prefix `S5U-XXX: description`
 - Write tests for new/changed code (unless pure config/docs)
 
-### 5. Quality Gates
+### 6. Quality Gates
 ```bash
 make lint && make typecheck && make test
 ```
 Also run import linter: `uv run lint-imports`
 
-### 6. Verify (conditional)
+### 7. Verify (conditional)
 **If pipeline code changed** (`packages/pipeline/`):
 - Use the `run-pipeline` skill knowledge to verify pipeline still works
 - At minimum, run `uv run reader-pipeline run --doc aeon-trespass-core --mock` to check stages execute
@@ -56,13 +62,13 @@ Also run import linter: `uv run lint-imports`
 **If export format changed**:
 - Run both pipeline mock and reader build
 
-### 7. Code Review
+### 8. Code Review
 **MANDATORY.** Spawn a sub-agent with the review prompt:
 - Read `.claude/prompts/review.md` and use it as the Agent prompt
 - If verdict is **BLOCK**, fix all critical issues before proceeding
 - If only warnings, fix them. Nits are optional.
 
-### 8. Create PR
+### 9. Create PR
 ```bash
 git push -u origin HEAD
 ```
@@ -71,7 +77,7 @@ Create PR via `gh pr create` with:
 - Body: summary, Linear issue link (`Closes S5U-XXX`), test plan
 - Follow the PR template in `.github/pull_request_template.md`
 
-### 9. Babysit
+### 10. Babysit
 Follow the `babysit-prs` skill:
 - Watch CI with `gh pr checks <number> --watch`
 - Fix failures (max 3 attempts)
@@ -79,7 +85,7 @@ Follow the `babysit-prs` skill:
 - Sync local main
 - Update Linear to Done
 
-### 10. Next Issue
+### 11. Next Issue
 **Always ask the user before starting the next issue.** Report:
 - What was completed (issue ID, PR number)
 - What the next highest-priority issue would be
