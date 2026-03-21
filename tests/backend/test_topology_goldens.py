@@ -100,12 +100,12 @@ def _assert_topology_equal(
     assert actual["page_number"] == golden["page_number"], f"{label}: page_number mismatch"
 
     if "regions" in actual:
-        assert actual.get("width_pt") == pytest.approx(
-            golden.get("width_pt"), abs=0.1
-        ), f"{label}: width_pt mismatch"
-        assert actual.get("height_pt") == pytest.approx(
-            golden.get("height_pt"), abs=0.1
-        ), f"{label}: height_pt mismatch"
+        assert actual.get("width_pt") == pytest.approx(golden.get("width_pt"), abs=0.1), (
+            f"{label}: width_pt mismatch"
+        )
+        assert actual.get("height_pt") == pytest.approx(golden.get("height_pt"), abs=0.1), (
+            f"{label}: height_pt mismatch"
+        )
         assert actual.get("furniture_ids_excluded") == golden.get("furniture_ids_excluded"), (
             f"{label}: furniture_ids_excluded mismatch"
         )
