@@ -8,6 +8,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
+from aeon_reader_pipeline.config.hashing import hash_file
 from aeon_reader_pipeline.io.json_io import read_json, read_jsonl, write_json, write_jsonl
 from aeon_reader_pipeline.models.run_models import RunManifest, StageManifest
 
@@ -143,6 +144,22 @@ class ArtifactStore:
         stage_dir = self.stage_dir(run_id, doc_id, stage_name)
         path = stage_dir / filename
         return read_jsonl(path, model_cls)
+
+    def compute_output_hashes(self, run_id: str, doc_id: str, stage_name: str) -> dict[str, str]:
+        """Compute SHA-256 hashes of all output files in a stage directory.
+
+        Only hashes *immediate* children (no recursion into subdirs).
+        Excludes ``stage_manifest.json`` so the hash set reflects only the
+        artifacts produced by the stage, not the manifest written by the runner.
+        """
+        sdir = self.stage_dir(run_id, doc_id, stage_name)
+        if not sdir.exists():
+            return {}
+        hashes: dict[str, str] = {}
+        for path in sorted(sdir.iterdir()):
+            if path.is_file() and path.name != "stage_manifest.json":
+                hashes[path.name] = hash_file(str(path))
+        return hashes
 
     def cache_dir_for(self, stage_name: str, cache_key: str) -> Path:
         """Get cache directory for a specific stage and cache key."""
