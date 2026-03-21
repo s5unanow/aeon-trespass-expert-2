@@ -179,3 +179,16 @@ def detect_body_font_size(font_sizes: list[float]) -> float:
 
     counter = Counter(font_sizes)
     return counter.most_common(1)[0][0]
+
+
+# ---------------------------------------------------------------------------
+# Caption detection
+# ---------------------------------------------------------------------------
+
+CAPTION_PREFIXES: tuple[str, ...] = ("figure ", "fig. ", "fig ", "table ", "diagram ")
+"""Lowercase prefixes that identify a text block as a figure/table caption."""
+
+
+def is_caption_text(text: str) -> bool:
+    """Check if *text* looks like a figure/table caption by prefix."""
+    return text.lower().strip().startswith(CAPTION_PREFIXES)

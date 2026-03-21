@@ -180,8 +180,9 @@ def _make_text_runs(block: TextBlock) -> list[InlineNode]:
 
 def _is_caption_text(text: str) -> bool:
     """Heuristic: does this text look like a figure/table caption?"""
-    lower = text.lower().strip()
-    return lower.startswith(("figure ", "fig. ", "fig ", "table ", "diagram "))
+    from aeon_reader_pipeline.utils.normalization import is_caption_text
+
+    return is_caption_text(text)
 
 
 def _classify_blocks(  # noqa: C901, PLR0915

@@ -211,4 +211,4 @@ class TestResolveAssetsSymbols:
     def test_stage_registration(self) -> None:
         stage = ResolveAssetsSymbolsStage()
         assert stage.name == "resolve_assets_symbols"
-        assert stage.version == "1.1.0"
+        assert stage.version == "1.2.0"

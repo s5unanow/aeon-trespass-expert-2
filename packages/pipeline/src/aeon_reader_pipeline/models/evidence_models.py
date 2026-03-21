@@ -455,6 +455,41 @@ class DocumentSymbolSummary(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Figure-caption linking (S5U-260)
+# ---------------------------------------------------------------------------
+
+
+class FigureCaptionLink(BaseModel):
+    """A scored link between a figure region and its caption.
+
+    Produced by spatial scoring (v3) or sequential block-order matching (v2).
+    Persisted as part of ``PageFigureCaptionLinks`` for review/debugging.
+    """
+
+    figure_id: str
+    caption_id: str
+    figure_block_id: str = ""
+    caption_block_id: str = ""
+    score: float = Field(default=0.0, ge=0.0, le=1.0)
+    x_overlap_ratio: float = 0.0
+    y_distance_norm: float = 0.0
+    reasons: list[str] = Field(default_factory=list)
+
+
+class PageFigureCaptionLinks(BaseModel):
+    """Figure-caption linkage artifact for a single page.
+
+    Artifact path: ``{run}/resolve_assets_symbols/p{page_number:04d}_figure_caption_links.json``
+    """
+
+    page_number: int
+    doc_id: str
+    links: list[FigureCaptionLink] = Field(default_factory=list)
+    method: Literal["spatial", "sequential"] = "sequential"
+    detection_version: str = "0.1.0"
+
+
+# ---------------------------------------------------------------------------
 # Canonical evidence — topology and entity analysis results
 # ---------------------------------------------------------------------------
 
