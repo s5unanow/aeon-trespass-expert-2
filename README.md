@@ -56,7 +56,8 @@ All work is tracked in Linear (project ATE2, team S5U). See [docs/operator-guide
 | Lint | `ruff check` + `ruff format --check` | Pre-commit + CI |
 | Types (Python) | `mypy --strict` | Pre-commit + CI |
 | Types (TS) | `tsc` | Pre-commit + CI |
-| Tests | `pytest` + `vitest` | Pre-commit + CI |
+| Tests (Python) | `pytest` | Pre-commit + CI |
+| Tests (TS) | `vitest` | CI |
 | Import boundaries | `uv run lint-imports` | CI |
 | E2E | `pnpm --filter reader test:e2e` | CI |
 
