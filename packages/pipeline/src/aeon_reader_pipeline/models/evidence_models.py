@@ -69,6 +69,8 @@ class TablePrimitiveEvidence(BaseModel):
     rows: int = 0
     cols: int = 0
     cell_count: int = 0
+    extraction_strategy: str = "default"
+    area_fraction: float = 0.0
 
 
 class DrawingPrimitiveEvidence(BaseModel):

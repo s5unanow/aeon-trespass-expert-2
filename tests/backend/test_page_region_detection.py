@@ -378,6 +378,98 @@ class TestTableRegions:
         assert len(tables) == 1
         assert "tbl-0001" in tables[0].source_evidence_ids
 
+    def test_lines_strict_table_gets_high_confidence(self) -> None:
+        """Tables extracted with lines_strict receive higher confidence."""
+        page = _make_page(
+            table_primitives=[
+                TablePrimitiveEvidence(
+                    primitive_id="tbl-strict",
+                    bbox_norm=_bbox(0.1, 0.30, 0.9, 0.60),
+                    rows=3,
+                    cols=4,
+                    cell_count=12,
+                    extraction_strategy="lines_strict",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        tables = [r for r in graph.regions if r.kind_hint == "table"]
+        assert len(tables) == 1
+        assert tables[0].confidence.value >= 0.9
+        assert "strategy:lines_strict" in tables[0].confidence.reasons
+
+    def test_degenerate_1x1_table_gets_low_confidence(self) -> None:
+        """A 1x1 table (likely a decorative box) receives low confidence."""
+        page = _make_page(
+            table_primitives=[
+                TablePrimitiveEvidence(
+                    primitive_id="tbl-box",
+                    bbox_norm=_bbox(0.1, 0.30, 0.9, 0.60),
+                    rows=1,
+                    cols=1,
+                    cell_count=1,
+                    extraction_strategy="default",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        tables = [r for r in graph.regions if r.kind_hint == "table"]
+        assert len(tables) == 1
+        assert tables[0].confidence.value <= 0.5
+        assert "degenerate_1x1" in tables[0].confidence.reasons
+
+    def test_table_overlapping_text_gets_penalised(self) -> None:
+        """A table bbox covering most text in its band is likely decorative."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-0001",
+                    bbox_norm=_bbox(0.15, 0.32, 0.85, 0.38),
+                    text="Text inside the box",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-0002",
+                    bbox_norm=_bbox(0.15, 0.40, 0.85, 0.46),
+                    text="More text inside",
+                ),
+            ],
+            table_primitives=[
+                TablePrimitiveEvidence(
+                    primitive_id="tbl-border",
+                    bbox_norm=_bbox(0.1, 0.30, 0.9, 0.50),
+                    rows=2,
+                    cols=2,
+                    cell_count=4,
+                    extraction_strategy="default",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        tables = [r for r in graph.regions if r.kind_hint == "table"]
+        assert len(tables) == 1
+        assert "high_text_overlap" in tables[0].confidence.reasons
+
+    def test_table_region_carries_provenance_features(self) -> None:
+        """Table regions include extraction strategy and structure metadata."""
+        page = _make_page(
+            table_primitives=[
+                TablePrimitiveEvidence(
+                    primitive_id="tbl-0001",
+                    bbox_norm=_bbox(0.1, 0.30, 0.9, 0.60),
+                    rows=5,
+                    cols=3,
+                    cell_count=15,
+                    extraction_strategy="lines",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        tables = [r for r in graph.regions if r.kind_hint == "table"]
+        assert len(tables) == 1
+        assert tables[0].features["rows"] == 5
+        assert tables[0].features["cols"] == 3
+        assert tables[0].features["extraction_strategy"] == "lines"
+
 
 class TestFurnitureImageExclusion:
     def test_furniture_image_produces_no_figure_region(self) -> None:

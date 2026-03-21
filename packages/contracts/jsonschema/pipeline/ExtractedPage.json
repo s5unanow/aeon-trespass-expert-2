@@ -191,6 +191,11 @@
           },
           "title": "Cells",
           "type": "array"
+        },
+        "extraction_strategy": {
+          "default": "default",
+          "title": "Extraction Strategy",
+          "type": "string"
         }
       },
       "required": [

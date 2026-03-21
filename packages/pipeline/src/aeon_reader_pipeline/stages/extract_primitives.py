@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pymupdf
 
@@ -218,26 +219,87 @@ def _extract_images(
     return images, failures
 
 
+_TABLE_STRATEGIES: list[str] = ["lines_strict", "lines", "text"]
+"""Ordered table-detection strategies — strictest first, broadest last."""
+
+
+def _try_find_tables(
+    page: pymupdf.Page,
+    strategy: str,
+) -> list[Any] | None:
+    """Attempt ``page.find_tables`` with a given strategy.
+
+    Returns the list of detected tables on success, or *None* if the
+    strategy is not supported by the installed PyMuPDF version.
+    """
+    try:
+        finder = page.find_tables(strategy=strategy)  # type: ignore[attr-defined]
+        return list(finder.tables)
+    except TypeError:
+        # PyMuPDF version does not support the strategy keyword
+        return None
+
+
 def _extract_tables(
     page: pymupdf.Page,
     *,
     ctx: StageContext,
     page_number: int,
 ) -> list[RawTableInfo]:
-    """Extract table structures from a page using PyMuPDF's table finder."""
-    tables: list[RawTableInfo] = []
-    try:
-        finder = page.find_tables()  # type: ignore[attr-defined]
-    except Exception as exc:
-        ctx.logger.warning(
-            "table_detection_failed",
-            page=page_number,
-            error=str(exc),
-            error_type=type(exc).__name__,
-        )
-        return tables
+    """Extract table structures from a page using PyMuPDF's table finder.
 
-    for tbl_idx, table in enumerate(finder.tables):
+    Tries strategies in deterministic order (``lines_strict`` → ``lines`` →
+    ``text``).  The first strategy that yields any tables wins; its name is
+    recorded on every :class:`RawTableInfo` for downstream provenance.
+    """
+    # Try each strategy in order; first one to produce results wins.
+    # ``strategies_supported`` tracks whether the strategy kwarg works at all.
+    raw_tables: list[Any] = []
+    chosen_strategy = "default"
+    strategies_supported = False
+
+    for strategy in _TABLE_STRATEGIES:
+        try:
+            result = _try_find_tables(page, strategy)
+        except Exception as exc:
+            ctx.logger.warning(
+                "table_detection_failed",
+                page=page_number,
+                strategy=strategy,
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            continue
+        if result is None:
+            # Strategy keyword not supported — fall through to default
+            break
+        strategies_supported = True
+        if result:
+            raw_tables = result
+            chosen_strategy = strategy
+            break
+
+    # Only fall back to plain find_tables() when the strategy keyword is
+    # unsupported.  If strategies ran but found nothing, that is a real
+    # "no tables" result — re-running without a keyword could reintroduce
+    # false positives that stricter strategies intentionally rejected.
+    if not raw_tables and not strategies_supported:
+        try:
+            finder: Any = page.find_tables()  # type: ignore[attr-defined]
+            raw_tables = list(finder.tables)
+            chosen_strategy = "default"
+        except Exception as exc:
+            ctx.logger.warning(
+                "table_detection_failed",
+                page=page_number,
+                strategy="default",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
+            return []
+
+    tables: list[RawTableInfo] = []
+    for tbl_idx, table in enumerate(raw_tables):
         try:
             bbox = BBox(x0=table.bbox[0], y0=table.bbox[1], x1=table.bbox[2], y1=table.bbox[3])
             extracted = table.extract()
@@ -260,6 +322,7 @@ def _extract_tables(
                     cols=col_count,
                     bbox=bbox,
                     cells=cells,
+                    extraction_strategy=chosen_strategy,
                 )
             )
         except Exception as exc:

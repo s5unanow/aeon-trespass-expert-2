@@ -60,6 +60,20 @@ class TestRawTableModels:
         page = ExtractedPage(page_number=1, width_pt=612, height_pt=792)
         assert page.tables == []
 
+    def test_raw_table_extraction_strategy_default(self) -> None:
+        table = RawTableInfo(table_index=0, rows=2, cols=2, bbox=BBox(x0=0, y0=0, x1=100, y1=50))
+        assert table.extraction_strategy == "default"
+
+    def test_raw_table_extraction_strategy_explicit(self) -> None:
+        table = RawTableInfo(
+            table_index=0,
+            rows=2,
+            cols=2,
+            bbox=BBox(x0=0, y0=0, x1=100, y1=50),
+            extraction_strategy="lines_strict",
+        )
+        assert table.extraction_strategy == "lines_strict"
+
 
 class TestIRTableModels:
     """Test IR-level table models."""
