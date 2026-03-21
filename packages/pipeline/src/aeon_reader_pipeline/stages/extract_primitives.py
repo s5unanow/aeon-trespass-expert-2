@@ -253,8 +253,10 @@ def _extract_tables(
     recorded on every :class:`RawTableInfo` for downstream provenance.
     """
     # Try each strategy in order; first one to produce results wins.
+    # ``strategies_supported`` tracks whether the strategy kwarg works at all.
     raw_tables: list[Any] = []
     chosen_strategy = "default"
+    strategies_supported = False
 
     for strategy in _TABLE_STRATEGIES:
         try:
@@ -271,16 +273,17 @@ def _extract_tables(
         if result is None:
             # Strategy keyword not supported — fall through to default
             break
+        strategies_supported = True
         if result:
             raw_tables = result
             chosen_strategy = strategy
             break
-    else:
-        # All strategies either returned empty or errored — already handled.
-        pass
 
-    # Fallback: plain find_tables() without strategy kwarg
-    if not raw_tables:
+    # Only fall back to plain find_tables() when the strategy keyword is
+    # unsupported.  If strategies ran but found nothing, that is a real
+    # "no tables" result — re-running without a keyword could reintroduce
+    # false positives that stricter strategies intentionally rejected.
+    if not raw_tables and not strategies_supported:
         try:
             finder: Any = page.find_tables()  # type: ignore[attr-defined]
             raw_tables = list(finder.tables)
