@@ -1,6 +1,6 @@
 ---
 name: health
-description: Add /health skill for Claude Code configuration audit
+description: Audit Claude Code configuration — hooks, rules, skills, memory, and toolchain
 user_invocable: true
 ---
 
