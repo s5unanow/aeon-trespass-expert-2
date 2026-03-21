@@ -108,43 +108,36 @@ def link_figures_captions_spatial(
 def link_figures_captions_sequential(
     record: PageRecord,
 ) -> PageFigureCaptionLinks:
-    """Link figures to captions using block-order proximity (v2 fallback).
+    """Link figures to captions using positional matching (v2 fallback).
 
-    Looks up to 2 blocks ahead of each figure for the nearest caption.
+    Collects all figures and captions in block order, then pairs them
+    positionally (1st figure → 1st caption, 2nd → 2nd, etc.). This
+    handles the figure-first ordering from normalize_layout where all
+    FigureBlocks precede caption text blocks.
+
     Returns links with confidence metadata.
-
-    Note: block ordering depends on how normalize_layout adds blocks
-    (images first, then text). This can misorder figures relative to
-    captions. Use ``link_figures_captions_spatial`` for reliable linking.
     """
-    links: list[FigureCaptionLink] = []
-    blocks = record.blocks
-    used_captions: set[str] = set()
+    figures = [(i, b) for i, b in enumerate(record.blocks) if isinstance(b, FigureBlock)]
+    captions = [(i, b) for i, b in enumerate(record.blocks) if isinstance(b, CaptionBlock)]
 
-    for i, block in enumerate(blocks):
-        if not isinstance(block, FigureBlock):
-            continue
-        for j in range(i + 1, min(i + 3, len(blocks))):
-            candidate = blocks[j]
-            if isinstance(candidate, CaptionBlock) and candidate.block_id not in used_captions:
-                block_distance = j - i
-                score = max(0.5, 1.0 - block_distance * 0.2)
-                links.append(
-                    FigureCaptionLink(
-                        figure_id=block.block_id,
-                        caption_id=candidate.block_id,
-                        figure_block_id=block.block_id,
-                        caption_block_id=candidate.block_id,
-                        score=score,
-                        y_distance_norm=block_distance / max(len(blocks), 1),
-                        reasons=[
-                            "sequential_proximity",
-                            f"block_distance={block_distance}",
-                        ],
-                    )
-                )
-                used_captions.add(candidate.block_id)
-                break
+    links: list[FigureCaptionLink] = []
+    for (fig_idx, fig), (cap_idx, cap) in zip(figures, captions, strict=False):
+        block_distance = abs(cap_idx - fig_idx)
+        score = max(0.3, 1.0 - block_distance * 0.1)
+        links.append(
+            FigureCaptionLink(
+                figure_id=fig.block_id,
+                caption_id=cap.block_id,
+                figure_block_id=fig.block_id,
+                caption_block_id=cap.block_id,
+                score=score,
+                y_distance_norm=block_distance / max(len(record.blocks), 1),
+                reasons=[
+                    "sequential_positional",
+                    f"block_distance={block_distance}",
+                ],
+            )
+        )
 
     return PageFigureCaptionLinks(
         page_number=record.page_number,
