@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 from aeon_reader_pipeline.models.enrich_models import NavigationTree
+from aeon_reader_pipeline.models.evidence_models import CanonicalPageEvidence
 from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
 from aeon_reader_pipeline.qa import QualityGateError
 from aeon_reader_pipeline.qa.engine import QAEngine
 from aeon_reader_pipeline.qa.rules.confidence_rules import LowConfidencePageRule
+from aeon_reader_pipeline.qa.rules.entity_rules import (
+    CalloutStructureRule,
+    FigureCaptionLinkageRule,
+    TableStructureRule,
+)
+from aeon_reader_pipeline.qa.rules.extraction_rules import (
+    ReadingOrderValidityRule,
+    RegionGraphValidityRule,
+)
+from aeon_reader_pipeline.qa.rules.symbol_rules import SymbolAnchorValidityRule
 from aeon_reader_pipeline.qa.rules.translation_rules import (
     EmptyTranslationRule,
     MissingTranslationRule,
@@ -17,16 +28,60 @@ from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
 
 STAGE_NAME = "evaluate_qa"
-STAGE_VERSION = "1.0.0"
+STAGE_VERSION = "1.1.0"
 
 
-def _build_default_engine() -> QAEngine:
-    """Create engine with default rule set."""
+def _build_default_engine(
+    *,
+    evidence: dict[int, CanonicalPageEvidence] | None = None,
+) -> QAEngine:
+    """Create engine with default rule set.
+
+    When *evidence* is provided (Architecture 3 runs), extraction-level
+    rules are registered alongside the standard translation/entity rules.
+    """
     engine = QAEngine()
+
+    # Translation rules (always)
     engine.register(MissingTranslationRule())
     engine.register(EmptyTranslationRule())
+
+    # Confidence rules (always)
     engine.register(LowConfidencePageRule())
+
+    # Entity / symbol structural rules (always)
+    engine.register(SymbolAnchorValidityRule())
+    engine.register(FigureCaptionLinkageRule())
+    engine.register(TableStructureRule())
+    engine.register(CalloutStructureRule())
+
+    # Extraction rules (v3 only — need evidence artifacts)
+    if evidence is not None:
+        engine.register(RegionGraphValidityRule(evidence))
+        engine.register(ReadingOrderValidityRule(evidence))
+
     return engine
+
+
+def _load_evidence(
+    ctx: StageContext,
+    page_nums: list[int],
+) -> dict[int, CanonicalPageEvidence]:
+    """Load canonical page evidence from collect_evidence stage."""
+    evidence: dict[int, CanonicalPageEvidence] = {}
+    for page_num in page_nums:
+        try:
+            ev = ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "collect_evidence",
+                f"evidence/p{page_num:04d}_canonical.json",
+                CanonicalPageEvidence,
+            )
+            evidence[page_num] = ev
+        except FileNotFoundError:
+            ctx.logger.debug("evidence_not_found", page=page_num)
+    return evidence
 
 
 @register_stage
@@ -76,8 +131,14 @@ class EvaluateQAStage(BaseStage):
         except FileNotFoundError:
             ctx.logger.warning("navigation_not_found")
 
+        # Load evidence for v3 extraction rules
+        evidence: dict[int, CanonicalPageEvidence] | None = None
+        if ctx.pipeline_config.architecture == "v3":
+            evidence = _load_evidence(ctx, page_nums)
+            ctx.logger.info("evidence_loaded", pages_with_evidence=len(evidence))
+
         # Run QA engine
-        engine = _build_default_engine()
+        engine = _build_default_engine(evidence=evidence)
         issues = engine.evaluate(pages, nav)
 
         # Write issues

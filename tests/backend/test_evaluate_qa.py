@@ -19,8 +19,18 @@ from aeon_reader_pipeline.models.config_models import (
     RuleProfile,
     SymbolPack,
 )
+from aeon_reader_pipeline.models.evidence_models import (
+    CanonicalPageEvidence,
+    NormalizedBBox,
+    PageReadingOrder,
+    PageRegionGraph,
+    ReadingOrderEntry,
+    RegionCandidate,
+    RegionEdge,
+)
 from aeon_reader_pipeline.models.qa_models import QASummary
 from aeon_reader_pipeline.models.run_models import PipelineConfig
+from aeon_reader_pipeline.qa import QualityGateError
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stages.enrich_content import EnrichContentStage
 from aeon_reader_pipeline.stages.evaluate_qa import EvaluateQAStage
@@ -152,7 +162,114 @@ class TestEvaluateQAStage:
         assert summary.accepted is True
         assert summary.errors == 0
 
+    def test_v3_loads_evidence_and_runs_extraction_rules(self, tmp_path: Path) -> None:
+        """V3 architecture loads evidence and registers extraction rules."""
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        # Run pipeline as v2, then switch to v3 for QA only
+        _run_through_enrich(ctx)
+        ctx.pipeline_config = PipelineConfig(run_id="run-001", architecture="v3")
+
+        # Write valid canonical evidence for page 1
+        bbox = NormalizedBBox(x0=0.0, y0=0.0, x1=1.0, y1=1.0)
+        region_graph = PageRegionGraph(
+            page_number=1,
+            doc_id="test-doc",
+            width_pt=612,
+            height_pt=792,
+            regions=[RegionCandidate(region_id="r1", kind_hint="main_flow", bbox=bbox)],
+            edges=[],
+        )
+        reading_order = PageReadingOrder(
+            page_number=1,
+            doc_id="test-doc",
+            entries=[
+                ReadingOrderEntry(sequence_index=0, region_id="r1", kind_hint="main_flow"),
+            ],
+            total_regions=1,
+        )
+        canonical = CanonicalPageEvidence(
+            page_number=1,
+            doc_id="test-doc",
+            width_pt=612,
+            height_pt=792,
+            region_graph=region_graph,
+            reading_order=reading_order,
+        )
+        ctx.artifact_store.write_artifact(
+            "run-001",
+            "test-doc",
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            canonical,
+        )
+
+        EvaluateQAStage().execute(ctx)
+        summary = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "evaluate_qa",
+            "summary.json",
+            QASummary,
+        )
+        assert summary.accepted is True
+        assert summary.errors == 0
+
+    def test_v3_rejects_bad_evidence(self, tmp_path: Path) -> None:
+        """V3 with invalid evidence produces extraction errors and rejects."""
+        pdf = tmp_path / "source.pdf"
+        _create_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf)
+        _run_through_enrich(ctx)
+        ctx.pipeline_config = PipelineConfig(run_id="run-001", architecture="v3")
+
+        # Write bad evidence: duplicate region + self-referential edge
+        bbox = NormalizedBBox(x0=0.0, y0=0.0, x1=1.0, y1=1.0)
+        bad_graph = PageRegionGraph(
+            page_number=1,
+            doc_id="test-doc",
+            width_pt=612,
+            height_pt=792,
+            regions=[
+                RegionCandidate(region_id="r1", kind_hint="main_flow", bbox=bbox),
+                RegionCandidate(region_id="r1", kind_hint="column", bbox=bbox),
+            ],
+            edges=[
+                RegionEdge(
+                    edge_type="contains",
+                    src_region_id="r1",
+                    dst_region_id="r1",
+                ),
+            ],
+        )
+        canonical = CanonicalPageEvidence(
+            page_number=1,
+            doc_id="test-doc",
+            width_pt=612,
+            height_pt=792,
+            region_graph=bad_graph,
+            reading_order=PageReadingOrder(
+                page_number=1,
+                doc_id="test-doc",
+                entries=[],
+                total_regions=2,
+            ),
+        )
+        ctx.artifact_store.write_artifact(
+            "run-001",
+            "test-doc",
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            canonical,
+        )
+
+        import pytest
+
+        with pytest.raises(QualityGateError):
+            EvaluateQAStage().execute(ctx)
+
     def test_stage_registration(self) -> None:
         stage = EvaluateQAStage()
         assert stage.name == "evaluate_qa"
-        assert stage.version == "1.0.0"
+        assert stage.version == "1.1.0"
