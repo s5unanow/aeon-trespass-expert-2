@@ -22,8 +22,8 @@ from aeon_reader_pipeline.models.evidence_models import (
 )
 from aeon_reader_pipeline.utils.ids import symbol_candidate_id
 from aeon_reader_pipeline.utils.symbol_candidates import (
-    _infer_bbox_anchor,
-    _infer_text_anchor,
+    infer_bbox_anchor,
+    infer_text_anchor,
     build_symbol_summary,
     compute_page_symbol_ids,
     generate_page_candidates,
@@ -647,38 +647,38 @@ class TestJsonRoundTrip:
 
 class TestAnchorTypeInference:
     def test_text_inline_mid_sentence(self) -> None:
-        assert _infer_text_anchor("Take the SWORD from the chest", "SWORD") == "inline"
+        assert infer_text_anchor("Take the SWORD from the chest", "SWORD") == "inline"
 
     def test_text_line_prefix_at_start(self) -> None:
-        assert _infer_text_anchor("SWORD Attack +2", "SWORD") == "line_prefix"
+        assert infer_text_anchor("SWORD Attack +2", "SWORD") == "line_prefix"
 
     def test_text_line_prefix_with_leading_space(self) -> None:
-        assert _infer_text_anchor("  SWORD Attack +2", "SWORD") == "line_prefix"
+        assert infer_text_anchor("  SWORD Attack +2", "SWORD") == "line_prefix"
 
     def test_text_inline_when_no_space_after(self) -> None:
         # Token at start but immediately followed by non-whitespace
-        assert _infer_text_anchor("SWORDsmith", "SWORD") == "inline"
+        assert infer_text_anchor("SWORDsmith", "SWORD") == "inline"
 
     def test_text_line_prefix_token_is_entire_text(self) -> None:
-        assert _infer_text_anchor("SWORD", "SWORD") == "line_prefix"
+        assert infer_text_anchor("SWORD", "SWORD") == "line_prefix"
 
     def test_bbox_inline_small(self) -> None:
         small = NormalizedBBox(x0=0.1, y0=0.1, x1=0.14, y1=0.14)
-        assert _infer_bbox_anchor(small) == "inline"
+        assert infer_bbox_anchor(small) == "inline"
 
     def test_bbox_block_attached_large(self) -> None:
         large = NormalizedBBox(x0=0.1, y0=0.1, x1=0.3, y1=0.3)
-        assert _infer_bbox_anchor(large) == "block_attached"
+        assert infer_bbox_anchor(large) == "block_attached"
 
     def test_bbox_inline_boundary(self) -> None:
         # Exactly at the 5% boundary — width=0.05, height=0.04 → still inline
         edge = NormalizedBBox(x0=0.0, y0=0.0, x1=0.049, y1=0.04)
-        assert _infer_bbox_anchor(edge) == "inline"
+        assert infer_bbox_anchor(edge) == "inline"
 
     def test_bbox_block_attached_one_axis_large(self) -> None:
         # Width > 5%, height < 5% → block_attached (either axis exceeds)
         wide = NormalizedBBox(x0=0.0, y0=0.0, x1=0.1, y1=0.03)
-        assert _infer_bbox_anchor(wide) == "block_attached"
+        assert infer_bbox_anchor(wide) == "block_attached"
 
     def test_text_token_gets_anchor_type(self) -> None:
         """Integration: text token at line start gets line_prefix."""

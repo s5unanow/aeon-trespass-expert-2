@@ -144,7 +144,7 @@ def compute_page_symbol_ids(
 # ---------------------------------------------------------------------------
 
 
-def _infer_bbox_anchor(bbox: NormalizedBBox) -> SymbolAnchorType:
+def infer_bbox_anchor(bbox: NormalizedBBox) -> SymbolAnchorType:
     """Infer anchor type from a symbol's bounding-box size.
 
     Small bboxes (< 5% page width and height) are classified as ``inline``.
@@ -158,7 +158,7 @@ def _infer_bbox_anchor(bbox: NormalizedBBox) -> SymbolAnchorType:
     return "block_attached"
 
 
-def _infer_text_anchor(text: str, token: str) -> SymbolAnchorType:
+def infer_text_anchor(text: str, token: str) -> SymbolAnchorType:
     """Infer anchor type from a text token's position within its text run.
 
     Returns ``line_prefix`` when the token appears at the start of the
@@ -195,7 +195,7 @@ def _detect_text_token_candidates(
     for tp in page.text_primitives:
         for token, sid in token_map.items():
             if token in tp.text:
-                anchor: SymbolAnchorType = _infer_text_anchor(tp.text, token)
+                anchor: SymbolAnchorType = infer_text_anchor(tp.text, token)
                 candidates.append(
                     SymbolCandidate(
                         candidate_id="",  # assigned later
@@ -236,7 +236,7 @@ def _detect_raster_hash_candidates(
     candidates: list[SymbolCandidate] = []
     for img in page.image_primitives:
         if img.content_hash in hash_map:
-            anchor = _infer_bbox_anchor(img.bbox_norm)
+            anchor = infer_bbox_anchor(img.bbox_norm)
             candidates.append(
                 SymbolCandidate(
                     candidate_id="",
@@ -275,7 +275,7 @@ def _detect_vector_signature_candidates(
             continue
         fp = drawing_fingerprint(drw)
         if fp in sig_map:
-            anchor = _infer_bbox_anchor(drw.bbox_norm)
+            anchor = infer_bbox_anchor(drw.bbox_norm)
             candidates.append(
                 SymbolCandidate(
                     candidate_id="",

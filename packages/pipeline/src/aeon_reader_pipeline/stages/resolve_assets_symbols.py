@@ -171,11 +171,11 @@ def _apply_evidence_candidates(
     new_blocks: list[Block] = []
     for block in record.blocks:
         if isinstance(block, FigureBlock) and block.asset_ref:
-            for prim_id, (sym_id, _conf, _anchor) in evidence_symbols.items():
+            for prim_id, (sym_id, _conf, anchor) in evidence_symbols.items():
                 if prim_id in (block.asset_ref, block.block_id):
-                    # Preserve existing alt_text, prepend symbol tag
+                    # Preserve existing alt_text, prepend symbol tag with anchor
                     existing_alt = block.alt_text or ""
-                    alt = f"[symbol:{sym_id}] {existing_alt}".strip()
+                    alt = f"[symbol:{sym_id}:{anchor}] {existing_alt}".strip()
                     block = block.model_copy(update={"alt_text": alt})
                     break
         new_blocks.append(block)
