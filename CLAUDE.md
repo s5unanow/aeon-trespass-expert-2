@@ -32,6 +32,7 @@ All work tracked in **Linear** (project **ATE2**, team **S5U**). No exceptions.
 - Quality gates run automatically before each commit via hook
 
 ### 4. Definition of done
+- [ ] Issue has explicit acceptance criteria (if missing, add them before starting)
 - [ ] Code changes directly address the Linear issue
 - [ ] New/changed code has tests (unless pure config/docs)
 - [ ] No `except Exception` without structured logging
