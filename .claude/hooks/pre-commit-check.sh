@@ -60,7 +60,7 @@ echo "🔍 Running pre-commit quality gates (python=$HAS_PYTHON, frontend=$HAS_F
 
 GATE=0
 TOTAL=0
-if [ "$HAS_PYTHON" = true ]; then TOTAL=$((TOTAL + 3)); fi   # ruff check, ruff format, pytest
+if [ "$HAS_PYTHON" = true ]; then TOTAL=$((TOTAL + 4)); fi   # ruff check, ruff format, mypy, pytest
 if [ "$HAS_FRONTEND" = true ]; then TOTAL=$((TOTAL + 2)); fi # pnpm lint, tsc
 
 # ── Python gates ──
@@ -78,6 +78,14 @@ if [ "$HAS_PYTHON" = true ]; then
   if ! uv run ruff format --check packages/pipeline/src/ tests/ 2>&1; then
     echo ""
     echo "❌ BLOCKED: ruff format failed. Run 'ruff format' to fix."
+    exit 1
+  fi
+
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] mypy --strict..."
+  if ! uv run mypy --strict packages/pipeline/src/ 2>&1; then
+    echo ""
+    echo "❌ BLOCKED: mypy failed. Fix type errors before committing."
     exit 1
   fi
 fi
