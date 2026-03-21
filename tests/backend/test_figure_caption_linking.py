@@ -18,7 +18,6 @@ from aeon_reader_pipeline.models.ir_models import (
     CaptionBlock,
     FigureBlock,
     PageRecord,
-    ParagraphBlock,
     TextRun,
 )
 from aeon_reader_pipeline.utils.figure_caption_linking import (
@@ -268,7 +267,7 @@ class TestSpatialLinking:
 
 class TestSequentialLinking:
     def test_basic_sequential(self) -> None:
-        """Sequential linking finds caption within 2 blocks of figure."""
+        """Sequential linking pairs figures and captions positionally."""
         record = _make_record(
             [
                 FigureBlock(block_id="fig1", asset_ref="img.png"),
@@ -287,22 +286,44 @@ class TestSequentialLinking:
         assert result.links[0].caption_block_id == "cap1"
         assert result.links[0].score > 0.5
 
-    def test_caption_too_far_sequential(self) -> None:
-        """Caption more than 2 blocks after figure is not linked."""
+    def test_figure_first_ordering_links_correctly(self) -> None:
+        """Figures before captions (pipeline ordering) are matched positionally."""
         record = _make_record(
             [
-                FigureBlock(block_id="fig1", asset_ref="img.png"),
-                ParagraphBlock(block_id="p1", content=[TextRun(text="A")]),
-                ParagraphBlock(block_id="p2", content=[TextRun(text="B")]),
-                CaptionBlock(
-                    block_id="cap1",
-                    content=[TextRun(text="Figure 1: Test")],
-                ),
+                FigureBlock(block_id="fig1", asset_ref="a.png"),
+                FigureBlock(block_id="fig2", asset_ref="b.png"),
+                FigureBlock(block_id="fig3", asset_ref="c.png"),
+                CaptionBlock(block_id="cap1", content=[TextRun(text="Figure 1")]),
+                CaptionBlock(block_id="cap2", content=[TextRun(text="Figure 2")]),
+                CaptionBlock(block_id="cap3", content=[TextRun(text="Figure 3")]),
             ]
         )
 
         result = link_figures_captions_sequential(record)
-        assert len(result.links) == 0
+
+        assert len(result.links) == 3
+        assert result.links[0].figure_block_id == "fig1"
+        assert result.links[0].caption_block_id == "cap1"
+        assert result.links[1].figure_block_id == "fig2"
+        assert result.links[1].caption_block_id == "cap2"
+        assert result.links[2].figure_block_id == "fig3"
+        assert result.links[2].caption_block_id == "cap3"
+
+    def test_more_figures_than_captions(self) -> None:
+        """Extra figures without captions are unlinked (no crash)."""
+        record = _make_record(
+            [
+                FigureBlock(block_id="fig1", asset_ref="a.png"),
+                FigureBlock(block_id="fig2", asset_ref="b.png"),
+                CaptionBlock(block_id="cap1", content=[TextRun(text="Figure 1")]),
+            ]
+        )
+
+        result = link_figures_captions_sequential(record)
+
+        assert len(result.links) == 1
+        assert result.links[0].figure_block_id == "fig1"
+        assert result.links[0].caption_block_id == "cap1"
 
 
 # ---------------------------------------------------------------------------
