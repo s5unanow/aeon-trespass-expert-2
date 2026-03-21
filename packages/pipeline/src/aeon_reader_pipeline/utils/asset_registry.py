@@ -186,7 +186,7 @@ def _group_vectors(
         for drw in page.drawing_primitives:
             if drw.is_decorative:
                 continue
-            key = _drawing_fingerprint(drw)
+            key = drawing_fingerprint(drw)
             groups[key].append(
                 _DrawingOccurrence(
                     page_number=page.page_number,
@@ -325,7 +325,7 @@ def _guess_raster_context(
     return "unknown"
 
 
-def _drawing_fingerprint(drw: DrawingPrimitiveEvidence) -> str:
+def drawing_fingerprint(drw: DrawingPrimitiveEvidence) -> str:
     """Fingerprint a non-decorative drawing for cross-page grouping.
 
     Groups by path count and rounded bbox dimensions (not position,

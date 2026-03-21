@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from aeon_reader_pipeline.models.evidence_models import PageSymbolCandidates
 from aeon_reader_pipeline.models.ir_models import (
     Block,
     CaptionBlock,
@@ -19,7 +20,7 @@ from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
 
 STAGE_NAME = "resolve_assets_symbols"
-STAGE_VERSION = "1.0.0"
+STAGE_VERSION = "1.1.0"
 
 
 class ResolvedAsset(BaseModel):
@@ -127,6 +128,49 @@ def _build_symbol_token_map(ctx: StageContext) -> dict[str, str]:
     return token_map
 
 
+def _apply_evidence_candidates(
+    record: PageRecord,
+    page_cands: PageSymbolCandidates,
+    min_confidence: float,
+) -> PageRecord:
+    """Insert SymbolRef nodes for pre-classified evidence candidates.
+
+    Only applies candidates that are classified and above the confidence
+    threshold. Text-token candidates are skipped here since the legacy
+    text-splitting path already handles them. Raster/vector candidates
+    annotate matching figure blocks with symbol metadata.
+    """
+    if not page_cands.candidates:
+        return record
+
+    # Collect classified non-text-token symbols above threshold
+    evidence_symbols: dict[str, str] = {}
+    for cand in page_cands.candidates:
+        if (
+            cand.is_classified
+            and cand.confidence >= min_confidence
+            and cand.evidence_source != "text_token"
+            and cand.symbol_id
+            and cand.source_primitive_id
+        ):
+            evidence_symbols[cand.source_primitive_id] = cand.symbol_id
+
+    if not evidence_symbols:
+        return record
+
+    new_blocks: list[Block] = []
+    for block in record.blocks:
+        if isinstance(block, FigureBlock) and block.asset_ref:
+            # Check if this figure's asset matches a classified symbol
+            for prim_id, sym_id in evidence_symbols.items():
+                if prim_id in (block.asset_ref, block.block_id):
+                    block = block.model_copy(update={"alt_text": f"[symbol:{sym_id}]"})
+                    break
+        new_blocks.append(block)
+
+    return record.model_copy(update={"blocks": new_blocks})
+
+
 @register_stage
 class ResolveAssetsSymbolsStage(BaseStage):
     """Resolve asset references and map inline symbols."""
@@ -149,7 +193,9 @@ class ResolveAssetsSymbolsStage(BaseStage):
         page_nums = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
         ctx.logger.info("resolving_assets_symbols", page_count=len(page_nums))
 
+        is_v3 = ctx.pipeline_config.architecture == "v3"
         symbol_tokens = _build_symbol_token_map(ctx)
+        min_confidence = ctx.rule_profile.symbol_detection.min_confidence
         all_assets: list[ResolvedAsset] = []
 
         for page_num in page_nums:
@@ -183,6 +229,17 @@ class ResolveAssetsSymbolsStage(BaseStage):
 
             # Resolve symbol tokens in text
             record = _resolve_symbols_in_page(record, symbol_tokens)
+
+            # v3: also consume pre-classified evidence candidates
+            if is_v3:
+                page_cands = ctx.artifact_store.read_artifact(
+                    ctx.run_id,
+                    ctx.doc_id,
+                    "collect_evidence",
+                    f"evidence/p{page_num:04d}_symbol_candidates.json",
+                    PageSymbolCandidates,
+                )
+                record = _apply_evidence_candidates(record, page_cands, min_confidence)
 
             # Collect asset records from figures
             for block in record.blocks:

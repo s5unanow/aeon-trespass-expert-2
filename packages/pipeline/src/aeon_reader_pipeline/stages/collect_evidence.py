@@ -5,6 +5,7 @@ from __future__ import annotations
 from aeon_reader_pipeline.config.hashing import hash_model
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
+    PageSymbolCandidates,
     PrimitivePageEvidence,
 )
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
@@ -22,6 +23,11 @@ from aeon_reader_pipeline.utils.furniture_detection import (
 from aeon_reader_pipeline.utils.page_filter import pages_to_process
 from aeon_reader_pipeline.utils.page_region_detection import segment_page_regions
 from aeon_reader_pipeline.utils.reading_order import compute_reading_order
+from aeon_reader_pipeline.utils.symbol_candidates import (
+    build_symbol_summary,
+    compute_page_symbol_ids,
+    generate_page_candidates,
+)
 
 STAGE_NAME = "collect_evidence"
 STAGE_VERSION = "0.5.0"
@@ -41,6 +47,10 @@ def _regions_filename(page_number: int) -> str:
 
 def _reading_order_filename(page_number: int) -> str:
     return f"evidence/p{page_number:04d}_reading_order.json"
+
+
+def _symbol_candidates_filename(page_number: int) -> str:
+    return f"evidence/p{page_number:04d}_symbol_candidates.json"
 
 
 @register_stage
@@ -110,11 +120,40 @@ class CollectEvidenceStage(BaseStage):
             total_occurrences=asset_registry.total_occurrences,
         )
 
+        # Symbol candidate detection (S5U-258)
+        all_page_candidates: list[PageSymbolCandidates] = []
+        for prim in all_primitives:
+            page_cands = generate_page_candidates(prim, asset_registry, ctx.symbol_pack)
+            all_page_candidates.append(page_cands)
+            ctx.artifact_store.write_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                STAGE_NAME,
+                _symbol_candidates_filename(prim.page_number),
+                page_cands,
+            )
+
+        symbol_summary = build_symbol_summary(all_page_candidates, ctx.doc_id)
+        ctx.artifact_store.write_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            STAGE_NAME,
+            "evidence/symbol_summary.json",
+            symbol_summary,
+        )
+        ctx.logger.info(
+            "symbol_candidates_detected",
+            total=symbol_summary.total_candidates,
+            classified=symbol_summary.classified_count,
+            unclassified=symbol_summary.unclassified_count,
+        )
+
         # Build per-page lookups
         page_furn_ids, page_tpl_id, page_furn_frac = compute_page_furniture(
             furniture_profile,
         )
         page_asset_occ_ids = compute_page_assets(asset_registry)
+        page_sym_ids = compute_page_symbol_ids(all_page_candidates)
 
         # Pass 2: Build region graphs and canonical evidence
         for primitive in all_primitives:
@@ -169,6 +208,7 @@ class CollectEvidenceStage(BaseStage):
                 region_graph=region_graph,
                 reading_order=reading_order,
                 asset_occurrence_ids=page_asset_occ_ids.get(pn, []),
+                symbol_candidate_ids=page_sym_ids.get(pn, []),
             )
 
             ctx.artifact_store.write_artifact(

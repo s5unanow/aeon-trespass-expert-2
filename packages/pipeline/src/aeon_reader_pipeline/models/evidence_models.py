@@ -370,6 +370,80 @@ class DocumentAssetRegistry(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Symbol candidates (S5U-258)
+# ---------------------------------------------------------------------------
+
+SymbolEvidenceSource = Literal[
+    "text_token",
+    "raster_hash",
+    "vector_signature",
+    "text_dingbat",
+]
+
+
+class SymbolCandidate(BaseModel):
+    """A single symbol candidate detected from evidence.
+
+    Classified candidates have a non-empty ``symbol_id``. Unclassified
+    candidates (e.g. dingbats not in the symbol pack) are preserved for
+    review by downstream QA rules.
+
+    Each candidate records its evidence source and the metadata required
+    to trace the detection back to a specific primitive or asset class.
+    """
+
+    candidate_id: str
+    page_number: int
+    evidence_source: SymbolEvidenceSource
+    bbox_norm: NormalizedBBox
+    source_primitive_id: str = ""
+    source_asset_class_id: str = ""
+
+    # Classification result
+    symbol_id: str = ""
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    is_classified: bool = False
+
+    # Evidence metadata (populated per source type)
+    matched_token: str = ""
+    matched_hash: str = ""
+    matched_signature: str = ""
+    codepoint: str = ""
+    codepoint_name: str = ""
+
+    is_decorative: bool = False
+
+
+class PageSymbolCandidates(BaseModel):
+    """Symbol candidates for a single page.
+
+    Artifact path: ``{run}/evidence/p{page_number:04d}_symbol_candidates.json``
+    """
+
+    page_number: int
+    doc_id: str
+    candidates: list[SymbolCandidate] = Field(default_factory=list)
+    classified_count: int = 0
+    unclassified_count: int = 0
+    detection_version: str = "0.1.0"
+
+
+class DocumentSymbolSummary(BaseModel):
+    """Document-level symbol detection summary.
+
+    Artifact path: ``{run}/evidence/symbol_summary.json``
+    """
+
+    doc_id: str
+    total_pages_analyzed: int
+    total_candidates: int = 0
+    classified_count: int = 0
+    unclassified_count: int = 0
+    symbols_found: list[str] = Field(default_factory=list)
+    detection_version: str = "0.1.0"
+
+
+# ---------------------------------------------------------------------------
 # Canonical evidence — topology and entity analysis results
 # ---------------------------------------------------------------------------
 
@@ -406,6 +480,7 @@ class CanonicalPageEvidence(BaseModel):
     region_graph: PageRegionGraph | None = None
     reading_order: PageReadingOrder | None = None
     asset_occurrence_ids: list[str] = Field(default_factory=list)
+    symbol_candidate_ids: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
