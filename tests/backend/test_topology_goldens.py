@@ -64,7 +64,7 @@ def _serialize(model: PageRegionGraph | PageReadingOrder) -> dict[str, Any]:
 def _save_golden(fixture_name: str, artifact_name: str, data: dict[str, Any]) -> None:
     path = _golden_path(fixture_name, artifact_name)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS))
+    path.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS) + b"\n")
 
 
 def _load_golden(fixture_name: str, artifact_name: str) -> dict[str, Any] | None:
@@ -100,8 +100,20 @@ def _assert_topology_equal(
     assert actual["page_number"] == golden["page_number"], f"{label}: page_number mismatch"
 
     if "regions" in actual:
+        assert actual.get("width_pt") == pytest.approx(
+            golden.get("width_pt"), abs=0.1
+        ), f"{label}: width_pt mismatch"
+        assert actual.get("height_pt") == pytest.approx(
+            golden.get("height_pt"), abs=0.1
+        ), f"{label}: height_pt mismatch"
+        assert actual.get("furniture_ids_excluded") == golden.get("furniture_ids_excluded"), (
+            f"{label}: furniture_ids_excluded mismatch"
+        )
         _assert_regions_equal(actual, golden, label)
     if "entries" in actual:
+        assert actual.get("total_regions") == golden.get("total_regions"), (
+            f"{label}: total_regions mismatch"
+        )
         _assert_reading_order_equal(actual, golden, label)
 
 
@@ -124,6 +136,10 @@ def _assert_regions_equal(
         assert ar.get("parent_region_id") == gr.get("parent_region_id"), (
             f"{prefix}: parent_region_id mismatch"
         )
+        # Source evidence IDs (which primitives contribute to this region)
+        assert sorted(ar.get("source_evidence_ids", [])) == sorted(
+            gr.get("source_evidence_ids", [])
+        ), f"{prefix}: source_evidence_ids mismatch"
         # Bbox comparison with tolerance
         _assert_bbox_approx(ar["bbox"], gr["bbox"], prefix)
         # Confidence value
