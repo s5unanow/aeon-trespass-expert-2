@@ -11,10 +11,11 @@ from aeon_reader_pipeline.models.manifest_models import DocumentManifest
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import register_stage
+from aeon_reader_pipeline.stages.confidence import route_page, score_page_confidence
 from aeon_reader_pipeline.utils.page_filter import pages_to_process
 
 STAGE_NAME = "resolve_page_ir"
-STAGE_VERSION = "0.1.0"
+STAGE_VERSION = "0.2.0"
 
 
 def _canonical_filename(page_number: int) -> str:
@@ -59,15 +60,18 @@ class ResolvePageIRStage(BaseStage):
                 CanonicalPageEvidence,
             )
 
-            # Placeholders for confidence scoring (S5U-263)
+            confidence, reasons = score_page_confidence(canonical)
+            render_mode = route_page(confidence)
+
             resolved = ResolvedPageIR(
                 page_number=canonical.page_number,
                 doc_id=canonical.doc_id,
                 width_pt=canonical.width_pt,
                 height_pt=canonical.height_pt,
                 canonical_evidence_hash=hash_model(canonical),
-                render_mode="semantic",
-                page_confidence=1.0,
+                render_mode=render_mode,
+                page_confidence=confidence,
+                confidence_reasons=reasons,
             )
 
             ctx.artifact_store.write_artifact(
@@ -82,6 +86,7 @@ class ResolvePageIRStage(BaseStage):
                 "page_ir_resolved",
                 page=page_number,
                 render_mode=resolved.render_mode,
+                confidence=round(confidence, 3),
             )
 
         ctx.logger.info("resolve_page_ir_complete", pages=len(pages))

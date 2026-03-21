@@ -7,6 +7,7 @@ from aeon_reader_pipeline.models.ir_models import PageRecord
 from aeon_reader_pipeline.models.manifest_models import DocumentManifest
 from aeon_reader_pipeline.qa import QualityGateError
 from aeon_reader_pipeline.qa.engine import QAEngine
+from aeon_reader_pipeline.qa.rules.confidence_rules import LowConfidencePageRule
 from aeon_reader_pipeline.qa.rules.translation_rules import (
     EmptyTranslationRule,
     MissingTranslationRule,
@@ -24,6 +25,7 @@ def _build_default_engine() -> QAEngine:
     engine = QAEngine()
     engine.register(MissingTranslationRule())
     engine.register(EmptyTranslationRule())
+    engine.register(LowConfidencePageRule())
     return engine
 
 

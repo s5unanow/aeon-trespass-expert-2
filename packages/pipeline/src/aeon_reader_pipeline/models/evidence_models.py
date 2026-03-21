@@ -543,7 +543,9 @@ class ResolvedPageIR(BaseModel):
     the resolved render mode, confidence signals, and provenance
     references that determine how semantic blocks are built.
 
-    Confidence scoring details will be added by S5U-263.
+    Confidence is scored from canonical evidence signals (region quality,
+    reading-order quality, layout complexity, entity density) and mapped
+    to a render mode via deterministic thresholds (S5U-263).
 
     Artifact path: ``{run}/resolved/p{page_number:04d}.json``
     """

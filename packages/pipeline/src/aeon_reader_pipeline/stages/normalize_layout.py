@@ -7,6 +7,7 @@ from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
     NormalizedBBox,
     RegionCandidate,
+    ResolvedPageIR,
 )
 from aeon_reader_pipeline.models.extract_models import BBox, ExtractedPage, TextBlock
 from aeon_reader_pipeline.models.ir_models import (
@@ -642,6 +643,30 @@ class NormalizeLayoutStage(BaseStage):
     version = STAGE_VERSION
     description = "Classify extracted blocks into headings, paragraphs, lists, figures, captions"
 
+    def _load_resolved_ir(
+        self,
+        ctx: StageContext,
+        page_number: int,
+    ) -> ResolvedPageIR | None:
+        """Load resolved page IR for render-mode routing (v3 only)."""
+        if ctx.pipeline_config.architecture != "v3":
+            return None
+        try:
+            return ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "resolve_page_ir",
+                f"resolved/p{page_number:04d}.json",
+                ResolvedPageIR,
+            )
+        except (FileNotFoundError, ValueError):
+            ctx.logger.debug(
+                "resolved_ir_not_found",
+                page=page_number,
+                fallback="semantic",
+            )
+            return None
+
     def _load_callout_regions(
         self,
         ctx: StageContext,
@@ -699,11 +724,18 @@ class NormalizeLayoutStage(BaseStage):
             anchors = _build_anchors(blocks)
             fp = page_fingerprint(_blocks_text_for_fingerprint(blocks), page_num)
 
+            # Apply confidence-driven render mode from resolved IR (v3)
+            resolved = self._load_resolved_ir(ctx, page_num)
+            render_mode = resolved.render_mode if resolved else "semantic"
+            fallback_image_ref = resolved.fallback_image_ref if resolved else None
+
             record = PageRecord(
                 page_number=page_num,
                 doc_id=ctx.doc_id,
                 width_pt=extracted.width_pt,
                 height_pt=extracted.height_pt,
+                render_mode=render_mode,
+                fallback_image_ref=fallback_image_ref,
                 blocks=blocks,
                 anchors=anchors,
                 source_pdf_sha256=extracted.source_pdf_sha256,
