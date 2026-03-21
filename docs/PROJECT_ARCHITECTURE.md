@@ -1066,6 +1066,24 @@ Deterministic vs LLM
 
 deterministic
 
+Failure modes
+
+corrupt or missing extraction artifacts
+
+Retry/resume
+
+page-level rerun
+
+Caching
+
+page hash + extraction hash
+
+Metrics
+
+pages processed
+
+furniture elements subtracted
+
 Persist
 
 02a_evidence/pages/p0001.json
@@ -1103,6 +1121,28 @@ produce a semantic-ready intermediate representation for downstream block buildi
 Deterministic vs LLM
 
 deterministic
+
+Failure modes
+
+missing evidence artifacts from stage 2a
+
+inconsistent region/order graphs
+
+Retry/resume
+
+page-level rerun
+
+Caching
+
+evidence hash + topology hash
+
+Metrics
+
+pages resolved
+
+regions per page
+
+reading-order edges per page
 
 Persist
 
