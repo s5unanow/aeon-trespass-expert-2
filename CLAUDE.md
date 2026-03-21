@@ -39,6 +39,7 @@ All work tracked in **Linear** (project **ATE2**, team **S5U**). No exceptions.
 - [ ] `make lint && make typecheck && make test` passes
 
 ### 5. Sub-agent code review (MANDATORY before PR)
+- **You MUST spawn a review agent before creating a PR.** This is not optional.
 - Read `.claude/prompts/review.md` and use it as the Agent prompt
 - **BLOCK** → fix before proceeding; warnings → fix; nits → optional
 
@@ -61,5 +62,5 @@ All work tracked in **Linear** (project **ATE2**, team **S5U**). No exceptions.
 
 - `docs/PROJECT_ARCHITECTURE.md` — full system design
 - `docs/PROJECT_ARCHITECTURE_TO_AGENTIC.md` — locked implementation decisions
-- `docs/PIPELINE_STAGES.md` — 16-stage pipeline order
+- `docs/PIPELINE_STAGES.md` — 16-stage pipeline order (canonical registry: `stage_framework/registry.py`)
 - `Makefile` — all available commands (`make bootstrap`, `make lint`, etc.)
