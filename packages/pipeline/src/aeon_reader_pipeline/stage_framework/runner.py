@@ -20,7 +20,7 @@ from aeon_reader_pipeline.stage_framework.registry import (
 
 logger = structlog.get_logger()
 
-# Cache modes that bypass the skip/resume check
+# Cache modes that bypass the skip/resume check and always execute
 _FORCE_RERUN_MODES = frozenset({"force_refresh", "off", "write_only"})
 
 
@@ -59,12 +59,43 @@ class PipelineRunner:
         ctx.artifact_store.save_run_manifest(manifest)
         log.info("pipeline.complete")
 
-    def _should_skip(self, ctx: StageContext, stage: BaseStage) -> bool:
-        """Determine if a stage should be skipped, respecting cache_mode."""
+    def _should_skip(
+        self,
+        ctx: StageContext,
+        stage: BaseStage,
+        cache_key: str,
+    ) -> bool:
+        """Determine if a stage should be skipped, respecting cache_mode.
+
+        A stage is skipped only when *all* of the following hold:
+
+        1. ``cache_mode`` is not a force-rerun mode.
+        2. The stage itself reports it can be skipped (``should_skip()``).
+        3. If a persisted manifest exists, the stored cache key matches the
+           current ``cache_key`` (i.e. inputs have not changed).  When no
+           manifest is found or the manifest predates cache-key tracking,
+           the stage's own judgement is trusted.
+        """
         cache_mode = ctx.pipeline_config.cache_mode
         if cache_mode in _FORCE_RERUN_MODES:
             return False
-        return stage.should_skip(ctx)
+
+        if not stage.should_skip(ctx):
+            return False
+
+        # Stage says it can be skipped.  Validate the cache key when a
+        # manifest is available — if inputs changed the stage must rerun.
+        manifest = ctx.artifact_store.load_stage_manifest(ctx.run_id, ctx.doc_id, stage.name)
+        if manifest is None:
+            # No manifest to validate against — trust the stage.
+            return True
+
+        stored_key = str(manifest.metrics.get("cache_key", ""))
+        if not stored_key:
+            # Old manifest without cache key tracking — trust it.
+            return True
+
+        return stored_key == cache_key
 
     def _compute_input_hashes(self, ctx: StageContext) -> dict[str, str]:
         """Compute deterministic input hashes for a stage."""
@@ -88,16 +119,8 @@ class PipelineRunner:
         """Run a single stage with manifest tracking."""
         stage_log: Any = log.bind(stage=stage.name, stage_version=stage.version)
 
-        # Check skip (respects cache_mode)
-        if self._should_skip(ctx, stage):
-            stage_log.info("stage.skipped")
-            self._update_stage_status(ctx, stage.name, "skipped")
-            return
-
-        stage_log.info("stage.start")
-        self._update_stage_status(ctx, stage.name, "running")
-
-        # Compute input hashes and cache key
+        # Compute input hashes and cache key upfront so skip checks can
+        # validate that persisted outputs were produced from the same inputs.
         input_hashes = self._compute_input_hashes(ctx)
         cache_key = stage_cache_key(
             stage_name=stage.name,
@@ -105,7 +128,24 @@ class PipelineRunner:
             **input_hashes,
         )
 
-        # Create stage manifest
+        # --- skip / cache-hit path ---
+        if self._should_skip(ctx, stage, cache_key):
+            stage_log.info("stage.skipped", reason="cache_hit")
+            self._update_stage_status(ctx, stage.name, "skipped")
+            self._increment_cache_stat(ctx, "hits")
+            return
+
+        # --- read_only mode: no valid cache → skip without executing ---
+        if ctx.pipeline_config.cache_mode == "read_only":
+            stage_log.warning("stage.skipped", reason="read_only_no_cache")
+            self._update_stage_status(ctx, stage.name, "skipped")
+            return
+
+        # --- execute the stage ---
+        stage_log.info("stage.start")
+        self._update_stage_status(ctx, stage.name, "running")
+        self._increment_cache_stat(ctx, "misses")
+
         started_at = datetime.now(UTC)
         stage_manifest = StageManifest(
             stage_name=stage.name,
@@ -118,27 +158,38 @@ class PipelineRunner:
         try:
             stage.execute(ctx)
             completed_at = datetime.now(UTC)
-            collected = ctx.errors.collect()
-            stage_manifest.errors = collected
+            collected_errors = ctx.errors.collect()
+            collected_work_units = ctx.work_units.collect()
+
+            # Compute output hashes from the files the stage wrote
+            output_hashes = ctx.artifact_store.compute_output_hashes(
+                ctx.run_id, ctx.doc_id, stage.name
+            )
+
+            stage_manifest.errors = collected_errors
+            stage_manifest.work_units = collected_work_units
             stage_manifest.status = "completed"
             stage_manifest.completed_at = completed_at
+            stage_manifest.output_hashes = output_hashes
             stage_manifest.metrics = {
                 "duration_ms": int((completed_at - started_at).total_seconds() * 1000),
                 "cache_key": cache_key,
             }
             ctx.artifact_store.save_stage_manifest(ctx.run_id, ctx.doc_id, stage_manifest)
             self._update_stage_status(ctx, stage.name, "completed")
-            if collected:
+            if collected_errors:
                 stage_log.info(
                     "stage.complete",
-                    non_fatal_errors=len(collected),
+                    non_fatal_errors=len(collected_errors),
                 )
             else:
                 stage_log.info("stage.complete")
         except Exception as e:
             completed_at = datetime.now(UTC)
-            collected = ctx.errors.collect()
-            stage_manifest.errors = collected
+            collected_errors = ctx.errors.collect()
+            collected_work_units = ctx.work_units.collect()
+            stage_manifest.errors = collected_errors
+            stage_manifest.work_units = collected_work_units
             stage_manifest.status = "failed"
             stage_manifest.error = str(e)
             stage_manifest.completed_at = completed_at
@@ -163,4 +214,14 @@ class PipelineRunner:
             if s.stage_name == stage_name:
                 s.status = status  # type: ignore[assignment]
                 break
+        ctx.artifact_store.save_run_manifest(manifest)
+
+    def _increment_cache_stat(
+        self,
+        ctx: StageContext,
+        stat: str,
+    ) -> None:
+        """Increment a cache statistics counter on the run manifest."""
+        manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
+        manifest.cache_stats[stat] = manifest.cache_stats.get(stat, 0) + 1
         ctx.artifact_store.save_run_manifest(manifest)
