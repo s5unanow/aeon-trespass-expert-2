@@ -8,7 +8,7 @@ if ! echo "$CLAUDE_TOOL_INPUT" | grep -qE 'git checkout -b|git switch -c'; then
   exit 0
 fi
 
-cd /Users/s5una/projects/aeon-trespass-expert-2
+cd "$(git rev-parse --show-toplevel)"
 
 BRANCH=$(git branch --show-current)
 
