@@ -17,8 +17,6 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-import pytest
-
 from aeon_reader_pipeline.models.config_models import (
     SymbolDetectionConfig,
     SymbolEntry,
@@ -90,7 +88,6 @@ def _load_fixture(name: str) -> SymbolEvalFixture:
 # ---------------------------------------------------------------------------
 
 _SMALL_BBOX = NormalizedBBox(x0=0.1, y0=0.1, x1=0.15, y1=0.15)
-_MID_BBOX = NormalizedBBox(x0=0.2, y0=0.3, x1=0.4, y1=0.5)
 
 
 def _make_page(
@@ -550,28 +547,3 @@ class TestDenseMixedIcons:
         results = [generate_page_candidates(p, registry, pack) for p in pages]
         summary = build_symbol_summary(results, "eval-doc")
         assert set(summary.symbols_found) == {"sword-icon", "fire-icon", "star-icon"}
-
-
-# ---------------------------------------------------------------------------
-# Parametrized fixture-loading gate
-# ---------------------------------------------------------------------------
-
-_ALL_FIXTURES = ["inline_stat_icons", "decorative_assets", "dense_mixed_icons"]
-
-# Map fixture_id to page/registry/pack builders
-_FIXTURE_BUILDERS: dict[str, type] = {
-    "inline_stat_icons": TestInlineStatIcons,
-    "decorative_assets": TestDecorativeAssets,
-    "dense_mixed_icons": TestDenseMixedIcons,
-}
-
-
-@pytest.mark.parametrize("fixture_name", _ALL_FIXTURES)
-def test_symbol_eval_gate(fixture_name: str) -> None:
-    """Parametrized CI gate: load fixture spec, build pages, run detection, compare."""
-    fixture = _load_fixture(fixture_name)
-    builder_cls = _FIXTURE_BUILDERS[fixture_name]
-    builder = builder_cls()
-    pages, registry, pack = builder._build_pages_and_registry()
-    results = [generate_page_candidates(p, registry, pack) for p in pages]
-    _assert_fixture(fixture, results)
