@@ -47,7 +47,7 @@ from aeon_reader_pipeline.utils.normalization import (
 )
 
 STAGE_NAME = "normalize_layout"
-STAGE_VERSION = "1.0.0"
+STAGE_VERSION = "1.1.0"
 
 
 def _collect_font_sizes(page: ExtractedPage) -> list[float]:
@@ -658,7 +658,7 @@ class NormalizeLayoutStage(BaseStage):
                 f"evidence/p{page_number:04d}_canonical.json",
                 CanonicalPageEvidence,
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, ValueError):
             return []
         if not canonical.has_callouts or canonical.region_graph is None:
             return []

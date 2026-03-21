@@ -258,7 +258,7 @@ class TestNormalizeLayout:
     def test_stage_registration(self) -> None:
         stage = NormalizeLayoutStage()
         assert stage.name == "normalize_layout"
-        assert stage.version == "1.0.0"
+        assert stage.version == "1.1.0"
 
     def test_fixture_simple_text(self, tmp_path: Path) -> None:
         """Normalize the shared simple_text fixture PDF."""
