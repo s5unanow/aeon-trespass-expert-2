@@ -31,11 +31,13 @@ from aeon_reader_pipeline.models.extract_models import (
     TextSpan,
 )
 from aeon_reader_pipeline.models.ir_models import (
+    Block,
     CalloutBlock,
     CaptionBlock,
     FigureBlock,
     HeadingBlock,
     ListBlock,
+    ListItemBlock,
     PageRecord,
     ParagraphBlock,
     TextRun,
@@ -515,3 +517,42 @@ class TestCalloutBlockWrapping:
         assert isinstance(cb, CalloutBlock)
         assert cb.kind == "callout"
         assert cb.callout_type == "note"
+
+    def test_list_block_content_preserved_in_callout(self) -> None:
+        """ListBlock items inside a callout are preserved as inline content."""
+        text_blocks = [
+            _make_text_block(0, "- Item one", 100, 200, 500, 220),
+            _make_text_block(1, "- Item two", 100, 230, 500, 250),
+        ]
+        page = _make_extracted_page(text_blocks)
+        callout = _make_callout_region("reg:1:0", 0.10, 0.20, 0.90, 0.40)
+
+        blocks: list[Block] = [
+            ListBlock(
+                block_id="b:list:0",
+                items=[
+                    ListItemBlock(
+                        block_id="li:0",
+                        bullet="-",
+                        content=[TextRun(text="Item one")],
+                        source_block_index=0,
+                    ),
+                    ListItemBlock(
+                        block_id="li:1",
+                        bullet="-",
+                        content=[TextRun(text="Item two")],
+                        source_block_index=1,
+                    ),
+                ],
+                source_block_index=0,
+            ),
+        ]
+
+        result = _wrap_callout_blocks(blocks, page, [callout], "test-doc")
+
+        assert len(result) == 1
+        cb = result[0]
+        assert isinstance(cb, CalloutBlock)
+        text = " ".join(n.text for n in cb.content if isinstance(n, TextRun))
+        assert "Item one" in text
+        assert "Item two" in text
