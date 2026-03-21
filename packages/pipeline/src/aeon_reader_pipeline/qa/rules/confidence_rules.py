@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class LowConfidencePageRule:
     """Flag pages that were routed away from semantic rendering.
 
-    Reports hybrid pages as warnings and facsimile pages as errors
+    Reports hybrid pages as warnings and facsimile pages as info
     so operators can investigate extraction quality.
     """
 

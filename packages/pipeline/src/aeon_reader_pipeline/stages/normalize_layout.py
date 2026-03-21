@@ -660,6 +660,11 @@ class NormalizeLayoutStage(BaseStage):
                 ResolvedPageIR,
             )
         except (FileNotFoundError, ValueError):
+            ctx.logger.debug(
+                "resolved_ir_not_found",
+                page=page_number,
+                fallback="semantic",
+            )
             return None
 
     def _load_callout_regions(
