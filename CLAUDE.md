@@ -18,6 +18,8 @@ Pre-commit hook enforces 1-5 automatically (scoped by file type). Run gate 6 man
 
 All work tracked in **Linear** (project **ATE2**, team **S5U**). No exceptions.
 
+**One issue at a time.** Never work multiple issues or PRs in parallel. Finish the current issue (merge or abandon) before picking up the next. This avoids merge conflicts, keeps context focused, and prevents half-finished branches.
+
 ### 1. Pick up an issue
 - Use the specified issue, or **auto-pick** highest-priority unassigned from earliest milestone
 - Set to **In Progress**: `mcp__linear__save_issue(id="S5U-XXX", state="In Progress")`

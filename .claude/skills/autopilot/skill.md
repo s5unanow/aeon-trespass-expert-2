@@ -117,6 +117,7 @@ Append each completed issue to `.claude/skills/autopilot/data/autopilot.log`:
 
 ## Safety Rails
 
+- **One issue at a time.** Never work multiple issues or PRs in parallel. The current issue must be merged or abandoned before picking up the next (see CLAUDE.md).
 - **Never loop infinitely.** Always pause between issues.
 - **3-strike rule.** If any step fails 3 times, stop and report to the user.
 - **Pipeline costs money.** Only run real translation (`translate_units`) if explicitly needed. Default to `--mock`.
