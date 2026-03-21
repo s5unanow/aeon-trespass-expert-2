@@ -156,6 +156,18 @@ class TestContextHints:
         registry = build_asset_registry(pages)
         assert registry.asset_classes[0].occurrences[0].context_hint == "figure"
 
+    def test_midrange_image_classified_as_unknown(self) -> None:
+        """An image between 1% and 4% page area is hinted as unknown."""
+        # bbox area = 0.15 * 0.15 = 0.0225 → between 0.01 and 0.04
+        pages = [
+            _make_page(
+                1,
+                image_primitives=[_raster(1, 0, "mid", _bbox(0.1, 0.1, 0.25, 0.25))],
+            ),
+        ]
+        registry = build_asset_registry(pages)
+        assert registry.asset_classes[0].occurrences[0].context_hint == "unknown"
+
 
 class TestFurnitureMarking:
     def test_furniture_asset_marked(self) -> None:
