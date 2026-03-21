@@ -54,9 +54,7 @@ All work tracked in **Linear** (project **ATE2**, team **S5U**). No exceptions.
 ## Conventions
 
 - **Commit prefixes**: `S5U-XXX:` referencing the Linear issue
-- **Contract direction**: Python Pydantic → JSON Schema → TypeScript (never manual TS types)
-- **JSON IO**: orjson with atomic writes (temp + rename)
-- **Config hashing**: Deterministic SHA-256 for cache keys
+- **Path-scoped rules**: `.claude/rules/pipeline.md`, `reader.md`, `contracts.md` — loaded automatically by file path
 
 ## Reference (read on demand)
 
