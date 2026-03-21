@@ -379,6 +379,68 @@ class TestTableRegions:
         assert "tbl-0001" in tables[0].source_evidence_ids
 
 
+class TestFurnitureImageExclusion:
+    def test_furniture_image_produces_no_figure_region(self) -> None:
+        """An image at a furniture position is excluded from figure regions."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-0001",
+                    bbox_norm=_bbox(0.1, 0.15, 0.9, 0.25),
+                    text="Body text",
+                ),
+            ],
+            image_primitives=[
+                ImagePrimitiveEvidence(
+                    primitive_id="img-logo",
+                    bbox_norm=_bbox(0.0, 0.01, 0.15, 0.05),
+                    content_hash="sha256:logo",
+                ),
+            ],
+        )
+        profile = DocumentFurnitureProfile(
+            doc_id="test-doc",
+            total_pages_analyzed=5,
+            furniture_candidates=[
+                FurnitureCandidate(
+                    candidate_id="furn:ornament:000",
+                    furniture_type="ornament",
+                    bbox_norm=_bbox(0.0, 0.01, 0.15, 0.05),
+                    source_primitive_kind="image",
+                    page_numbers=[1, 2, 3, 4, 5],
+                    repetition_rate=1.0,
+                    content_hash="sha256:logo",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, profile, ["furn:ornament:000"])
+        figures = [r for r in graph.regions if r.kind_hint == "figure"]
+        assert len(figures) == 0
+
+    def test_content_image_still_creates_figure_region(self) -> None:
+        """A non-furniture image still produces a figure region."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-0001",
+                    bbox_norm=_bbox(0.1, 0.10, 0.9, 0.20),
+                    text="Body text",
+                ),
+            ],
+            image_primitives=[
+                ImagePrimitiveEvidence(
+                    primitive_id="img-content",
+                    bbox_norm=_bbox(0.2, 0.30, 0.8, 0.60),
+                    content_hash="sha256:content",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        figures = [r for r in graph.regions if r.kind_hint == "figure"]
+        assert len(figures) == 1
+        assert "img-content" in figures[0].source_evidence_ids
+
+
 class TestDecorativeDrawingExclusion:
     def test_decorative_drawings_excluded(self) -> None:
         """Decorative drawings are not included in region primitives."""

@@ -182,7 +182,8 @@ class CollectEvidenceStage(BaseStage):
                 reading_order,
             )
 
-            # Estimate column count as max columns in any single band
+            # Derive summary flags from post-furniture region graph
+            region_kinds = {r.kind_hint for r in region_graph.regions}
             estimated_columns = max(
                 (
                     int(r.features.get("column_count", 1))
@@ -199,9 +200,9 @@ class CollectEvidenceStage(BaseStage):
                 height_pt=primitive.height_pt,
                 primitive_evidence_hash=hash_model(primitive),
                 estimated_column_count=estimated_columns,
-                has_tables=len(primitive.table_primitives) > 0,
-                has_figures=len(primitive.image_primitives) > 0,
-                has_callouts=False,
+                has_tables="table" in region_kinds,
+                has_figures="figure" in region_kinds,
+                has_callouts="callout" in region_kinds,
                 furniture_fraction=page_furn_frac.get(pn, 0.0),
                 furniture_ids=furn_ids,
                 template_id=page_tpl_id.get(pn, ""),
