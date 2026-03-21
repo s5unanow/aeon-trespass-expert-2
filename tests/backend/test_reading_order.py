@@ -326,6 +326,55 @@ class TestFullWidthInterruption:
         for entry in order.entries:
             assert entry.flow_role == "main"
 
+    def test_leading_intro_not_interruption(self) -> None:
+        """single-column intro -> two-column body stays main."""
+        b0 = _band("b0", _bbox(0.05, 0.05, 0.95, 0.15), 0, 1)
+        b1 = _band("b1", _bbox(0.05, 0.20, 0.95, 0.80), 1, 2)
+        c0 = _column("c0", _bbox(0.05, 0.20, 0.45, 0.80), 1, 0, "b1")
+        c1 = _column("c1", _bbox(0.55, 0.20, 0.95, 0.80), 1, 1, "b1")
+        graph = _graph(
+            [b0, b1, c0, c1],
+            [_adjacent("b0", "b1"), _contains("b1", "c0"), _contains("b1", "c1")],
+        )
+        order = compute_reading_order(graph)
+        b0_entry = next(e for e in order.entries if e.region_id == "b0")
+        assert b0_entry.flow_role == "main"
+
+    def test_trailing_outro_not_interruption(self) -> None:
+        """two-column body -> single-column outro stays main."""
+        b0 = _band("b0", _bbox(0.05, 0.05, 0.95, 0.70), 0, 2)
+        c0 = _column("c0", _bbox(0.05, 0.05, 0.45, 0.70), 0, 0, "b0")
+        c1 = _column("c1", _bbox(0.55, 0.05, 0.95, 0.70), 0, 1, "b0")
+        b1 = _band("b1", _bbox(0.05, 0.75, 0.95, 0.90), 1, 1)
+        graph = _graph(
+            [b0, c0, c1, b1],
+            [_contains("b0", "c0"), _contains("b0", "c1"), _adjacent("b0", "b1")],
+        )
+        order = compute_reading_order(graph)
+        b1_entry = next(e for e in order.entries if e.region_id == "b1")
+        assert b1_entry.flow_role == "main"
+
+    def test_intro_and_outro_not_interruption(self) -> None:
+        """single-col intro -> two-col body -> single-col outro all stay main."""
+        b0 = _band("b0", _bbox(0.05, 0.05, 0.95, 0.15), 0, 1)
+        b1 = _band("b1", _bbox(0.05, 0.20, 0.95, 0.70), 1, 2)
+        c0 = _column("c0", _bbox(0.05, 0.20, 0.45, 0.70), 1, 0, "b1")
+        c1 = _column("c1", _bbox(0.55, 0.20, 0.95, 0.70), 1, 1, "b1")
+        b2 = _band("b2", _bbox(0.05, 0.75, 0.95, 0.90), 2, 1)
+        graph = _graph(
+            [b0, b1, c0, c1, b2],
+            [
+                _adjacent("b0", "b1"),
+                _contains("b1", "c0"),
+                _contains("b1", "c1"),
+                _adjacent("b1", "b2"),
+            ],
+        )
+        order = compute_reading_order(graph)
+        for entry in order.entries:
+            if entry.region_id in ("b0", "b2"):
+                assert entry.flow_role == "main", f"{entry.region_id} should be main"
+
 
 class TestFiguresAndTables:
     def test_figure_emitted_after_columns(self) -> None:

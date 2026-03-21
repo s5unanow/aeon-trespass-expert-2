@@ -32,6 +32,25 @@ _INLINE_KINDS: frozenset[RegionKind] = frozenset({"figure", "table", "caption"})
 
 
 # ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+
+def _is_interruption(band_pos: int, band_col_counts: list[int]) -> bool:
+    """True when a single-column band truly interrupts a multi-column flow.
+
+    A band is an interruption only if there is at least one multi-column
+    band both before and after it in the band sequence.  Leading/trailing
+    single-column bands are *not* interruptions.
+    """
+    if band_col_counts[band_pos] != 1 or len(band_col_counts) <= 1:
+        return False
+    has_multi_before = any(cc > 1 for cc in band_col_counts[:band_pos])
+    has_multi_after = any(cc > 1 for cc in band_col_counts[band_pos + 1 :])
+    return has_multi_before and has_multi_after
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -68,14 +87,14 @@ def compute_reading_order(graph: PageRegionGraph) -> PageReadingOrder:
             if child is not None:
                 children_of.setdefault(edge.src_region_id, []).append(child)
 
-    # Detect whether the page has any multi-column bands (for interruption tagging)
-    has_multi_column = any(int(b.features.get("column_count", 1)) > 1 for b in bands)
+    # Precompute column counts per band for interruption detection
+    band_col_counts = [int(b.features.get("column_count", 1)) for b in bands]
 
     entries: list[ReadingOrderEntry] = []
     assigned_ids: set[str] = set()
     seq = 0
 
-    for band in bands:
+    for band_pos, band in enumerate(bands):
         children = children_of.get(band.region_id, [])
         columns = sorted(
             (c for c in children if c.kind_hint == "column"),
@@ -90,14 +109,10 @@ def compute_reading_order(graph: PageRegionGraph) -> PageReadingOrder:
             key=lambda c: c.bbox.y0,
         )
 
-        band_column_count = int(band.features.get("column_count", 1))
-
-        # Determine flow role for this band's content
-        band_flow_role: FlowRole = "main"
-        if has_multi_column and band_column_count == 1 and len(bands) > 1:
-            # A single-column band in a page that also has multi-column bands
-            # is an interruption (e.g. full-width heading between column blocks)
-            band_flow_role = "interruption"
+        # Determine flow role: only true mid-sequence breaks are interruptions
+        band_flow_role: FlowRole = (
+            "interruption" if _is_interruption(band_pos, band_col_counts) else "main"
+        )
 
         if columns:
             # Multi-column: emit columns left-to-right
