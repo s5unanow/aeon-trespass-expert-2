@@ -145,6 +145,17 @@ class ArtifactStore:
         path = stage_dir / filename
         return read_jsonl(path, model_cls)
 
+    def write_debug_bytes(self, run_id: str, doc_id: str, sub_path: str, data: bytes) -> Path:
+        """Write raw bytes (e.g. PNG overlay) under the run directory.
+
+        ``sub_path`` is relative to the run/doc directory, e.g.
+        ``debug/overlays/p0001_primitives.png``.
+        """
+        out = self.run_dir(run_id, doc_id) / sub_path
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(data)
+        return out
+
     def compute_output_hashes(self, run_id: str, doc_id: str, stage_name: str) -> dict[str, str]:
         """Compute SHA-256 hashes of all output files in a stage directory.
 
