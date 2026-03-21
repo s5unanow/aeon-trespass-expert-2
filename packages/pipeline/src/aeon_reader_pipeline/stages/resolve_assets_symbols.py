@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from aeon_reader_pipeline.models.evidence_models import PageSymbolCandidates
+from aeon_reader_pipeline.models.evidence_models import (
+    PageSymbolCandidates,
+    SymbolAnchorType,
+)
 from aeon_reader_pipeline.models.ir_models import (
     Block,
     CaptionBlock,
@@ -145,7 +148,7 @@ def _apply_evidence_candidates(
 
     # Collect classified non-text-token symbols above threshold.
     # Use highest-confidence candidate when multiple match the same primitive.
-    evidence_symbols: dict[str, tuple[str, float]] = {}
+    evidence_symbols: dict[str, tuple[str, float, SymbolAnchorType]] = {}
     for cand in page_cands.candidates:
         if (
             cand.is_classified
@@ -159,6 +162,7 @@ def _apply_evidence_candidates(
                 evidence_symbols[cand.source_primitive_id] = (
                     cand.symbol_id,
                     cand.confidence,
+                    cand.anchor_type,
                 )
 
     if not evidence_symbols:
@@ -167,7 +171,7 @@ def _apply_evidence_candidates(
     new_blocks: list[Block] = []
     for block in record.blocks:
         if isinstance(block, FigureBlock) and block.asset_ref:
-            for prim_id, (sym_id, _conf) in evidence_symbols.items():
+            for prim_id, (sym_id, _conf, _anchor) in evidence_symbols.items():
                 if prim_id in (block.asset_ref, block.block_id):
                     # Preserve existing alt_text, prepend symbol tag
                     existing_alt = block.alt_text or ""

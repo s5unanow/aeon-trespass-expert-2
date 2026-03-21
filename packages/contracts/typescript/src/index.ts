@@ -24,6 +24,7 @@ export type {
   BundleSymbolRef,
   BundleTableBlock,
   BundleTextRun,
+  SymbolAnchorType,
   CatalogEntry,
   CatalogManifest,
   NavEntry,

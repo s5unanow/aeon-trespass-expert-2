@@ -171,6 +171,19 @@ _INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
     ReleaseManifest,
 ]
 
+# Enum type aliases (name -> enum values).
+# When a JSON Schema enum matches one of these, the generated TypeScript
+# uses the named alias instead of inlining the union literal.
+ENUM_ALIASES: dict[str, list[str]] = {
+    "SymbolAnchorType": [
+        "inline",
+        "line_prefix",
+        "cell_local",
+        "block_attached",
+        "region_decoration",
+    ],
+}
+
 # Union type aliases (name -> member model names)
 UNION_TYPES: dict[str, list[str]] = {
     "BundleInlineNode": ["BundleTextRun", "BundleSymbolRef", "BundleGlossaryRef"],
@@ -295,9 +308,13 @@ def _schema_type_to_ts(  # noqa: C901, PLR0912
         val = prop["const"]
         return f'"{val}"' if isinstance(val, str) else str(val)
 
-    # enum — string union
+    # enum — string union (check for named alias first)
     if "enum" in prop:
-        return " | ".join(f'"{v}"' for v in prop["enum"])
+        values = prop["enum"]
+        for alias_name, alias_values in ENUM_ALIASES.items():
+            if values == alias_values:
+                return alias_name
+        return " | ".join(f'"{v}"' for v in values)
 
     # anyOf — Union / Optional
     if "anyOf" in prop:
@@ -354,6 +371,25 @@ def _generate_union_type(name: str, members: list[str]) -> str:
     return f"export type {name} =\n  | {parts};"
 
 
+def _emit_needed_enum_aliases(
+    model_name: str,
+    emitted: set[str],
+    sections: list[str],
+) -> None:
+    """Emit enum type aliases used by a model's fields, if not already emitted."""
+    schema = _load_schema(model_name)
+    properties, _defs = _resolve_top_level(schema)
+    for _field_name, field_schema in properties.items():
+        if "enum" in field_schema:
+            values = field_schema["enum"]
+            for alias_name, alias_values in ENUM_ALIASES.items():
+                if values == alias_values and alias_name not in emitted:
+                    parts = "\n  | ".join(f'"{v}"' for v in alias_values)
+                    sections.append(f"export type {alias_name} =\n  | {parts};")
+                    sections.append("")
+                    emitted.add(alias_name)
+
+
 def generate_typescript() -> None:
     """Write TypeScript interfaces from checked-in JSON Schema files."""
     TS_GENERATED_DIR.mkdir(parents=True, exist_ok=True)
@@ -374,6 +410,9 @@ def generate_typescript() -> None:
         "",
     ]
 
+    # Track which enum aliases have been emitted
+    emitted_enums: set[str] = set()
+
     for header, model_names, union_names in _TS_SECTIONS:
         sections.append("// " + "-" * 75)
         sections.append(f"// {header}")
@@ -381,6 +420,8 @@ def generate_typescript() -> None:
         sections.append("")
 
         for model_name in model_names:
+            # Emit any enum aliases first used by this model
+            _emit_needed_enum_aliases(model_name, emitted_enums, sections)
             sections.append(_generate_interface_from_schema(model_name, known_models))
             sections.append("")
 

@@ -95,6 +95,7 @@ def _convert_inline(node: _InlineSource) -> BundleTextRun | BundleSymbolRef | Bu
             alt_text=node.alt_text or default_alt,
             label=label,
             svg_data=svg_data,
+            anchor_type=node.anchor_type,
         )
     return BundleGlossaryRef(
         term_id=node.term_id,

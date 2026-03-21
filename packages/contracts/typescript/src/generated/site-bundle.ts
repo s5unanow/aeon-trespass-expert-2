@@ -20,12 +20,20 @@ export interface BundleTextRun {
   monospace: boolean;
 }
 
+export type SymbolAnchorType =
+  | "inline"
+  | "line_prefix"
+  | "cell_local"
+  | "block_attached"
+  | "region_decoration";
+
 export interface BundleSymbolRef {
   kind: "symbol";
   symbol_id: string;
   alt_text: string;
   label: string;
   svg_data: string;
+  anchor_type: SymbolAnchorType;
 }
 
 export interface BundleGlossaryRef {

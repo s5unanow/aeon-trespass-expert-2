@@ -381,6 +381,14 @@ SymbolEvidenceSource = Literal[
     "text_dingbat",
 ]
 
+SymbolAnchorType = Literal[
+    "inline",
+    "line_prefix",
+    "cell_local",
+    "block_attached",
+    "region_decoration",
+]
+
 
 class SymbolCandidate(BaseModel):
     """A single symbol candidate detected from evidence.
@@ -413,6 +421,8 @@ class SymbolCandidate(BaseModel):
     codepoint_name: str = ""
 
     is_decorative: bool = False
+
+    anchor_type: SymbolAnchorType = "inline"
 
 
 class PageSymbolCandidates(BaseModel):
