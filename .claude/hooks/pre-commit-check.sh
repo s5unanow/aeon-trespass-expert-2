@@ -32,52 +32,92 @@ if echo "$CLAUDE_TOOL_INPUT" | grep -q -- '--amend'; then
   exit 0
 fi
 
-echo "🔍 Running pre-commit quality gates..."
+# ── Detect staged file types ──
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
 
-# Gate 1: ruff check
-echo "  [1/5] ruff check..."
-if ! uv run ruff check packages/pipeline/src/ tests/ 2>&1; then
-  echo ""
-  echo "❌ BLOCKED: ruff check failed. Fix lint errors before committing."
-  exit 1
+if [ -z "$STAGED_FILES" ]; then
+  echo "✅ No staged files — skipping quality gates."
+  exit 0
 fi
 
-# Gate 2: ruff format
-echo "  [2/5] ruff format --check..."
-if ! uv run ruff format --check packages/pipeline/src/ tests/ 2>&1; then
-  echo ""
-  echo "❌ BLOCKED: ruff format failed. Run 'ruff format' to fix."
-  exit 1
+HAS_PYTHON=false
+HAS_FRONTEND=false
+
+if echo "$STAGED_FILES" | grep -qE '\.py$'; then
+  HAS_PYTHON=true
 fi
 
-# Gate 3: pnpm lint (ESLint for reader)
-echo "  [3/5] pnpm lint..."
-if ! (cd apps/reader && pnpm lint 2>&1); then
-  echo ""
-  echo "❌ BLOCKED: ESLint failed. Fix frontend lint errors before committing."
-  exit 1
+if echo "$STAGED_FILES" | grep -qE '\.(ts|tsx|js|jsx|css|scss)$'; then
+  HAS_FRONTEND=true
 fi
 
-# Gate 4: typecheck (mypy + tsc)
-echo "  [4/5] typecheck..."
-if ! uv run mypy --strict packages/pipeline/src/ 2>&1; then
-  echo ""
-  echo "❌ BLOCKED: mypy failed. Fix type errors before committing."
-  exit 1
+if [ "$HAS_PYTHON" = false ] && [ "$HAS_FRONTEND" = false ]; then
+  echo "✅ No Python or frontend files staged — skipping quality gates."
+  exit 0
 fi
 
-if ! (cd apps/reader && pnpm tsc --noEmit 2>&1); then
-  echo ""
-  echo "❌ BLOCKED: tsc failed. Fix TypeScript errors before committing."
-  exit 1
+echo "🔍 Running pre-commit quality gates (python=$HAS_PYTHON, frontend=$HAS_FRONTEND)..."
+
+GATE=0
+TOTAL=0
+if [ "$HAS_PYTHON" = true ]; then TOTAL=$((TOTAL + 4)); fi   # ruff check, ruff format, mypy, pytest
+if [ "$HAS_FRONTEND" = true ]; then TOTAL=$((TOTAL + 2)); fi # pnpm lint, tsc
+
+# ── Python gates ──
+if [ "$HAS_PYTHON" = true ]; then
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] ruff check..."
+  if ! uv run ruff check packages/pipeline/src/ tests/ 2>&1; then
+    echo ""
+    echo "❌ BLOCKED: ruff check failed. Fix lint errors before committing."
+    exit 1
+  fi
+
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] ruff format --check..."
+  if ! uv run ruff format --check packages/pipeline/src/ tests/ 2>&1; then
+    echo ""
+    echo "❌ BLOCKED: ruff format failed. Run 'ruff format' to fix."
+    exit 1
+  fi
+
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] mypy --strict..."
+  if ! uv run mypy --strict packages/pipeline/src/ 2>&1; then
+    echo ""
+    echo "❌ BLOCKED: mypy failed. Fix type errors before committing."
+    exit 1
+  fi
 fi
 
-# Gate 5: pytest (fail-fast, skip slow integration tests)
-echo "  [5/5] pytest (fast)..."
-if ! uv run pytest tests/ -x -q --timeout=60 -m "not slow" 2>&1; then
-  echo ""
-  echo "❌ BLOCKED: Tests failed. Fix failing tests before committing."
-  exit 1
+# ── Frontend gates ──
+if [ "$HAS_FRONTEND" = true ]; then
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] pnpm lint..."
+  if ! (cd apps/reader && pnpm lint 2>&1); then
+    echo ""
+    echo "❌ BLOCKED: ESLint failed. Fix frontend lint errors before committing."
+    exit 1
+  fi
+
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] tsc --noEmit..."
+  if ! (cd apps/reader && pnpm tsc --noEmit 2>&1); then
+    echo ""
+    echo "❌ BLOCKED: tsc failed. Fix TypeScript errors before committing."
+    exit 1
+  fi
+fi
+
+# ── Python tests ──
+if [ "$HAS_PYTHON" = true ]; then
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] pytest (fast)..."
+  if ! uv run pytest tests/ -x -q --timeout=60 -m "not slow" 2>&1; then
+    echo ""
+    echo "❌ BLOCKED: Tests failed. Fix failing tests before committing."
+    exit 1
+  fi
 fi
 
 echo "✅ All quality gates passed."
