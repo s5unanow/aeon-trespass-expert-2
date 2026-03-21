@@ -6,6 +6,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Discriminator, Field, Tag
 
+from aeon_reader_pipeline.models.evidence_models import SymbolAnchorType
+
 # ---------------------------------------------------------------------------
 # Inline nodes — leaf-level content within a block
 # ---------------------------------------------------------------------------
@@ -30,6 +32,7 @@ class SymbolRef(BaseModel):
     kind: Literal["symbol"] = "symbol"
     symbol_id: str
     alt_text: str = ""
+    anchor_type: SymbolAnchorType = "inline"
 
 
 class GlossaryRef(BaseModel):

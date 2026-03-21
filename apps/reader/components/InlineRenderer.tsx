@@ -33,6 +33,7 @@ export function InlineRenderer({ node }: InlineRendererProps) {
           altText={node.alt_text}
           label={node.label}
           svgData={node.svg_data}
+          anchorType={node.anchor_type}
         />
       );
     case "glossary_ref":

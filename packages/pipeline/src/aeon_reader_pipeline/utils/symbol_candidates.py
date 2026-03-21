@@ -14,8 +14,10 @@ from aeon_reader_pipeline.models.config_models import SymbolPack
 from aeon_reader_pipeline.models.evidence_models import (
     DocumentAssetRegistry,
     DocumentSymbolSummary,
+    NormalizedBBox,
     PageSymbolCandidates,
     PrimitivePageEvidence,
+    SymbolAnchorType,
     SymbolCandidate,
 )
 from aeon_reader_pipeline.utils.asset_registry import drawing_fingerprint
@@ -138,6 +140,40 @@ def compute_page_symbol_ids(
 
 
 # ---------------------------------------------------------------------------
+# Anchor-type inference helpers
+# ---------------------------------------------------------------------------
+
+
+def infer_bbox_anchor(bbox: NormalizedBBox) -> SymbolAnchorType:
+    """Infer anchor type from a symbol's bounding-box size.
+
+    Small bboxes (< 5% page width and height) are classified as ``inline``.
+    Larger bboxes are ``block_attached`` since they likely represent a
+    standalone visual element rather than text-level decoration.
+    """
+    w = bbox.x1 - bbox.x0
+    h = bbox.y1 - bbox.y0
+    if w < 0.05 and h < 0.05:
+        return "inline"
+    return "block_attached"
+
+
+def infer_text_anchor(text: str, token: str) -> SymbolAnchorType:
+    """Infer anchor type from a text token's position within its text run.
+
+    Returns ``line_prefix`` when the token appears at the start of the
+    stripped text (the symbol leads a line). Otherwise ``inline``.
+    """
+    stripped = text.lstrip()
+    if stripped.startswith(token):
+        remaining = stripped[len(token) :]
+        # Only count as line_prefix when followed by whitespace or end
+        if not remaining or remaining[0] in (" ", "\t", "\n"):
+            return "line_prefix"
+    return "inline"
+
+
+# ---------------------------------------------------------------------------
 # Internal detectors
 # ---------------------------------------------------------------------------
 
@@ -159,6 +195,7 @@ def _detect_text_token_candidates(
     for tp in page.text_primitives:
         for token, sid in token_map.items():
             if token in tp.text:
+                anchor: SymbolAnchorType = infer_text_anchor(tp.text, token)
                 candidates.append(
                     SymbolCandidate(
                         candidate_id="",  # assigned later
@@ -170,6 +207,7 @@ def _detect_text_token_candidates(
                         confidence=_CONFIDENCE_TEXT_TOKEN,
                         is_classified=True,
                         matched_token=token,
+                        anchor_type=anchor,
                     )
                 )
     return candidates
@@ -198,6 +236,7 @@ def _detect_raster_hash_candidates(
     candidates: list[SymbolCandidate] = []
     for img in page.image_primitives:
         if img.content_hash in hash_map:
+            anchor = infer_bbox_anchor(img.bbox_norm)
             candidates.append(
                 SymbolCandidate(
                     candidate_id="",
@@ -210,6 +249,7 @@ def _detect_raster_hash_candidates(
                     confidence=_CONFIDENCE_RASTER_HASH,
                     is_classified=True,
                     matched_hash=img.content_hash,
+                    anchor_type=anchor,
                 )
             )
     return candidates
@@ -235,6 +275,7 @@ def _detect_vector_signature_candidates(
             continue
         fp = drawing_fingerprint(drw)
         if fp in sig_map:
+            anchor = infer_bbox_anchor(drw.bbox_norm)
             candidates.append(
                 SymbolCandidate(
                     candidate_id="",
@@ -246,6 +287,7 @@ def _detect_vector_signature_candidates(
                     confidence=_CONFIDENCE_VECTOR_SIG,
                     is_classified=True,
                     matched_signature=fp,
+                    anchor_type=anchor,
                 )
             )
     return candidates

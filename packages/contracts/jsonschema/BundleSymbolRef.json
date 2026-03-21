@@ -25,6 +25,18 @@
       "default": "",
       "title": "Svg Data",
       "type": "string"
+    },
+    "anchor_type": {
+      "default": "inline",
+      "enum": [
+        "inline",
+        "line_prefix",
+        "cell_local",
+        "block_attached",
+        "region_decoration"
+      ],
+      "title": "Anchor Type",
+      "type": "string"
     }
   },
   "required": [

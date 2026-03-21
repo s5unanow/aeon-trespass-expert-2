@@ -119,6 +119,7 @@ describe("InlineRenderer", () => {
         alt_text: "AP",
         label: "Action Point",
         svg_data: "",
+        anchor_type: "inline",
       };
       const { container } = render(<InlineRenderer node={node} />);
       const symbol = container.querySelector(".inline-symbol");
@@ -138,6 +139,7 @@ describe("InlineRenderer", () => {
         alt_text: "AP",
         label: "Action Point",
         svg_data: svgContent,
+        anchor_type: "inline",
       };
       const { container } = render(<InlineRenderer node={node} />);
       const symbol = container.querySelector(".inline-symbol--svg");
@@ -154,6 +156,7 @@ describe("InlineRenderer", () => {
         alt_text: "",
         label: "Action Point",
         svg_data: "",
+        anchor_type: "inline",
       };
       const { container } = render(<InlineRenderer node={node} />);
       const symbol = container.querySelector(".inline-symbol");
@@ -168,6 +171,7 @@ describe("InlineRenderer", () => {
         alt_text: "",
         label: "",
         svg_data: "",
+        anchor_type: "inline",
       };
       const { container } = render(<InlineRenderer node={node} />);
       const symbol = container.querySelector(".inline-symbol");
@@ -255,7 +259,7 @@ describe("InlineList", () => {
   it("does not insert space adjacent to symbol nodes (empty nodeText)", () => {
     const nodes: BundleInlineNode[] = [
       { kind: "text", text: "Cost:", ru_text: null, bold: false, italic: false, monospace: false },
-      { kind: "symbol", symbol_id: "ap", alt_text: "AP", label: "", svg_data: "" },
+      { kind: "symbol", symbol_id: "ap", alt_text: "AP", label: "", svg_data: "", anchor_type: "inline" },
     ];
     const { container } = render(<InlineList nodes={nodes} />);
     // Symbol nodeText returns "" so no spacer is inserted

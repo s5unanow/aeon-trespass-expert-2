@@ -10,6 +10,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Discriminator, Field, Tag
 
+from aeon_reader_pipeline.models.evidence_models import SymbolAnchorType
+
 # ---------------------------------------------------------------------------
 # Public inline nodes — mirrors ir_models but without internal metadata
 # ---------------------------------------------------------------------------
@@ -34,6 +36,7 @@ class BundleSymbolRef(BaseModel):
     alt_text: str = ""
     label: str = ""
     svg_data: str = ""
+    anchor_type: SymbolAnchorType = "inline"
 
 
 class BundleGlossaryRef(BaseModel):
