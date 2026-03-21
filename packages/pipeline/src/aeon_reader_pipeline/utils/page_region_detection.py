@@ -192,17 +192,19 @@ def segment_page_regions(
 class _PrimRef:
     """Lightweight reference to a primitive's ID, kind, and bbox."""
 
-    __slots__ = ("bbox", "kind", "primitive_id")
+    __slots__ = ("bbox", "features", "kind", "primitive_id")
 
     def __init__(
         self,
         primitive_id: str,
         bbox: NormalizedBBox,
         kind: str,
+        features: dict[str, float | int | str] | None = None,
     ) -> None:
         self.primitive_id = primitive_id
         self.bbox = bbox
         self.kind = kind
+        self.features: dict[str, float | int | str] = features or {}
 
 
 class _Band:
@@ -266,7 +268,20 @@ def _filter_non_furniture_primitives(
 
     for tbp in primitive.table_primitives:
         if not _overlaps_any_furniture(tbp.bbox_norm, furniture_bboxes):
-            refs.append(_PrimRef(tbp.primitive_id, tbp.bbox_norm, "table"))
+            refs.append(
+                _PrimRef(
+                    tbp.primitive_id,
+                    tbp.bbox_norm,
+                    "table",
+                    features={
+                        "rows": tbp.rows,
+                        "cols": tbp.cols,
+                        "cell_count": tbp.cell_count,
+                        "extraction_strategy": tbp.extraction_strategy,
+                        "area_fraction": tbp.area_fraction,
+                    },
+                )
+            )
 
     for dp in primitive.drawing_primitives:
         if not dp.is_decorative and not _overlaps_any_furniture(dp.bbox_norm, furniture_bboxes):
@@ -478,6 +493,61 @@ def _detect_figure_regions(
     return regions, counter
 
 
+def _score_table_confidence(
+    prim: _PrimRef,
+    band: _Band,
+) -> RegionConfidence:
+    """Compute region confidence for a table primitive using provenance metadata.
+
+    Factors:
+    - Extraction strategy: ``lines_strict`` tables are high confidence.
+    - Structure: single-cell tables are likely decorative boxes.
+    - Text overlap: a table bbox that contains many text primitives may be a
+      decorative border rather than a real data table.
+    """
+    reasons: list[str] = ["table_primitive"]
+    strategy = str(prim.features.get("extraction_strategy", "default"))
+    rows = int(prim.features.get("rows", 0))
+    cols = int(prim.features.get("cols", 0))
+    cell_count = int(prim.features.get("cell_count", 0))
+
+    # Base confidence from extraction strategy
+    if strategy == "lines_strict":
+        score = 0.9
+        reasons.append("strategy:lines_strict")
+    elif strategy == "lines":
+        score = 0.8
+        reasons.append("strategy:lines")
+    else:
+        score = 0.7
+        reasons.append(f"strategy:{strategy}")
+
+    # Penalise degenerate tables (likely decorative boxes)
+    if rows <= 1 and cols <= 1:
+        score -= 0.25
+        reasons.append("degenerate_1x1")
+    elif cell_count <= 2:
+        score -= 0.15
+        reasons.append("very_few_cells")
+
+    # Boost well-structured tables
+    if rows >= 2 and cols >= 2 and cell_count >= 4:
+        score += 0.05
+        reasons.append("multi_row_col")
+
+    # Check text-overlap: if more than half the band's text prims fall inside
+    # the table bbox, the "table" is probably a decorative border/box.
+    text_prims_in_band = [p for p in band.prims if p.kind == "text"]
+    if text_prims_in_band:
+        inside = sum(1 for tp in text_prims_in_band if _bbox_contains(prim.bbox, tp.bbox))
+        overlap_ratio = inside / len(text_prims_in_band)
+        if overlap_ratio > 0.5:
+            score -= 0.2
+            reasons.append("high_text_overlap")
+
+    return RegionConfidence(value=max(0.0, min(1.0, round(score, 2))), reasons=reasons)
+
+
 def _detect_table_regions(
     band: _Band,
     page_number: int,
@@ -485,10 +555,16 @@ def _detect_table_regions(
     parent_id: str,
     band_idx: int,
 ) -> tuple[list[RegionCandidate], int]:
-    """Detect table candidate regions from table primitives in the band."""
+    """Detect table candidate regions from table primitives in the band.
+
+    Uses extraction strategy, structural metadata, and region context
+    to assign confidence.  Degenerate tables (1x1 from decorative boxes)
+    receive low confidence so downstream stages can filter them.
+    """
     regions: list[RegionCandidate] = []
     for prim in band.prims:
         if prim.kind == "table":
+            confidence = _score_table_confidence(prim, band)
             region_id = f"reg:{page_number}:{counter}"
             counter += 1
             regions.append(
@@ -499,7 +575,14 @@ def _detect_table_regions(
                     parent_region_id=parent_id,
                     band_index=band_idx,
                     source_evidence_ids=[prim.primitive_id],
-                    confidence=RegionConfidence(value=0.8, reasons=["table_primitive"]),
+                    confidence=confidence,
+                    features={
+                        "rows": int(prim.features.get("rows", 0)),
+                        "cols": int(prim.features.get("cols", 0)),
+                        "extraction_strategy": str(
+                            prim.features.get("extraction_strategy", "default")
+                        ),
+                    },
                 )
             )
     return regions, counter

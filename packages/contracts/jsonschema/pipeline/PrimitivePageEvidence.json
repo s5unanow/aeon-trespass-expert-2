@@ -195,6 +195,16 @@
           "default": 0,
           "title": "Cell Count",
           "type": "integer"
+        },
+        "extraction_strategy": {
+          "default": "default",
+          "title": "Extraction Strategy",
+          "type": "string"
+        },
+        "area_fraction": {
+          "default": 0.0,
+          "title": "Area Fraction",
+          "type": "number"
         }
       },
       "required": [

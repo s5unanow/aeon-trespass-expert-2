@@ -117,6 +117,7 @@ def _convert_table(
 ) -> TablePrimitiveEvidence:
     """Convert a raw table to provenance-tagged evidence."""
     bbox_norm = normalize_bbox(tbl.bbox, width_pt, height_pt)
+    area = max(0.0, bbox_norm.x1 - bbox_norm.x0) * max(0.0, bbox_norm.y1 - bbox_norm.y0)
 
     return TablePrimitiveEvidence(
         primitive_id=primitive_id("table", page_number, tbl.table_index),
@@ -124,6 +125,8 @@ def _convert_table(
         rows=tbl.rows,
         cols=tbl.cols,
         cell_count=len(tbl.cells),
+        extraction_strategy=tbl.extraction_strategy,
+        area_fraction=round(area, 6),
     )
 
 

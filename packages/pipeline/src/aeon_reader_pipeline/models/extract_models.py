@@ -100,6 +100,7 @@ class RawTableInfo(BaseModel):
     cols: int
     bbox: BBox
     cells: list[RawTableCell] = Field(default_factory=list)
+    extraction_strategy: str = "default"
 
 
 class ExtractedPage(BaseModel):

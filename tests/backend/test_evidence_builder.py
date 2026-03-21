@@ -162,6 +162,16 @@ class TestBuildPrimitiveEvidence:
         assert tp.rows == 2
         assert tp.cols == 3
         assert tp.cell_count == 6
+        assert tp.extraction_strategy == "default"
+        assert tp.area_fraction > 0.0
+
+    def test_table_strategy_propagated(self) -> None:
+        page = _make_extracted_page()
+        page.tables[0].extraction_strategy = "lines_strict"
+        evidence = build_primitive_evidence(page)
+
+        tp = evidence.table_primitives[0]
+        assert tp.extraction_strategy == "lines_strict"
 
     def test_font_summary_computed(self) -> None:
         page = _make_extracted_page()
