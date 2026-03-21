@@ -185,9 +185,7 @@ class TestEvaluateQAStage:
             page_number=1,
             doc_id="test-doc",
             entries=[
-                ReadingOrderEntry(
-                    sequence_index=0, region_id="r1", kind_hint="main_flow"
-                ),
+                ReadingOrderEntry(sequence_index=0, region_id="r1", kind_hint="main_flow"),
             ],
             total_regions=1,
         )
@@ -200,13 +198,20 @@ class TestEvaluateQAStage:
             reading_order=reading_order,
         )
         ctx.artifact_store.write_artifact(
-            "run-001", "test-doc", "collect_evidence",
-            "evidence/p0001_canonical.json", canonical,
+            "run-001",
+            "test-doc",
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            canonical,
         )
 
         EvaluateQAStage().execute(ctx)
         summary = ctx.artifact_store.read_artifact(
-            ctx.run_id, ctx.doc_id, "evaluate_qa", "summary.json", QASummary,
+            ctx.run_id,
+            ctx.doc_id,
+            "evaluate_qa",
+            "summary.json",
+            QASummary,
         )
         assert summary.accepted is True
         assert summary.errors == 0
@@ -232,7 +237,9 @@ class TestEvaluateQAStage:
             ],
             edges=[
                 RegionEdge(
-                    edge_type="contains", src_region_id="r1", dst_region_id="r1",
+                    edge_type="contains",
+                    src_region_id="r1",
+                    dst_region_id="r1",
                 ),
             ],
         )
@@ -243,12 +250,18 @@ class TestEvaluateQAStage:
             height_pt=792,
             region_graph=bad_graph,
             reading_order=PageReadingOrder(
-                page_number=1, doc_id="test-doc", entries=[], total_regions=2,
+                page_number=1,
+                doc_id="test-doc",
+                entries=[],
+                total_regions=2,
             ),
         )
         ctx.artifact_store.write_artifact(
-            "run-001", "test-doc", "collect_evidence",
-            "evidence/p0001_canonical.json", canonical,
+            "run-001",
+            "test-doc",
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            canonical,
         )
 
         import pytest
