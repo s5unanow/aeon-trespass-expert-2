@@ -85,9 +85,12 @@ class PipelineRunner:
 
         # Stage says it can be skipped.  Validate the cache key when a
         # manifest is available — if inputs changed the stage must rerun.
+        # Note: when no manifest exists, we trust the stage.  For the
+        # default BaseStage.should_skip() this branch is unreachable
+        # (it already returns False when no manifest exists), but custom
+        # overrides may reach it.
         manifest = ctx.artifact_store.load_stage_manifest(ctx.run_id, ctx.doc_id, stage.name)
         if manifest is None:
-            # No manifest to validate against — trust the stage.
             return True
 
         stored_key = str(manifest.metrics.get("cache_key", ""))
@@ -131,20 +134,18 @@ class PipelineRunner:
         # --- skip / cache-hit path ---
         if self._should_skip(ctx, stage, cache_key):
             stage_log.info("stage.skipped", reason="cache_hit")
-            self._update_stage_status(ctx, stage.name, "skipped")
-            self._increment_cache_stat(ctx, "hits")
+            self._update_stage_status(ctx, stage.name, "skipped", cache_stat="hits")
             return
 
         # --- read_only mode: no valid cache → skip without executing ---
         if ctx.pipeline_config.cache_mode == "read_only":
             stage_log.warning("stage.skipped", reason="read_only_no_cache")
-            self._update_stage_status(ctx, stage.name, "skipped")
+            self._update_stage_status(ctx, stage.name, "skipped", cache_stat="misses")
             return
 
         # --- execute the stage ---
         stage_log.info("stage.start")
-        self._update_stage_status(ctx, stage.name, "running")
-        self._increment_cache_stat(ctx, "misses")
+        self._update_stage_status(ctx, stage.name, "running", cache_stat="misses")
 
         started_at = datetime.now(UTC)
         stage_manifest = StageManifest(
@@ -207,21 +208,19 @@ class PipelineRunner:
         ctx: StageContext,
         stage_name: str,
         status: str,
+        *,
+        cache_stat: str | None = None,
     ) -> None:
-        """Update stage status in the run manifest."""
+        """Update stage status in the run manifest.
+
+        Optionally increments a cache statistics counter in the same
+        load/save cycle to avoid redundant I/O.
+        """
         manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
         for s in manifest.stages:
             if s.stage_name == stage_name:
                 s.status = status  # type: ignore[assignment]
                 break
-        ctx.artifact_store.save_run_manifest(manifest)
-
-    def _increment_cache_stat(
-        self,
-        ctx: StageContext,
-        stat: str,
-    ) -> None:
-        """Increment a cache statistics counter on the run manifest."""
-        manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
-        manifest.cache_stats[stat] = manifest.cache_stats.get(stat, 0) + 1
+        if cache_stat is not None:
+            manifest.cache_stats[cache_stat] = manifest.cache_stats.get(cache_stat, 0) + 1
         ctx.artifact_store.save_run_manifest(manifest)
