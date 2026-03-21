@@ -160,6 +160,7 @@ class FurnitureCandidate(BaseModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     text_sample: str = ""
     content_hash: str = ""
+    path_count: int = 0
 
 
 class TemplateAssignment(BaseModel):

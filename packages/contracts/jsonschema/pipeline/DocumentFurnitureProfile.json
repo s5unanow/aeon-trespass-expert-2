@@ -62,6 +62,11 @@
           "default": "",
           "title": "Content Hash",
           "type": "string"
+        },
+        "path_count": {
+          "default": 0,
+          "title": "Path Count",
+          "type": "integer"
         }
       },
       "required": [

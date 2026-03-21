@@ -244,8 +244,8 @@ class TestVectorClusters:
         assert vc[0].occurrence_count == 3
         assert vc[0].path_count == 5
 
-    def test_decorative_drawings_excluded(self) -> None:
-        """Decorative drawings are excluded from vector clusters."""
+    def test_decorative_drawings_included(self) -> None:
+        """Decorative drawings are included in vector clusters."""
         pages = [
             _make_page(
                 i,
@@ -262,7 +262,8 @@ class TestVectorClusters:
         ]
         registry = build_asset_registry(pages)
         vc = [ac for ac in registry.asset_classes if ac.kind == "vector_cluster"]
-        assert len(vc) == 0
+        assert len(vc) == 1
+        assert vc[0].occurrence_count == 3
 
     def test_different_drawings_separate_classes(self) -> None:
         """Drawings with different path counts are separate classes."""
@@ -278,6 +279,152 @@ class TestVectorClusters:
         registry = build_asset_registry(pages)
         vc = [ac for ac in registry.asset_classes if ac.kind == "vector_cluster"]
         assert len(vc) == 2
+
+
+class TestVectorFurnitureMarking:
+    def test_repeated_divider_marked_as_furniture(self) -> None:
+        """A non-decorative divider detected as furniture is marked is_furniture=True."""
+        # Divider: wide, thin, near bottom edge
+        divider_bbox = _bbox(0.05, 0.95, 0.95, 0.97)
+        pages = [
+            _make_page(
+                i,
+                drawing_primitives=[_drawing(i, 0, 3, divider_bbox)],
+            )
+            for i in range(1, 4)
+        ]
+        profile = DocumentFurnitureProfile(
+            doc_id="test-doc",
+            total_pages_analyzed=3,
+            furniture_candidates=[
+                FurnitureCandidate(
+                    candidate_id="furn:divider:000",
+                    furniture_type="divider",
+                    bbox_norm=divider_bbox,
+                    source_primitive_kind="drawing",
+                    page_numbers=[1, 2, 3],
+                    repetition_rate=1.0,
+                    path_count=3,
+                ),
+            ],
+        )
+        registry = build_asset_registry(pages, profile)
+        vc = [ac for ac in registry.asset_classes if ac.kind == "vector_cluster"]
+        assert len(vc) == 1
+        assert vc[0].is_furniture is True
+        for occ in vc[0].occurrences:
+            assert occ.context_hint == "decoration"
+
+    def test_decorative_border_marked_as_furniture(self) -> None:
+        """A decorative border detected as furniture is marked is_furniture=True."""
+        border_bbox = _bbox(0.0, 0.0, 1.0, 1.0)
+        pages = [
+            _make_page(
+                i,
+                drawing_primitives=[
+                    DrawingPrimitiveEvidence(
+                        primitive_id=f"drawing:p{i:04d}:000",
+                        bbox_norm=border_bbox,
+                        path_count=12,
+                        is_decorative=True,
+                    )
+                ],
+            )
+            for i in range(1, 4)
+        ]
+        profile = DocumentFurnitureProfile(
+            doc_id="test-doc",
+            total_pages_analyzed=3,
+            furniture_candidates=[
+                FurnitureCandidate(
+                    candidate_id="furn:border:000",
+                    furniture_type="border",
+                    bbox_norm=border_bbox,
+                    source_primitive_kind="drawing",
+                    page_numbers=[1, 2, 3],
+                    repetition_rate=1.0,
+                    path_count=12,
+                ),
+            ],
+        )
+        registry = build_asset_registry(pages, profile)
+        vc = [ac for ac in registry.asset_classes if ac.kind == "vector_cluster"]
+        assert len(vc) == 1
+        assert vc[0].is_furniture is True
+        for occ in vc[0].occurrences:
+            assert occ.context_hint == "decoration"
+
+    def test_non_furniture_vector_not_marked(self) -> None:
+        """A vector cluster that doesn't match furniture is not marked."""
+        pages = [
+            _make_page(
+                i,
+                drawing_primitives=[_drawing(i, 0, 7, _bbox(0.3, 0.3, 0.4, 0.4))],
+            )
+            for i in range(1, 4)
+        ]
+        profile = DocumentFurnitureProfile(
+            doc_id="test-doc",
+            total_pages_analyzed=3,
+            furniture_candidates=[
+                FurnitureCandidate(
+                    candidate_id="furn:divider:000",
+                    furniture_type="divider",
+                    bbox_norm=_bbox(0.05, 0.95, 0.95, 0.97),
+                    source_primitive_kind="drawing",
+                    page_numbers=[1, 2, 3],
+                    repetition_rate=1.0,
+                    path_count=3,
+                ),
+            ],
+        )
+        registry = build_asset_registry(pages, profile)
+        vc = [ac for ac in registry.asset_classes if ac.kind == "vector_cluster"]
+        assert len(vc) == 1
+        assert vc[0].is_furniture is False
+
+    def test_raster_furniture_not_regressed(self) -> None:
+        """Raster furniture marking still works alongside vector furniture."""
+        divider_bbox = _bbox(0.05, 0.95, 0.95, 0.97)
+        pages = [
+            _make_page(
+                i,
+                image_primitives=[_raster(i, 0, "logo_hash", _bbox(0.0, 0.0, 0.1, 0.05))],
+                drawing_primitives=[_drawing(i, 0, 3, divider_bbox)],
+            )
+            for i in range(1, 4)
+        ]
+        profile = DocumentFurnitureProfile(
+            doc_id="test-doc",
+            total_pages_analyzed=3,
+            furniture_candidates=[
+                FurnitureCandidate(
+                    candidate_id="furn:ornament:000",
+                    furniture_type="ornament",
+                    bbox_norm=_bbox(0.0, 0.0, 0.1, 0.05),
+                    source_primitive_kind="image",
+                    page_numbers=[1, 2, 3],
+                    repetition_rate=1.0,
+                    content_hash="logo_hash",
+                ),
+                FurnitureCandidate(
+                    candidate_id="furn:divider:000",
+                    furniture_type="divider",
+                    bbox_norm=divider_bbox,
+                    source_primitive_kind="drawing",
+                    page_numbers=[1, 2, 3],
+                    repetition_rate=1.0,
+                    path_count=3,
+                ),
+            ],
+        )
+        registry = build_asset_registry(pages, profile)
+        rasters = [ac for ac in registry.asset_classes if ac.kind == "raster"]
+        vectors = [ac for ac in registry.asset_classes if ac.kind == "vector_cluster"]
+        assert len(rasters) == 1
+        assert rasters[0].is_furniture is True
+        assert len(vectors) == 1
+        assert vectors[0].is_furniture is True
 
 
 class TestComputePageAssets:
