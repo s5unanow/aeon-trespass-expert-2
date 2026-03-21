@@ -20,6 +20,12 @@ from aeon_reader_pipeline.models.config_models import (
 from aeon_reader_pipeline.models.evidence_models import (
     CanonicalPageEvidence,
     DocumentFurnitureProfile,
+    NormalizedBBox,
+    PageReadingOrder,
+    PageRegionGraph,
+    ReadingOrderEntry,
+    RegionCandidate,
+    RegionConfidence,
     ResolvedPageIR,
 )
 from aeon_reader_pipeline.models.ir_models import PageRecord
@@ -180,6 +186,81 @@ class TestV3Path:
         assert resolved.canonical_evidence_hash != ""
         assert resolved.render_mode == "semantic"
         assert resolved.page_confidence > 0.0
+        assert resolved.fallback_image_ref is None
+
+    def test_resolve_page_ir_sets_fallback_image_ref_for_non_semantic(self, tmp_path: Path) -> None:
+        """Non-semantic routes must carry a fallback image reference."""
+        pdf = tmp_path / "source.pdf"
+        _create_test_pdf(pdf)
+        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        _run_extract(ctx)
+        CollectEvidenceStage().execute(ctx)
+
+        # Overwrite canonical evidence with extreme penalties to force facsimile
+        canonical = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            CanonicalPageEvidence,
+        )
+        unit_bbox = NormalizedBBox(x0=0.0, y0=0.0, x1=1.0, y1=1.0)
+        low_conf = canonical.model_copy(
+            update={
+                "estimated_column_count": 3,
+                "has_tables": True,
+                "has_figures": True,
+                "has_callouts": True,
+                "furniture_fraction": 0.9,
+                "region_graph": PageRegionGraph(
+                    page_number=1,
+                    doc_id="test-doc",
+                    width_pt=612.0,
+                    height_pt=792.0,
+                    regions=[
+                        RegionCandidate(
+                            region_id="r1",
+                            kind_hint="main_flow",
+                            bbox=unit_bbox,
+                            confidence=RegionConfidence(value=0.0),
+                        )
+                    ],
+                ),
+                "reading_order": PageReadingOrder(
+                    page_number=1,
+                    doc_id="test-doc",
+                    entries=[
+                        ReadingOrderEntry(
+                            sequence_index=0,
+                            region_id="r1",
+                            kind_hint="main_flow",
+                            confidence=RegionConfidence(value=0.0),
+                        )
+                    ],
+                    total_regions=5,
+                    unassigned_region_ids=["r2", "r3", "r4", "r5"],
+                ),
+            }
+        )
+        ctx.artifact_store.write_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "collect_evidence",
+            "evidence/p0001_canonical.json",
+            low_conf,
+        )
+
+        ResolvePageIRStage().execute(ctx)
+
+        resolved = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "resolve_page_ir",
+            "resolved/p0001.json",
+            ResolvedPageIR,
+        )
+        assert resolved.render_mode != "semantic"
+        assert resolved.fallback_image_ref == "p0001_fallback.png"
 
     def test_v3_full_pipeline_produces_page_record(self, tmp_path: Path) -> None:
         """V3: extract → collect_evidence → resolve_page_ir → normalize produces PageRecord."""
