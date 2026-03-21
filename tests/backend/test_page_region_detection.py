@@ -441,6 +441,139 @@ class TestFurnitureImageExclusion:
         assert "img-content" in figures[0].source_evidence_ids
 
 
+class TestSidebarDetection:
+    def test_narrow_column_classified_as_sidebar(self) -> None:
+        """A narrow column (< 35% of band width) is classified as sidebar."""
+        page = _make_page(
+            text_primitives=[
+                # Wide left column text
+                TextPrimitiveEvidence(
+                    primitive_id="txt-left-1",
+                    bbox_norm=_bbox(0.05, 0.10, 0.65, 0.15),
+                    text="Main body text line one",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-left-2",
+                    bbox_norm=_bbox(0.05, 0.16, 0.65, 0.21),
+                    text="Main body text line two",
+                ),
+                # Narrow right column (sidebar)
+                TextPrimitiveEvidence(
+                    primitive_id="txt-right-1",
+                    bbox_norm=_bbox(0.75, 0.10, 0.95, 0.15),
+                    text="Side note",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        sidebars = [r for r in graph.regions if r.kind_hint == "sidebar"]
+        columns = [r for r in graph.regions if r.kind_hint == "column"]
+        assert len(sidebars) == 1
+        assert "txt-right-1" in sidebars[0].source_evidence_ids
+        assert len(columns) == 1  # The wide column remains a regular column
+
+    def test_equal_columns_not_sidebars(self) -> None:
+        """Equally-sized columns are not classified as sidebars."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-left",
+                    bbox_norm=_bbox(0.05, 0.10, 0.45, 0.20),
+                    text="Left",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-right",
+                    bbox_norm=_bbox(0.55, 0.10, 0.95, 0.20),
+                    text="Right",
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        sidebars = [r for r in graph.regions if r.kind_hint == "sidebar"]
+        columns = [r for r in graph.regions if r.kind_hint == "column"]
+        assert len(sidebars) == 0
+        assert len(columns) == 2
+
+
+class TestCalloutDetection:
+    def test_drawing_enclosing_text_is_callout(self) -> None:
+        """A drawing primitive enclosing text is detected as a callout."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-outside",
+                    bbox_norm=_bbox(0.1, 0.10, 0.9, 0.15),
+                    text="Regular text",
+                ),
+                TextPrimitiveEvidence(
+                    primitive_id="txt-inside",
+                    bbox_norm=_bbox(0.15, 0.25, 0.85, 0.30),
+                    text="Callout content",
+                ),
+            ],
+            drawing_primitives=[
+                DrawingPrimitiveEvidence(
+                    primitive_id="drw-box",
+                    bbox_norm=_bbox(0.10, 0.20, 0.90, 0.35),
+                    path_count=4,
+                    is_decorative=False,
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        callouts = [r for r in graph.regions if r.kind_hint == "callout"]
+        assert len(callouts) == 1
+        assert "drw-box" in callouts[0].source_evidence_ids
+        assert "txt-inside" in callouts[0].source_evidence_ids
+        assert "txt-outside" not in callouts[0].source_evidence_ids
+
+    def test_small_drawing_not_callout(self) -> None:
+        """A very small drawing does not create a callout."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-0001",
+                    bbox_norm=_bbox(0.1, 0.10, 0.9, 0.20),
+                    text="Body text",
+                ),
+            ],
+            drawing_primitives=[
+                DrawingPrimitiveEvidence(
+                    primitive_id="drw-tiny",
+                    bbox_norm=_bbox(0.1, 0.10, 0.12, 0.12),
+                    path_count=2,
+                    is_decorative=False,
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        callouts = [r for r in graph.regions if r.kind_hint == "callout"]
+        assert len(callouts) == 0
+
+    def test_drawing_not_enclosing_text_not_callout(self) -> None:
+        """A drawing that doesn't enclose any text is not a callout."""
+        page = _make_page(
+            text_primitives=[
+                TextPrimitiveEvidence(
+                    primitive_id="txt-0001",
+                    bbox_norm=_bbox(0.1, 0.10, 0.9, 0.20),
+                    text="Body text outside the box",
+                ),
+            ],
+            drawing_primitives=[
+                DrawingPrimitiveEvidence(
+                    primitive_id="drw-box",
+                    bbox_norm=_bbox(0.1, 0.30, 0.9, 0.50),
+                    path_count=4,
+                    is_decorative=False,
+                ),
+            ],
+        )
+        graph = segment_page_regions(page, _empty_furniture(), [])
+        callouts = [r for r in graph.regions if r.kind_hint == "callout"]
+        assert len(callouts) == 0
+
+
 class TestDecorativeDrawingExclusion:
     def test_decorative_drawings_excluded(self) -> None:
         """Decorative drawings are not included in region primitives."""
