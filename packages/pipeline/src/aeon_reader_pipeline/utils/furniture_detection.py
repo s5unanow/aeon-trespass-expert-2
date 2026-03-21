@@ -67,6 +67,12 @@ def detect_furniture(
     # Step 1+2: Build clusters from fingerprinted primitives
     clusters = _build_clusters(primitives, position_tolerance)
 
+    # Build drawing path_count lookup for vector furniture cross-referencing
+    drawing_path_counts: dict[str, int] = {}
+    for page in primitives:
+        for drw in page.drawing_primitives:
+            drawing_path_counts[drw.primitive_id] = drw.path_count
+
     # Step 3: Filter by repetition rate and classify
     candidates: list[FurnitureCandidate] = []
     candidate_idx = 0
@@ -97,6 +103,7 @@ def detect_furniture(
                 confidence=min(1.0, rate / min_repetition_rate),
                 text_sample=representative.text_sample,
                 content_hash=representative.content_hash,
+                path_count=drawing_path_counts.get(representative.primitive_id, 0),
             )
         )
         candidate_idx += 1

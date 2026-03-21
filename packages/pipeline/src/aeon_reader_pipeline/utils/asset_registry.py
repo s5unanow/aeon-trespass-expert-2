@@ -53,12 +53,13 @@ def build_asset_registry(
 
     doc_id = primitives[0].doc_id
     furniture_hashes = _collect_furniture_hashes(furniture_profile)
+    furniture_vector_fps = _collect_furniture_vector_fps(furniture_profile, primitives)
 
     raster_groups = _group_rasters(primitives)
     vector_groups = _group_vectors(primitives)
 
     asset_classes = _build_raster_classes(raster_groups, furniture_hashes)
-    asset_classes.extend(_build_vector_classes(vector_groups))
+    asset_classes.extend(_build_vector_classes(vector_groups, furniture_vector_fps))
 
     total_occs = sum(ac.occurrence_count for ac in asset_classes)
 
@@ -156,6 +157,40 @@ def _collect_furniture_hashes(
     return {c.content_hash for c in profile.furniture_candidates if c.content_hash}
 
 
+def _collect_furniture_vector_fps(
+    profile: DocumentFurnitureProfile | None,
+    primitives: list[PrimitivePageEvidence],
+) -> set[str]:
+    """Collect drawing fingerprints for primitives identified as furniture.
+
+    Uses actual primitive bboxes (not median) so fingerprints exactly match
+    the keys used in ``_group_vectors``.
+    """
+    if not profile:
+        return set()
+
+    # Build page → path_count lookup from drawing furniture candidates
+    furn_page_pcs: dict[int, set[int]] = defaultdict(set)
+    for c in profile.furniture_candidates:
+        if c.source_primitive_kind == "drawing":
+            for pn in c.page_numbers:
+                furn_page_pcs[pn].add(c.path_count)
+
+    if not furn_page_pcs:
+        return set()
+
+    # Collect fingerprints from actual primitives on furniture pages
+    fps: set[str] = set()
+    for page in primitives:
+        pcs = furn_page_pcs.get(page.page_number)
+        if not pcs:
+            continue
+        for drw in page.drawing_primitives:
+            if drw.path_count in pcs:
+                fps.add(drawing_fingerprint(drw))
+    return fps
+
+
 def _group_rasters(
     primitives: list[PrimitivePageEvidence],
 ) -> dict[str, list[_ImageOccurrence]]:
@@ -180,12 +215,10 @@ def _group_rasters(
 def _group_vectors(
     primitives: list[PrimitivePageEvidence],
 ) -> dict[str, list[_DrawingOccurrence]]:
-    """Group non-decorative drawings by fingerprint across all pages."""
+    """Group all drawings by fingerprint across all pages."""
     groups: dict[str, list[_DrawingOccurrence]] = defaultdict(list)
     for page in primitives:
         for drw in page.drawing_primitives:
-            if drw.is_decorative:
-                continue
             key = drawing_fingerprint(drw)
             groups[key].append(
                 _DrawingOccurrence(
@@ -274,13 +307,16 @@ def _build_raster_classes(
 
 def _build_vector_classes(
     groups: dict[str, list[_DrawingOccurrence]],
+    furniture_fps: set[str],
 ) -> list[AssetClass]:
     """Build AssetClass entries for vector cluster groups."""
     classes: list[AssetClass] = []
-    for idx, (_key, occs) in enumerate(sorted(groups.items())):
+    for idx, (key, occs) in enumerate(sorted(groups.items())):
         class_id = asset_class_id("vector_cluster", idx)
         rep = occs[0]
-        occurrences = _build_occurrences(class_id, occs, _vector_context_fn)
+        is_furn = key in furniture_fps
+        ctx_fn = _make_vector_context_fn(is_furn)
+        occurrences = _build_occurrences(class_id, occs, ctx_fn)
         classes.append(
             AssetClass(
                 asset_class_id=class_id,
@@ -289,6 +325,7 @@ def _build_vector_classes(
                 occurrence_count=len(occurrences),
                 page_numbers=sorted({o.page_number for o in occs}),
                 occurrences=occurrences,
+                is_furniture=is_furn,
             )
         )
     return classes
@@ -299,9 +336,17 @@ def _build_vector_classes(
 # ---------------------------------------------------------------------------
 
 
-def _vector_context_fn(_o: _AnyOccurrence) -> OccurrenceContext:
-    """Default context hint for vector clusters."""
-    return "unknown"
+def _make_vector_context_fn(
+    is_furn: bool,
+) -> Callable[[_AnyOccurrence], OccurrenceContext]:
+    """Create a context-hint function for a vector group."""
+
+    def _fn(_o: _AnyOccurrence) -> OccurrenceContext:
+        if is_furn:
+            return "decoration"
+        return "unknown"
+
+    return _fn
 
 
 def _bbox_area(bbox: NormalizedBBox) -> float:
@@ -326,7 +371,7 @@ def _guess_raster_context(
 
 
 def drawing_fingerprint(drw: DrawingPrimitiveEvidence) -> str:
-    """Fingerprint a non-decorative drawing for cross-page grouping.
+    """Fingerprint a drawing for cross-page grouping.
 
     Groups by path count and rounded bbox dimensions (not position,
     since the same icon may appear at different positions).
