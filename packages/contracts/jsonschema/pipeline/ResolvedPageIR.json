@@ -1,5 +1,5 @@
 {
-  "description": "Fully resolved page IR ready for semantic block building.\n\nBridges evidence analysis and PageRecord construction. Contains\nthe resolved render mode, confidence signals, and provenance\nreferences that determine how semantic blocks are built.\n\nConfidence scoring details will be added by S5U-263.\n\nArtifact path: ``{run}/resolved/p{page_number:04d}.json``",
+  "description": "Fully resolved page IR ready for semantic block building.\n\nBridges evidence analysis and PageRecord construction. Contains\nthe resolved render mode, confidence signals, and provenance\nreferences that determine how semantic blocks are built.\n\nConfidence is scored from canonical evidence signals (region quality,\nreading-order quality, layout complexity, entity density) and mapped\nto a render mode via deterministic thresholds (S5U-263).\n\nArtifact path: ``{run}/resolved/p{page_number:04d}.json``",
   "properties": {
     "page_number": {
       "title": "Page Number",

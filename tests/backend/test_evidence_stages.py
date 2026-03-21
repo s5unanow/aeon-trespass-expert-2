@@ -100,7 +100,7 @@ class TestStageRegistration:
     def test_resolve_page_ir_registration(self) -> None:
         stage = ResolvePageIRStage()
         assert stage.name == "resolve_page_ir"
-        assert stage.version == "0.1.0"
+        assert stage.version == "0.2.0"
 
 
 class TestV2SkipPath:
@@ -179,7 +179,7 @@ class TestV3Path:
         assert resolved.doc_id == "test-doc"
         assert resolved.canonical_evidence_hash != ""
         assert resolved.render_mode == "semantic"
-        assert resolved.page_confidence == 1.0
+        assert resolved.page_confidence > 0.0
 
     def test_v3_full_pipeline_produces_page_record(self, tmp_path: Path) -> None:
         """V3: extract → collect_evidence → resolve_page_ir → normalize produces PageRecord."""
