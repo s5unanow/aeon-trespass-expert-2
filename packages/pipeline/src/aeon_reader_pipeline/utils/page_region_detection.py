@@ -22,6 +22,13 @@ from aeon_reader_pipeline.models.evidence_models import (
     RegionEdge,
 )
 
+# Columns narrower than this fraction of band width are classified as sidebars
+_SIDEBAR_WIDTH_RATIO = 0.35
+
+# Minimum area (normalized page fraction) for a drawing to be a callout
+_CALLOUT_MIN_AREA = 0.005
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -79,12 +86,15 @@ def segment_page_regions(
 
         if len(columns) > 1:
             band_region.features["column_count"] = len(columns)
+            band_width = band.bbox.x1 - band.bbox.x0
             for col_idx, col in enumerate(columns):
                 col_id = f"reg:{primitive.page_number}:{region_counter}"
                 region_counter += 1
+                col_width = col.bbox.x1 - col.bbox.x0
+                is_sidebar = band_width > 0 and col_width / band_width < _SIDEBAR_WIDTH_RATIO
                 col_region = RegionCandidate(
                     region_id=col_id,
-                    kind_hint="column",
+                    kind_hint="sidebar" if is_sidebar else "column",
                     bbox=col.bbox,
                     parent_region_id=band_id,
                     band_index=band_idx,
@@ -92,8 +102,8 @@ def segment_page_regions(
                     source_evidence_ids=col.primitive_ids,
                     features={"text_count": len(col.primitive_ids)},
                     confidence=RegionConfidence(
-                        value=0.85,
-                        reasons=["gutter_detected"],
+                        value=0.7 if is_sidebar else 0.85,
+                        reasons=["narrow_column_sidebar"] if is_sidebar else ["gutter_detected"],
                     ),
                 )
                 regions.append(col_region)
@@ -134,6 +144,21 @@ def segment_page_regions(
                     edge_type="contains",
                     src_region_id=band_id,
                     dst_region_id=tbl_region.region_id,
+                )
+            )
+
+        # Detect callout regions (drawing-enclosed text)
+        callout_regions, callout_counter = _detect_callout_regions(
+            band, primitive.page_number, region_counter, band_id, band_idx
+        )
+        region_counter = callout_counter
+        for callout_region in callout_regions:
+            regions.append(callout_region)
+            edges.append(
+                RegionEdge(
+                    edge_type="contains",
+                    src_region_id=band_id,
+                    dst_region_id=callout_region.region_id,
                 )
             )
 
@@ -477,4 +502,55 @@ def _detect_table_regions(
                     confidence=RegionConfidence(value=0.8, reasons=["table_primitive"]),
                 )
             )
+    return regions, counter
+
+
+def _bbox_contains(outer: NormalizedBBox, inner: NormalizedBBox) -> bool:
+    """Check if outer bbox fully contains inner bbox."""
+    return (
+        outer.x0 <= inner.x0
+        and outer.y0 <= inner.y0
+        and outer.x1 >= inner.x1
+        and outer.y1 >= inner.y1
+    )
+
+
+def _detect_callout_regions(
+    band: _Band,
+    page_number: int,
+    counter: int,
+    parent_id: str,
+    band_idx: int,
+) -> tuple[list[RegionCandidate], int]:
+    """Detect callout candidates from drawing primitives that enclose text.
+
+    A callout is a non-decorative drawing with sufficient area that fully
+    contains at least one text primitive — indicating a bordered text box.
+    """
+    drawing_prims = [p for p in band.prims if p.kind == "drawing"]
+    text_prims = [p for p in band.prims if p.kind == "text"]
+
+    if not drawing_prims or not text_prims:
+        return [], counter
+
+    regions: list[RegionCandidate] = []
+    for drw in drawing_prims:
+        if _bbox_area(drw.bbox) < _CALLOUT_MIN_AREA:
+            continue
+        enclosed = [t for t in text_prims if _bbox_contains(drw.bbox, t.bbox)]
+        if not enclosed:
+            continue
+        region_id = f"reg:{page_number}:{counter}"
+        counter += 1
+        regions.append(
+            RegionCandidate(
+                region_id=region_id,
+                kind_hint="callout",
+                bbox=drw.bbox,
+                parent_region_id=parent_id,
+                band_index=band_idx,
+                source_evidence_ids=[drw.primitive_id] + [t.primitive_id for t in enclosed],
+                confidence=RegionConfidence(value=0.6, reasons=["drawing_encloses_text"]),
+            )
+        )
     return regions, counter
