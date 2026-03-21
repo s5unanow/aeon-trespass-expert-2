@@ -162,6 +162,9 @@ def segment_page_regions(
                 )
             )
 
+    # Reclassify degenerate table containers as callouts
+    regions = _reclassify_container_tables(regions)
+
     # Add adjacency edges between consecutive bands
     band_regions = [r for r in regions if r.kind_hint == "band"]
     for i in range(len(band_regions) - 1):
@@ -618,11 +621,27 @@ def _detect_callout_regions(
 
     regions: list[RegionCandidate] = []
     for drw in drawing_prims:
-        if _bbox_area(drw.bbox) < _CALLOUT_MIN_AREA:
+        drw_area = _bbox_area(drw.bbox)
+        if drw_area < _CALLOUT_MIN_AREA:
             continue
         enclosed = [t for t in text_prims if _bbox_contains(drw.bbox, t.bbox)]
         if not enclosed:
             continue
+
+        # Compute container features
+        enclosed_text_area = sum(_bbox_area(t.bbox) for t in enclosed)
+        text_density = enclosed_text_area / drw_area if drw_area > 0 else 0.0
+
+        # Score confidence based on evidence richness
+        confidence = 0.6
+        reasons: list[str] = ["drawing_encloses_text"]
+        if len(enclosed) >= 3:
+            confidence += 0.1
+            reasons.append("multiple_text_blocks")
+        if text_density > 0.1:
+            confidence += 0.05
+            reasons.append("dense_text_content")
+
         region_id = f"reg:{page_number}:{counter}"
         counter += 1
         regions.append(
@@ -633,7 +652,52 @@ def _detect_callout_regions(
                 parent_region_id=parent_id,
                 band_index=band_idx,
                 source_evidence_ids=[drw.primitive_id] + [t.primitive_id for t in enclosed],
-                confidence=RegionConfidence(value=0.6, reasons=["drawing_encloses_text"]),
+                confidence=RegionConfidence(
+                    value=min(1.0, round(confidence, 2)),
+                    reasons=reasons,
+                ),
+                features={
+                    "enclosed_text_count": len(enclosed),
+                    "area_fraction": round(drw_area, 4),
+                    "text_density": round(text_density, 4),
+                },
             )
         )
     return regions, counter
+
+
+def _reclassify_container_tables(
+    regions: list[RegionCandidate],
+) -> list[RegionCandidate]:
+    """Reclassify degenerate table regions as callout containers.
+
+    Table regions with very low confidence from degenerate structure
+    (1x1) and high text overlap are likely bordered boxes / containers,
+    not real data tables.
+    """
+    result: list[RegionCandidate] = []
+    for region in regions:
+        if (
+            region.kind_hint == "table"
+            and region.confidence.value < 0.5
+            and "degenerate_1x1" in region.confidence.reasons
+            and "high_text_overlap" in region.confidence.reasons
+        ):
+            result.append(
+                region.model_copy(
+                    update={
+                        "kind_hint": "callout",
+                        "confidence": RegionConfidence(
+                            value=0.55,
+                            reasons=["reclassified_degenerate_table"],
+                        ),
+                        "features": {
+                            **region.features,
+                            "original_kind": "table",
+                        },
+                    }
+                )
+            )
+        else:
+            result.append(region)
+    return result

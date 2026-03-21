@@ -17,7 +17,21 @@ from aeon_reader_pipeline.models.config_models import (
     RuleProfile,
     SymbolPack,
 )
+from aeon_reader_pipeline.models.evidence_models import (
+    NormalizedBBox,
+    RegionCandidate,
+    RegionConfidence,
+)
+from aeon_reader_pipeline.models.extract_models import (
+    BBox,
+    ExtractedPage,
+    FontInfo,
+    TextBlock,
+    TextLine,
+    TextSpan,
+)
 from aeon_reader_pipeline.models.ir_models import (
+    CalloutBlock,
     CaptionBlock,
     FigureBlock,
     HeadingBlock,
@@ -30,7 +44,10 @@ from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stages.extract_primitives import ExtractPrimitivesStage
 from aeon_reader_pipeline.stages.ingest_source import IngestSourceStage
-from aeon_reader_pipeline.stages.normalize_layout import NormalizeLayoutStage
+from aeon_reader_pipeline.stages.normalize_layout import (
+    NormalizeLayoutStage,
+    _wrap_callout_blocks,
+)
 
 
 def _make_context(
@@ -241,7 +258,7 @@ class TestNormalizeLayout:
     def test_stage_registration(self) -> None:
         stage = NormalizeLayoutStage()
         assert stage.name == "normalize_layout"
-        assert stage.version == "1.0.0"
+        assert stage.version == "1.1.0"
 
     def test_fixture_simple_text(self, tmp_path: Path) -> None:
         """Normalize the shared simple_text fixture PDF."""
@@ -340,3 +357,161 @@ class TestNormalizeLayout:
         assert "heading" in kinds
         assert "list" in kinds
         assert "paragraph" in kinds
+
+
+# ---------------------------------------------------------------------------
+# Callout block wrapping tests (S5U-262)
+# ---------------------------------------------------------------------------
+
+
+def _make_text_block(
+    block_index: int,
+    text: str,
+    x0: float,
+    y0: float,
+    x1: float,
+    y1: float,
+    font_size: float = 11.0,
+) -> TextBlock:
+    """Create a synthetic TextBlock with one span."""
+    return TextBlock(
+        block_index=block_index,
+        lines=[
+            TextLine(
+                spans=[
+                    TextSpan(
+                        text=text,
+                        font=FontInfo(name="helv", size=font_size),
+                        bbox=BBox(x0=x0, y0=y0, x1=x1, y1=y1),
+                    ),
+                ],
+                bbox=BBox(x0=x0, y0=y0, x1=x1, y1=y1),
+            )
+        ],
+        bbox=BBox(x0=x0, y0=y0, x1=x1, y1=y1),
+    )
+
+
+def _make_extracted_page(text_blocks: list[TextBlock]) -> ExtractedPage:
+    return ExtractedPage(
+        page_number=1,
+        width_pt=612.0,
+        height_pt=792.0,
+        text_blocks=text_blocks,
+        doc_id="test-doc",
+    )
+
+
+def _make_callout_region(
+    region_id: str,
+    x0: float,
+    y0: float,
+    x1: float,
+    y1: float,
+) -> RegionCandidate:
+    return RegionCandidate(
+        region_id=region_id,
+        kind_hint="callout",
+        bbox=NormalizedBBox(x0=x0, y0=y0, x1=x1, y1=y1),
+        confidence=RegionConfidence(value=0.7, reasons=["drawing_encloses_text"]),
+    )
+
+
+class TestCalloutBlockWrapping:
+    def test_blocks_within_callout_wrapped(self) -> None:
+        """Text blocks inside a callout region are wrapped into a CalloutBlock."""
+        # Page with one block outside and two blocks inside a callout box
+        text_blocks = [
+            _make_text_block(0, "Outside text", 72, 72, 540, 90),
+            _make_text_block(1, "Inside line one", 100, 200, 500, 220),
+            _make_text_block(2, "Inside line two", 100, 230, 500, 250),
+        ]
+        page = _make_extracted_page(text_blocks)
+
+        # Callout region covers blocks 1 and 2 (in normalized coords)
+        # Block 1: center ~= (300/612, 210/792) ≈ (0.49, 0.27)
+        # Block 2: center ~= (300/612, 240/792) ≈ (0.49, 0.30)
+        callout = _make_callout_region("reg:1:5", 0.10, 0.20, 0.90, 0.40)
+
+        # Pre-classify all blocks as paragraphs
+        blocks = [
+            ParagraphBlock(
+                block_id=f"b:{i}",
+                content=[TextRun(text=tb.text)],
+                source_block_index=tb.block_index,
+            )
+            for i, tb in enumerate(text_blocks)
+        ]
+
+        result = _wrap_callout_blocks(blocks, page, [callout], "test-doc")
+
+        # Should have 2 blocks: outside paragraph + callout
+        assert len(result) == 2
+        outside = [b for b in result if isinstance(b, ParagraphBlock)]
+        callouts = [b for b in result if isinstance(b, CalloutBlock)]
+        assert len(outside) == 1
+        assert len(callouts) == 1
+        # Callout should contain text from both inside blocks
+        callout_text = " ".join(n.text for n in callouts[0].content if isinstance(n, TextRun))
+        assert "Inside line one" in callout_text
+        assert "Inside line two" in callout_text
+
+    def test_no_callout_regions_passthrough(self) -> None:
+        """When no callout regions exist, all blocks pass through unchanged."""
+        text_blocks = [
+            _make_text_block(0, "Regular text", 72, 72, 540, 90),
+        ]
+        page = _make_extracted_page(text_blocks)
+        blocks = [
+            ParagraphBlock(
+                block_id="b:0",
+                content=[TextRun(text="Regular text")],
+                source_block_index=0,
+            ),
+        ]
+
+        result = _wrap_callout_blocks(blocks, page, [], "test-doc")
+        assert len(result) == 1
+        assert isinstance(result[0], ParagraphBlock)
+
+    def test_block_outside_callout_not_wrapped(self) -> None:
+        """Blocks whose center falls outside the callout region are not wrapped."""
+        text_blocks = [
+            _make_text_block(0, "Outside text", 72, 72, 540, 90),
+        ]
+        page = _make_extracted_page(text_blocks)
+
+        # Callout region is far below the text block
+        callout = _make_callout_region("reg:1:5", 0.10, 0.50, 0.90, 0.80)
+
+        blocks = [
+            ParagraphBlock(
+                block_id="b:0",
+                content=[TextRun(text="Outside text")],
+                source_block_index=0,
+            ),
+        ]
+
+        result = _wrap_callout_blocks(blocks, page, [callout], "test-doc")
+        assert len(result) == 1
+        assert isinstance(result[0], ParagraphBlock)
+
+    def test_callout_block_has_correct_kind(self) -> None:
+        """Wrapped callout blocks have kind='callout' and callout_type='note'."""
+        text_blocks = [_make_text_block(0, "Box content", 100, 200, 500, 220)]
+        page = _make_extracted_page(text_blocks)
+        callout = _make_callout_region("reg:1:0", 0.10, 0.20, 0.90, 0.40)
+        blocks = [
+            ParagraphBlock(
+                block_id="b:0",
+                content=[TextRun(text="Box content")],
+                source_block_index=0,
+            ),
+        ]
+
+        result = _wrap_callout_blocks(blocks, page, [callout], "test-doc")
+        assert len(result) == 1
+        cb = result[0]
+        assert isinstance(cb, CalloutBlock)
+        assert cb.kind == "callout"
+        assert cb.callout_type == "note"
