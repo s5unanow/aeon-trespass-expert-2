@@ -294,20 +294,20 @@ test.describe("Extraction review — cross-page integrity", () => {
     for (const cp of CURATED_PAGES) {
       await page.goto(cp.route);
       await expect(page.locator(".page-view")).toBeVisible();
-      // Check all images on the page have loaded (naturalWidth > 0)
-      // Note: in static export, missing assets result in 404 images
+      // Verify all images loaded successfully (naturalWidth > 0 proves no 404)
       const images = page.locator(".page-view img");
       const count = await images.count();
       for (let i = 0; i < count; i++) {
         const img = images.nth(i);
         const src = await img.getAttribute("src");
-        // Only check images with a src (figure blocks without asset_ref won't have img)
         if (src) {
-          // Verify the image element is attached and has a non-empty src
-          await expect(
-            img,
-            `Broken image ref "${src}" on ${cp.label}`,
-          ).toBeAttached();
+          const isLoaded = await img.evaluate(
+            (el: HTMLImageElement) => el.complete && el.naturalWidth > 0,
+          );
+          expect(
+            isLoaded,
+            `Image "${src}" failed to load on ${cp.label}`,
+          ).toBe(true);
         }
       }
     }

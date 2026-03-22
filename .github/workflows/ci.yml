@@ -112,7 +112,7 @@ jobs:
             if [ -d "$dir" ]; then
               doc_id=$(basename "$(dirname "$dir")")
               mkdir -p "apps/reader/public/assets/$doc_id"
-              cp -r "$dir"/* "apps/reader/public/assets/$doc_id/"
+              cp -r "$dir"/. "apps/reader/public/assets/$doc_id/"
             fi
           done
       - run: pnpm --filter reader build
