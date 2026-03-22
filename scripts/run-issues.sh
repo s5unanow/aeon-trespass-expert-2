@@ -30,7 +30,7 @@ COOLDOWN="${COOLDOWN:-5}"
 MAX_ISSUES=0  # 0 = unlimited
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-AUTOPILOT_LOG="$REPO_ROOT/.claude/skills/autopilot/data/autopilot.log"
+AUTOPILOT_LOG="${AUTOPILOT_LOG:-$REPO_ROOT/.claude/skills/autopilot/data/autopilot.log}"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -186,11 +186,6 @@ while true; do
     log "Issue run #$issue_count NOT verified (exit code: $exit_code, no merged PR or log entry)"
     failure_count=$((failure_count + 1))
     consecutive_failures=$((consecutive_failures + 1))
-
-    # Reset orphaned issues after 2+ consecutive failures to avoid expensive cleanup on every miss
-    if [[ "$consecutive_failures" -ge 2 ]]; then
-      reset_orphaned_issues
-    fi
 
     if [[ "$consecutive_failures" -ge "$MAX_CONSECUTIVE_FAILURES" ]]; then
       log "Hit $MAX_CONSECUTIVE_FAILURES consecutive failures. Stopping to avoid infinite loop."

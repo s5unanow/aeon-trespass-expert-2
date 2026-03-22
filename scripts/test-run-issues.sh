@@ -14,29 +14,21 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEST_DIR=$(mktemp -d)
 CLEANUP_LOG="$TEST_DIR/cleanup_calls.log"
 
+cleanup_test_dir() {
+  if [[ "${fail:-0}" -eq 0 ]]; then
+    rm -rf "$TEST_DIR"
+  else
+    echo "  (test artifacts preserved at $TEST_DIR for debugging)"
+  fi
+}
+trap cleanup_test_dir EXIT
+
 # ---------------------------------------------------------------------------
 # Stubs
 # ---------------------------------------------------------------------------
 # Create a bin dir with fake `claude` and `gh` that appear first in PATH.
 STUB_BIN="$TEST_DIR/bin"
 mkdir -p "$STUB_BIN"
-
-# Fake `claude` — first call simulates autopilot outputting "no more issues",
-# subsequent calls (orphan cleanup) just log the prompt.
-cat > "$STUB_BIN/claude" <<'STUBEOF'
-#!/usr/bin/env bash
-prompt="${*}"
-# Detect orphan cleanup invocations (the -p flag value contains "In Progress")
-if echo "$prompt" | grep -q "In Progress"; then
-  echo "$prompt" >> "${CLEANUP_LOG}"
-  echo "No orphaned issues found."
-  exit 0
-fi
-# Simulate autopilot: output "no more actionable issues"
-echo "Checked backlog — no more actionable issues in the backlog."
-exit 0
-STUBEOF
-chmod +x "$STUB_BIN/claude"
 
 cat > "$STUB_BIN/gh" <<'STUBEOF'
 #!/usr/bin/env bash
@@ -74,6 +66,22 @@ assert() {
 echo "Test 1: EXIT trap fires on 'no more issues' exit"
 > "$CLEANUP_LOG"  # reset
 
+# Stub claude: autopilot outputs "no more issues", cleanup calls log the prompt
+cat > "$STUB_BIN/claude" <<'STUBEOF'
+#!/usr/bin/env bash
+prompt="${*}"
+# Detect orphan cleanup invocations (the -p flag value contains "In Progress")
+if echo "$prompt" | grep -q "In Progress"; then
+  echo "$prompt" >> "${CLEANUP_LOG}"
+  echo "No orphaned issues found."
+  exit 0
+fi
+# Simulate autopilot: output "no more actionable issues"
+echo "Checked backlog — no more actionable issues in the backlog."
+exit 0
+STUBEOF
+chmod +x "$STUB_BIN/claude"
+
 bash "$SCRIPT_DIR/run-issues.sh" --max-issues 5 > "$TEST_DIR/test1_output.log" 2>&1 || true
 
 assert "cleanup was called at least once" \
@@ -90,27 +98,11 @@ assert "cleanup prompt does NOT mention project ATE2" \
 # ---------------------------------------------------------------------------
 echo "Test 2: EXIT trap fires on max-issues exit"
 
-# Make claude stub succeed (simulate a verified run) so max-issues is reached
-cat > "$STUB_BIN/claude" <<'STUBEOF'
-#!/usr/bin/env bash
-prompt="${*}"
-if echo "$prompt" | grep -q "In Progress"; then
-  echo "$prompt" >> "${CLEANUP_LOG}"
-  echo "No orphaned issues found."
-  exit 0
-fi
-# Simulate successful autopilot run (no "no more issues" phrase)
-echo "Picked up S5U-999. Implemented. PR merged."
-exit 0
-STUBEOF
-chmod +x "$STUB_BIN/claude"
+# Fake autopilot log so post-run verification succeeds
+FAKE_LOG="$TEST_DIR/autopilot.log"
+export AUTOPILOT_LOG="$FAKE_LOG"
 
-# Also fake a "growing" autopilot log so verification passes
-FAKE_LOG_DIR="$TEST_DIR/autopilot_data"
-mkdir -p "$FAKE_LOG_DIR"
-FAKE_LOG="$FAKE_LOG_DIR/autopilot.log"
-
-# Patch: create a stub claude that also appends to the fake log
+# Stub claude: successful autopilot run + append to fake log for verification
 cat > "$STUB_BIN/claude" <<STUBEOF
 #!/usr/bin/env bash
 prompt="\${*}"
@@ -128,14 +120,7 @@ chmod +x "$STUB_BIN/claude"
 
 > "$CLEANUP_LOG"  # reset
 
-# Override AUTOPILOT_LOG location by wrapping the script
-AUTOPILOT_LOG="$FAKE_LOG" bash -c '
-  export AUTOPILOT_LOG
-  source /dev/stdin
-' < <(
-  # Re-export into the script env
-  sed "s|AUTOPILOT_LOG=.*|AUTOPILOT_LOG=\"$FAKE_LOG\"|" "$SCRIPT_DIR/run-issues.sh"
-) -- --max-issues 1 > "$TEST_DIR/test2_output.log" 2>&1 || true
+bash "$SCRIPT_DIR/run-issues.sh" --max-issues 1 > "$TEST_DIR/test2_output.log" 2>&1 || true
 
 assert "cleanup was called on max-issues exit" \
   test -s "$CLEANUP_LOG"
@@ -145,7 +130,6 @@ assert "cleanup was called on max-issues exit" \
 # ---------------------------------------------------------------------------
 echo ""
 echo "Results: $pass passed, $fail failed"
-rm -rf "$TEST_DIR"
 
 if [[ "$fail" -gt 0 ]]; then
   exit 1
