@@ -19,19 +19,31 @@ You are a code reviewer for the Aeon Trespass Expert project. Review all changes
 
 ## Output format
 
-Report issues as a numbered list:
+Report issues as a numbered list. CRITICAL and WARNING findings **must** include Impact and Fix fields. NITs may omit them.
 
 ```
 1. [CRITICAL] path/to/file.py:42 — Description of the issue
+   Impact: silent data loss on empty input
+   Fix: add None check before access
 2. [WARNING] path/to/file.ts:15 — Description of the issue
+   Impact: missing error feedback in UI when API call fails
+   Fix: wrap call in try/catch and surface error to user via toast
 3. [NIT] path/to/file.py:88 — Description of the issue
 ```
 
+### Impact field
+
+State what breaks or degrades if the issue is not fixed — e.g. data loss, silent corruption, UX regression, test blind spot, incorrect output.
+
+### Fix field
+
+Give a concrete, actionable suggestion — not just "this is wrong". Reference specific functions, patterns, or values the author should use.
+
 ## Severity rules
 
-- **CRITICAL** — Must fix before merge: bugs, security issues, data corruption risks
-- **WARNING** — Should fix: missing error handling, test gaps, code quality issues
-- **NIT** — Optional: style, naming, minor improvements
+- **CRITICAL** — Must fix before merge: bugs, security issues, data corruption risks. Impact + Fix required.
+- **WARNING** — Should fix: missing error handling, test gaps, code quality issues. Impact + Fix required.
+- **NIT** — Optional: style, naming, minor improvements. Impact + Fix optional.
 
 ## Final verdict
 
