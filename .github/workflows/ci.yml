@@ -106,6 +106,15 @@ jobs:
           rm -rf apps/reader/generated
           mkdir -p apps/reader/generated
           cp -r tests/fixtures/site-bundles/* apps/reader/generated/
+      - name: Install fixture assets for E2E
+        run: |
+          for dir in tests/fixtures/site-bundles/*/assets; do
+            if [ -d "$dir" ]; then
+              doc_id=$(basename "$(dirname "$dir")")
+              mkdir -p "apps/reader/public/assets/$doc_id"
+              cp -r "$dir"/. "apps/reader/public/assets/$doc_id/"
+            fi
+          done
       - run: pnpm --filter reader build
       - run: npx playwright install --with-deps chromium
       - run: pnpm --filter reader test:e2e
