@@ -22,6 +22,12 @@ jobs:
           mkdir -p apps/reader/generated
           cp -r tests/fixtures/site-bundles/* apps/reader/generated/
       - run: pnpm --filter reader build
+      - name: Build search index
+        run: pnpm --filter reader run build:search
+      - name: Verify search index
+        run: |
+          test -d apps/reader/out/pagefind || (echo "FAIL: pagefind/ directory missing" && exit 1)
+          test -f apps/reader/out/pagefind/pagefind.js || (echo "FAIL: pagefind.js missing" && exit 1)
       - uses: actions/upload-artifact@v4
         with:
           name: reader-preview

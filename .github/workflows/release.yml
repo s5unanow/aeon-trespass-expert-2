@@ -30,8 +30,13 @@ jobs:
             cp -r tests/fixtures/site-bundles/* apps/reader/generated/
           fi
       - run: pnpm --filter reader build
+      - name: Build search index
+        run: pnpm --filter reader run build:search
       - name: Verify build output
-        run: test -f apps/reader/out/index.html || (echo "Build produced no index.html" && exit 1)
+        run: |
+          test -f apps/reader/out/index.html || (echo "FAIL: index.html missing" && exit 1)
+          test -d apps/reader/out/pagefind || (echo "FAIL: pagefind/ directory missing" && exit 1)
+          test -f apps/reader/out/pagefind/pagefind.js || (echo "FAIL: pagefind.js missing" && exit 1)
       - name: Package static site
         run: tar -czf reader-site.tar.gz -C apps/reader/out .
       - uses: softprops/action-gh-release@v2
