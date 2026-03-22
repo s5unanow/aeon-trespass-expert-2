@@ -194,7 +194,6 @@ class ResolveAssetsSymbolsStage(BaseStage):
         page_nums = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
         ctx.logger.info("resolving_assets_symbols", page_count=len(page_nums))
 
-        is_v3 = ctx.pipeline_config.architecture == "v3"
         symbol_tokens = _build_symbol_token_map(ctx)
         min_confidence = ctx.rule_profile.symbol_detection.min_confidence
         all_assets: list[ResolvedAsset] = []
@@ -208,8 +207,8 @@ class ResolveAssetsSymbolsStage(BaseStage):
                 PageRecord,
             )
 
-            # Link figures to captions — spatial (v3) or sequential (v2)
-            fig_cap_links = self._compute_figure_caption_links(ctx, record, page_num, is_v3)
+            # Link figures to captions using spatial evidence
+            fig_cap_links = self._compute_figure_caption_links(ctx, record, page_num)
             record = apply_links_to_blocks(record, fig_cap_links)
 
             # Persist linkage artifact for review
@@ -224,16 +223,15 @@ class ResolveAssetsSymbolsStage(BaseStage):
             # Resolve symbol tokens in text
             record = _resolve_symbols_in_page(record, symbol_tokens)
 
-            # v3: also consume pre-classified evidence candidates
-            if is_v3:
-                page_cands = ctx.artifact_store.read_artifact(
-                    ctx.run_id,
-                    ctx.doc_id,
-                    "collect_evidence",
-                    f"evidence/p{page_num:04d}_symbol_candidates.json",
-                    PageSymbolCandidates,
-                )
-                record = _apply_evidence_candidates(record, page_cands, min_confidence)
+            # Consume pre-classified evidence candidates
+            page_cands = ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "collect_evidence",
+                f"evidence/p{page_num:04d}_symbol_candidates.json",
+                PageSymbolCandidates,
+            )
+            record = _apply_evidence_candidates(record, page_cands, min_confidence)
 
             # Collect asset records from figures
             for block in record.blocks:
@@ -286,25 +284,23 @@ class ResolveAssetsSymbolsStage(BaseStage):
         ctx: StageContext,
         record: PageRecord,
         page_num: int,
-        is_v3: bool,
     ) -> PageFigureCaptionLinks:
-        """Choose spatial or sequential linking based on architecture."""
-        if is_v3:
-            canonical = ctx.artifact_store.read_artifact(
+        """Link figures to captions using spatial evidence."""
+        canonical = ctx.artifact_store.read_artifact(
+            ctx.run_id,
+            ctx.doc_id,
+            "collect_evidence",
+            f"evidence/p{page_num:04d}_canonical.json",
+            CanonicalPageEvidence,
+        )
+        if canonical.region_graph is not None:
+            primitive = ctx.artifact_store.read_artifact(
                 ctx.run_id,
                 ctx.doc_id,
                 "collect_evidence",
-                f"evidence/p{page_num:04d}_canonical.json",
-                CanonicalPageEvidence,
+                f"evidence/p{page_num:04d}_primitive.json",
+                PrimitivePageEvidence,
             )
-            if canonical.region_graph is not None:
-                primitive = ctx.artifact_store.read_artifact(
-                    ctx.run_id,
-                    ctx.doc_id,
-                    "collect_evidence",
-                    f"evidence/p{page_num:04d}_primitive.json",
-                    PrimitivePageEvidence,
-                )
-                return link_figures_captions_spatial(canonical.region_graph, primitive, record)
+            return link_figures_captions_spatial(canonical.region_graph, primitive, record)
 
         return link_figures_captions_sequential(record)
