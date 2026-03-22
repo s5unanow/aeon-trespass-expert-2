@@ -44,7 +44,6 @@ def _make_context(
     *,
     doc_id: str = "test-doc",
     run_id: str = "run-001",
-    architecture: str = "v2",
 ) -> StageContext:
     configs_root = source_pdf_path.parent / "configs"
     configs_root.mkdir(exist_ok=True)
@@ -55,7 +54,7 @@ def _make_context(
     return StageContext(
         run_id=run_id,
         doc_id=doc_id,
-        pipeline_config=PipelineConfig(run_id=run_id, architecture=architecture),  # type: ignore[arg-type]
+        pipeline_config=PipelineConfig(run_id=run_id),
         document_config=DocumentConfig(
             doc_id=doc_id,
             slug="test-doc",
@@ -109,46 +108,17 @@ class TestStageRegistration:
         assert stage.version == "0.2.0"
 
 
-class TestV2SkipPath:
-    def test_collect_evidence_skips_on_v2(self, tmp_path: Path) -> None:
+class TestEvidencePipeline:
+    def test_collect_evidence_does_not_skip(self, tmp_path: Path) -> None:
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v2")
-        assert CollectEvidenceStage().should_skip(ctx) is True
-
-    def test_resolve_page_ir_skips_on_v2(self, tmp_path: Path) -> None:
-        pdf = tmp_path / "source.pdf"
-        _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v2")
-        assert ResolvePageIRStage().should_skip(ctx) is True
-
-    def test_v2_normalize_works_unchanged(self, tmp_path: Path) -> None:
-        """Legacy v2 path: extract → normalize produces PageRecord as before."""
-        pdf = tmp_path / "source.pdf"
-        _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v2")
-        _run_extract(ctx)
-        NormalizeLayoutStage().execute(ctx)
-
-        record = ctx.artifact_store.read_artifact(
-            ctx.run_id, ctx.doc_id, "normalize_layout", "pages/p0001.json", PageRecord
-        )
-        assert record.page_number == 1
-        assert len(record.blocks) > 0
-
-
-class TestV3Path:
-    def test_collect_evidence_does_not_skip_on_v3(self, tmp_path: Path) -> None:
-        pdf = tmp_path / "source.pdf"
-        _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
-        # should_skip returns False for v3 (no cached manifest)
+        ctx = _make_context(tmp_path, pdf)
         assert CollectEvidenceStage().should_skip(ctx) is False
 
     def test_collect_evidence_produces_canonical(self, tmp_path: Path) -> None:
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
 
@@ -169,7 +139,7 @@ class TestV3Path:
     def test_resolve_page_ir_produces_resolved(self, tmp_path: Path) -> None:
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
         ResolvePageIRStage().execute(ctx)
@@ -192,7 +162,7 @@ class TestV3Path:
         """Non-semantic routes must carry a fallback image reference."""
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
 
@@ -262,11 +232,11 @@ class TestV3Path:
         assert resolved.render_mode != "semantic"
         assert resolved.fallback_image_ref == "p0001_fallback.png"
 
-    def test_v3_full_pipeline_produces_page_record(self, tmp_path: Path) -> None:
-        """V3: extract → collect_evidence → resolve_page_ir → normalize produces PageRecord."""
+    def test_full_pipeline_produces_page_record(self, tmp_path: Path) -> None:
+        """Extract → collect_evidence → resolve_page_ir → normalize produces PageRecord."""
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
         ResolvePageIRStage().execute(ctx)
@@ -282,7 +252,7 @@ class TestV3Path:
         """collect_evidence emits a DocumentFurnitureProfile artifact."""
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
 
@@ -302,7 +272,7 @@ class TestV3Path:
         """Canonical evidence includes furniture_ids and template_id fields."""
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
 
@@ -323,7 +293,7 @@ class TestV3Path:
         pdf = tmp_path / "source.pdf"
         # Simple PDF without tables
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
 
@@ -340,7 +310,7 @@ class TestV3Path:
         """Summary flags are derived from region graph, not raw primitive counts."""
         pdf = tmp_path / "source.pdf"
         _create_test_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf, architecture="v3")
+        ctx = _make_context(tmp_path, pdf)
         _run_extract(ctx)
         CollectEvidenceStage().execute(ctx)
 
@@ -369,7 +339,7 @@ class TestV3Path:
         _create_test_pdf(pdf)
 
         # First run
-        ctx1 = _make_context(tmp_path / "run1", pdf, architecture="v3", run_id="run-a")
+        ctx1 = _make_context(tmp_path / "run1", pdf, run_id="run-a")
         _run_extract(ctx1)
         CollectEvidenceStage().execute(ctx1)
         ResolvePageIRStage().execute(ctx1)
@@ -390,7 +360,7 @@ class TestV3Path:
         )
 
         # Second run
-        ctx2 = _make_context(tmp_path / "run2", pdf, architecture="v3", run_id="run-b")
+        ctx2 = _make_context(tmp_path / "run2", pdf, run_id="run-b")
         _run_extract(ctx2)
         CollectEvidenceStage().execute(ctx2)
         ResolvePageIRStage().execute(ctx2)

@@ -162,14 +162,12 @@ class TestEvaluateQAStage:
         assert summary.accepted is True
         assert summary.errors == 0
 
-    def test_v3_loads_evidence_and_runs_extraction_rules(self, tmp_path: Path) -> None:
-        """V3 architecture loads evidence and registers extraction rules."""
+    def test_loads_evidence_and_runs_extraction_rules(self, tmp_path: Path) -> None:
+        """QA loads evidence and registers extraction rules."""
         pdf = tmp_path / "source.pdf"
         _create_pdf(pdf)
         ctx = _make_context(tmp_path, pdf)
-        # Run pipeline as v2, then switch to v3 for QA only
         _run_through_enrich(ctx)
-        ctx.pipeline_config = PipelineConfig(run_id="run-001", architecture="v3")
 
         # Write valid canonical evidence for page 1
         bbox = NormalizedBBox(x0=0.0, y0=0.0, x1=1.0, y1=1.0)
@@ -216,13 +214,12 @@ class TestEvaluateQAStage:
         assert summary.accepted is True
         assert summary.errors == 0
 
-    def test_v3_rejects_bad_evidence(self, tmp_path: Path) -> None:
-        """V3 with invalid evidence produces extraction errors and rejects."""
+    def test_rejects_bad_evidence(self, tmp_path: Path) -> None:
+        """Invalid evidence produces extraction errors and rejects."""
         pdf = tmp_path / "source.pdf"
         _create_pdf(pdf)
         ctx = _make_context(tmp_path, pdf)
         _run_through_enrich(ctx)
-        ctx.pipeline_config = PipelineConfig(run_id="run-001", architecture="v3")
 
         # Write bad evidence: duplicate region + self-referential edge
         bbox = NormalizedBBox(x0=0.0, y0=0.0, x1=1.0, y1=1.0)

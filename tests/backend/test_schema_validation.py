@@ -709,7 +709,7 @@ def _make_stage_context(
     return StageContext(
         run_id=run_id,
         doc_id=doc_id,
-        pipeline_config=PipelineConfig(run_id=run_id, architecture="v3"),  # type: ignore[arg-type]
+        pipeline_config=PipelineConfig(run_id=run_id),
         document_config=DocumentConfig(
             doc_id=doc_id,
             slug="test-doc",

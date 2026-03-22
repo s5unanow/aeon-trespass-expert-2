@@ -142,7 +142,7 @@ def _create_fixture_pdf(path: Path) -> None:
 
 
 def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
-    """Build a StageContext configured for v3 architecture."""
+    """Build a StageContext for hard-page e2e tests."""
     configs_root = tmp_path / "configs"
     configs_root.mkdir(exist_ok=True)
     prompts = tmp_path / "prompts" / "translate" / "v1"
@@ -159,7 +159,7 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
     return StageContext(
         run_id="run-hard-e2e",
         doc_id=DOC_ID,
-        pipeline_config=PipelineConfig(run_id="run-hard-e2e", architecture="v3"),
+        pipeline_config=PipelineConfig(run_id="run-hard-e2e"),
         document_config=DocumentConfig(
             doc_id=DOC_ID,
             slug=DOC_ID,
@@ -294,10 +294,10 @@ def pipeline_result(
 
 
 class TestHardPageE2E:
-    """End-to-end pipeline test with hard-page routing through v3 architecture."""
+    """End-to-end pipeline test with hard-page routing."""
 
     def test_pipeline_completes(self, pipeline_result: tuple[StageContext, Path]) -> None:
-        """Full v3 pipeline runs without errors."""
+        """Full pipeline runs without errors."""
         ctx, _ = pipeline_result
         release = ctx.artifact_store.read_artifact(
             ctx.run_id, ctx.doc_id, "package_release", "release_manifest.json", ReleaseManifest
