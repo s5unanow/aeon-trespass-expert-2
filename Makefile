@@ -1,5 +1,5 @@
 .PHONY: help bootstrap lint typecheck test test-backend test-frontend schemas \
-        site-dev site-build e2e clean security-lint deploy
+        site-dev site-build build-search site-release e2e clean security-lint deploy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -44,6 +44,13 @@ site-dev: ## Start reader dev server
 
 site-build: ## Build static reader site
 	pnpm --filter reader build
+
+build-search: ## Build Pagefind search index (run after site-build)
+	pnpm --filter reader run build:search
+
+site-release: site-build build-search ## Full operator path: build site + search index
+	@test -d apps/reader/out/pagefind || (echo "ERROR: Pagefind index not found at apps/reader/out/pagefind/" && exit 1)
+	@echo "Site built with search index at apps/reader/out/"
 
 e2e: ## Run end-to-end tests
 	pnpm --filter reader test:e2e
