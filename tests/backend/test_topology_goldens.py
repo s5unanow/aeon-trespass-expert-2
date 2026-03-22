@@ -18,9 +18,13 @@ import orjson
 import pytest
 
 from aeon_reader_pipeline.models.evidence_models import (
+    DrawingPrimitiveEvidence,
+    ImagePrimitiveEvidence,
     PageReadingOrder,
     PageRegionGraph,
     PrimitivePageEvidence,
+    TablePrimitiveEvidence,
+    TextPrimitiveEvidence,
 )
 from aeon_reader_pipeline.utils.furniture_detection import detect_furniture
 from aeon_reader_pipeline.utils.page_region_detection import segment_page_regions
@@ -210,10 +214,10 @@ def _assert_bbox_approx(
 def _page(
     page_number: int,
     *,
-    text: list[Any] | None = None,
-    images: list[Any] | None = None,
-    tables: list[Any] | None = None,
-    drawings: list[Any] | None = None,
+    text: list[TextPrimitiveEvidence] | None = None,
+    images: list[ImagePrimitiveEvidence] | None = None,
+    tables: list[TablePrimitiveEvidence] | None = None,
+    drawings: list[DrawingPrimitiveEvidence] | None = None,
 ) -> PrimitivePageEvidence:
     """Thin wrapper preserving the original ``text=`` kwarg name."""
     return _page_builder(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import structlog
 import typer
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from aeon_reader_pipeline.models.config_models import ModelProfile
     from aeon_reader_pipeline.models.run_models import CostEstimate, PipelineConfig
     from aeon_reader_pipeline.stage_framework.context import StageContext
+    from aeon_reader_pipeline.utils.architecture_compare import PageComparisonResult
 
 logger = structlog.get_logger()
 
@@ -596,7 +597,7 @@ def generate_overlays(
 
 def _run_arch_pipeline(
     *,
-    arch: str,
+    arch: Literal["v2", "v3"],
     doc: str,
     artifact_root: Path,
     page_filter: list[int] | None,
@@ -625,7 +626,7 @@ def _run_arch_pipeline(
         artifact_root=artifact_root,
         page_filter=page_filter,
     )
-    pipeline_config.architecture = arch  # type: ignore[assignment]
+    pipeline_config.architecture = arch
 
     from aeon_reader_pipeline.stage_framework.context import StageContext
 
@@ -645,16 +646,14 @@ def _run_arch_pipeline(
 
 def _print_comparison_report(
     doc: str,
-    page_results: list[Any],
+    page_results: list[PageComparisonResult],
 ) -> None:
     """Print a formatted comparison table."""
     from aeon_reader_pipeline.utils.architecture_compare import (
-        PageComparisonResult,
         build_comparison_report,
     )
 
-    results = [r for r in page_results if isinstance(r, PageComparisonResult)]
-    report = build_comparison_report(doc, results)
+    report = build_comparison_report(doc, page_results)
 
     typer.echo(f"\n{'=' * 80}")
     typer.echo(f"Architecture Comparison: {doc}")
