@@ -826,8 +826,8 @@ DocumentConfig + PipelineConfig
   -> resolve_run
   -> ingest_source
   -> extract_primitives
-  -> collect_evidence (v3 only)
-  -> resolve_page_ir (v3 only)
+  -> collect_evidence
+  -> resolve_page_ir
   -> normalize_layout
   -> resolve_assets_symbols
   -> plan_translation
@@ -1040,9 +1040,7 @@ Persist
 
 02_extract/manifest.json
 
-Stage 2a — collect_evidence (v3 only)
-
-Skips automatically when `architecture` is not `"v3"`.
+Stage 2a — collect_evidence
 
 Input contract
 
@@ -1090,9 +1088,7 @@ Persist
 
 02a_evidence/manifest.json
 
-Stage 2b — resolve_page_ir (v3 only)
-
-Skips automatically when `architecture` is not `"v3"`.
+Stage 2b — resolve_page_ir
 
 Input contract
 
