@@ -28,7 +28,9 @@ set -uo pipefail
 MAX_TURNS="${MAX_TURNS:-80}"
 COOLDOWN="${COOLDOWN:-5}"
 MAX_ISSUES=0  # 0 = unlimited
-AUTOPILOT_LOG=".claude/skills/autopilot/data/autopilot.log"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+AUTOPILOT_LOG="$REPO_ROOT/.claude/skills/autopilot/data/autopilot.log"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -87,9 +89,9 @@ log_line_count() {
   fi
 }
 
-# Get the most recent merged PR number (empty if none)
+# Get the most recent merged PR number by current user (empty if none)
 latest_merged_pr() {
-  gh pr list --state merged --limit 1 --json number --jq '.[0].number // empty' 2>/dev/null || echo ""
+  gh pr list --state merged --author @me --limit 1 --json number --jq '.[0].number // empty' 2>/dev/null || echo ""
 }
 
 # Reset orphaned In Progress issues via a lightweight Claude call
@@ -146,6 +148,7 @@ while true; do
   # Detect when autopilot reports no remaining issues
   if grep -qiE "no.*(backlog|actionable|remaining).*issues|no more.*issues|no issues" "$output_file" 2>/dev/null; then
     log "No more actionable issues found. Stopping."
+    issue_count=$((issue_count - 1))  # don't count a no-op scan
     rm -f "$output_file"
     break
   fi
@@ -179,8 +182,10 @@ while true; do
     failure_count=$((failure_count + 1))
     consecutive_failures=$((consecutive_failures + 1))
 
-    # Reset any orphaned In Progress issues
-    reset_orphaned_issues
+    # Reset orphaned issues after 2+ consecutive failures to avoid expensive cleanup on every miss
+    if [[ "$consecutive_failures" -ge 2 ]]; then
+      reset_orphaned_issues
+    fi
 
     if [[ "$consecutive_failures" -ge "$MAX_CONSECUTIVE_FAILURES" ]]; then
       log "Hit $MAX_CONSECUTIVE_FAILURES consecutive failures. Stopping to avoid infinite loop."
