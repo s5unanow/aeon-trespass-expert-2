@@ -1,4 +1,4 @@
-"""Shared primitive builders for Architecture 3 golden tests.
+"""Shared primitive builders for golden tests.
 
 Provides helper functions for constructing synthetic PrimitivePageEvidence
 fixtures without PDF or network access. Used by topology goldens,

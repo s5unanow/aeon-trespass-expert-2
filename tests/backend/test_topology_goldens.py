@@ -1,4 +1,4 @@
-"""Golden tests for Architecture 3 intermediate topology/entity outputs.
+"""Golden tests for intermediate topology/entity outputs.
 
 Catches regressions in region segmentation, reading order, furniture
 subtraction, and figure-caption linking by comparing curated hard-page

@@ -37,8 +37,8 @@ def _build_default_engine(
 ) -> QAEngine:
     """Create engine with default rule set.
 
-    When *evidence* is provided (Architecture 3 runs), extraction-level
-    rules are registered alongside the standard translation/entity rules.
+    When *evidence* is provided, extraction-level rules are registered
+    alongside the standard translation/entity rules.
     """
     engine = QAEngine()
 

@@ -1,4 +1,4 @@
-"""QA rules for validating Architecture 3 extraction artifacts.
+"""QA rules for validating extraction artifacts.
 
 These rules validate structural invariants on region graphs and reading
 order produced by ``collect_evidence``. They receive evidence via

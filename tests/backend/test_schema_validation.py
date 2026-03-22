@@ -1,6 +1,6 @@
-"""Schema-validation test suite for persisted Architecture 3 artifacts.
+"""Schema-validation test suite for persisted evidence artifacts.
 
-Validates that every Architecture 3 evidence-layer artifact:
+Validates that every evidence-layer artifact:
   1. Serializes to JSON that passes the checked-in JSON Schema.
   2. Round-trips through the authoritative Pydantic model.
   3. Rejects payloads with missing required fields or invalid values.
@@ -63,7 +63,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 INTERNAL_SCHEMA_DIR = REPO_ROOT / "packages" / "contracts" / "jsonschema" / "pipeline"
 
 # Models and their corresponding schema filenames
-ARCH3_MODELS: list[tuple[str, type[Any]]] = [
+EVIDENCE_MODELS: list[tuple[str, type[Any]]] = [
     ("PrimitivePageEvidence", PrimitivePageEvidence),
     ("CanonicalPageEvidence", CanonicalPageEvidence),
     ("ResolvedPageIR", ResolvedPageIR),
@@ -646,7 +646,7 @@ class TestPageRegionGraphSchema:
 class TestSchemaConsistency:
     """Verify that Pydantic-generated schemas match checked-in schemas."""
 
-    @pytest.mark.parametrize("schema_name,model_cls", ARCH3_MODELS)
+    @pytest.mark.parametrize("schema_name,model_cls", EVIDENCE_MODELS)
     def test_pydantic_schema_matches_checked_in(
         self, schema_name: str, model_cls: type[Any]
     ) -> None:

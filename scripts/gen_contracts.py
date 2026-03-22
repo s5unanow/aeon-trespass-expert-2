@@ -147,7 +147,7 @@ _INTERNAL_SCHEMA_MODELS: list[type[BaseModel]] = [
     # Ingest/extract contracts
     DocumentManifest,
     ExtractedPage,
-    # Evidence layer (Architecture 3)
+    # Evidence layer
     PrimitivePageEvidence,
     CanonicalPageEvidence,
     ResolvedPageIR,
