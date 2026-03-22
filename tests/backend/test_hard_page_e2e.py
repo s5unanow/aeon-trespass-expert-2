@@ -13,8 +13,10 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+from collections.abc import Generator
 from pathlib import Path
 
+import orjson
 import pymupdf
 import pytest
 
@@ -31,6 +33,8 @@ from aeon_reader_pipeline.models.config_models import (
     SymbolPack,
 )
 from aeon_reader_pipeline.models.enrich_models import SearchIndex
+from aeon_reader_pipeline.models.evidence_models import ResolvedPageIR
+from aeon_reader_pipeline.models.release_models import ReleaseManifest
 from aeon_reader_pipeline.models.run_models import PipelineConfig
 from aeon_reader_pipeline.models.site_bundle_models import (
     BundlePage,
@@ -62,7 +66,7 @@ from aeon_reader_pipeline.stages.resolve_page_ir import ResolvePageIRStage
 from aeon_reader_pipeline.stages.translate_units import TranslateUnitsStage
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Constants & helpers
 # ---------------------------------------------------------------------------
 
 DOC_ID = "hard-page-fixture"
@@ -90,9 +94,9 @@ class _MockGateway(LlmGateway):
 def _create_fixture_pdf(path: Path) -> None:
     """Create a 3-page fixture PDF with mixed content complexity.
 
-    Page 1 — simple heading + body (likely semantic)
-    Page 2 — heading + body (will be overridden with hard-page evidence)
-    Page 3 — heading + body (likely semantic)
+    Page 1 — simple heading + body (semantic)
+    Page 2 — heading + body (forced to hybrid via resolved IR override)
+    Page 3 — heading + body (semantic)
     """
     doc = pymupdf.open()
 
@@ -183,6 +187,107 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
     )
 
 
+def _run_pipeline(tmp_path: Path) -> tuple[StageContext, Path]:
+    """Run the full v3 pipeline with a hard-page override on page 2.
+
+    Shared by all test classes so the pipeline runs once per fixture scope.
+    """
+    pdf = tmp_path / "fixture.pdf"
+    _create_fixture_pdf(pdf)
+    ctx = _make_context(tmp_path, pdf)
+
+    # --- Stages 01-02: Ingest + Extract (real PDF) ---
+    IngestSourceStage().execute(ctx)
+    ExtractPrimitivesStage().execute(ctx)
+
+    # --- Stage 02a: Collect evidence (v3) ---
+    CollectEvidenceStage().execute(ctx)
+
+    # --- Stage 02b: Resolve page IR (v3) ---
+    ResolvePageIRStage().execute(ctx)
+
+    # Override page 2 resolved IR to force non-semantic routing.
+    # This simulates a hard page (e.g. dense multi-column layout) that
+    # the confidence scorer routes to hybrid rendering.  The override
+    # happens *after* the evidence stages so that collect_evidence and
+    # resolve_page_ir run normally on all pages, and only the routing
+    # decision is forced — testing the full downstream chain (normalize
+    # → translate → export → bundle) with a non-semantic render_mode.
+    hard_resolved = ResolvedPageIR(
+        page_number=2,
+        doc_id=DOC_ID,
+        width_pt=612.0,
+        height_pt=792.0,
+        canonical_evidence_hash="forced-hard-page-hash",
+        render_mode="hybrid",
+        fallback_image_ref="p0002_fallback.png",
+        page_confidence=0.45,
+        confidence_reasons=["forced_hard_page_for_e2e_test"],
+    )
+    ctx.artifact_store.write_artifact(
+        ctx.run_id,
+        ctx.doc_id,
+        "resolve_page_ir",
+        "resolved/p0002.json",
+        hard_resolved,
+    )
+
+    # --- Stage 03: Normalize layout ---
+    NormalizeLayoutStage().execute(ctx)
+
+    # --- Stage 04: Resolve assets/symbols ---
+    ResolveAssetsSymbolsStage().execute(ctx)
+
+    # --- Stage 05: Plan translation ---
+    PlanTranslationStage().execute(ctx)
+
+    # --- Stage 06: Translate units ---
+    ctx.llm_gateway = _MockGateway()
+    TranslateUnitsStage().execute(ctx)
+
+    # --- Stage 07: Merge localization ---
+    MergeLocalizationStage().execute(ctx)
+
+    # --- Stage 08: Enrich content ---
+    EnrichContentStage().execute(ctx)
+
+    # --- Stage 09: Evaluate QA ---
+    EvaluateQAStage().execute(ctx)
+
+    # --- Stage 11: Export site bundle (stage 10 intentionally absent) ---
+    ExportSiteBundleStage().execute(ctx)
+
+    # --- Stage 12: Build reader (sync bundle) ---
+    BuildReaderStage().execute(ctx)
+
+    # --- Stage 13: Index search ---
+    IndexSearchStage().execute(ctx)
+
+    # --- Stage 14: Package release ---
+    PackageReleaseStage().execute(ctx)
+
+    bundle_dir = (
+        ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "export_site_bundle")
+        / "site_bundle"
+        / DOC_ID
+    )
+    return ctx, bundle_dir
+
+
+# ---------------------------------------------------------------------------
+# Shared fixture — runs the pipeline once per test class
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="class")
+def pipeline_result(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Generator[tuple[StageContext, Path], None, None]:
+    """Run the full v3 pipeline once and share results across all tests."""
+    tmp_path = tmp_path_factory.mktemp("hard_page_e2e")
+    yield _run_pipeline(tmp_path)
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -191,105 +296,19 @@ def _make_context(tmp_path: Path, pdf_path: Path) -> StageContext:
 class TestHardPageE2E:
     """End-to-end pipeline test with hard-page routing through v3 architecture."""
 
-    def _run_pipeline(self, tmp_path: Path) -> tuple[StageContext, Path]:
-        """Run the full v3 pipeline with a hard-page override on page 2."""
-        pdf = tmp_path / "fixture.pdf"
-        _create_fixture_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf)
-
-        # --- Stages 01-02: Ingest + Extract (real PDF) ---
-        IngestSourceStage().execute(ctx)
-        ExtractPrimitivesStage().execute(ctx)
-
-        # --- Stage 02a: Collect evidence (v3) ---
-        CollectEvidenceStage().execute(ctx)
-
-        # --- Stage 02b: Resolve page IR (v3) ---
-        ResolvePageIRStage().execute(ctx)
-
-        # Override page 2 resolved IR to force non-semantic routing.
-        # This simulates a hard page (e.g. dense multi-column layout) that
-        # the confidence scorer routes to hybrid rendering.  The override
-        # happens *after* the evidence stages so that collect_evidence and
-        # resolve_page_ir run normally on all pages, and only the routing
-        # decision is forced — testing the full downstream chain (normalize
-        # → translate → export → bundle) with a non-semantic render_mode.
-        from aeon_reader_pipeline.models.evidence_models import ResolvedPageIR
-
-        hard_resolved = ResolvedPageIR(
-            page_number=2,
-            doc_id=DOC_ID,
-            width_pt=612.0,
-            height_pt=792.0,
-            canonical_evidence_hash="forced-hard-page-hash",
-            render_mode="hybrid",
-            fallback_image_ref="p0002_fallback.png",
-            page_confidence=0.45,
-            confidence_reasons=["forced_hard_page_for_e2e_test"],
-        )
-        ctx.artifact_store.write_artifact(
-            ctx.run_id,
-            ctx.doc_id,
-            "resolve_page_ir",
-            "resolved/p0002.json",
-            hard_resolved,
-        )
-
-        # --- Stage 03: Normalize layout ---
-        NormalizeLayoutStage().execute(ctx)
-
-        # --- Stage 04: Resolve assets/symbols ---
-        ResolveAssetsSymbolsStage().execute(ctx)
-
-        # --- Stage 05: Plan translation ---
-        PlanTranslationStage().execute(ctx)
-
-        # --- Stage 06: Translate units ---
-        ctx.llm_gateway = _MockGateway()
-        TranslateUnitsStage().execute(ctx)
-
-        # --- Stage 07: Merge localization ---
-        MergeLocalizationStage().execute(ctx)
-
-        # --- Stage 08: Enrich content ---
-        EnrichContentStage().execute(ctx)
-
-        # --- Stage 09: Evaluate QA ---
-        EvaluateQAStage().execute(ctx)
-
-        # --- Stage 11: Export site bundle ---
-        ExportSiteBundleStage().execute(ctx)
-
-        # --- Stage 12: Build reader (sync bundle) ---
-        BuildReaderStage().execute(ctx)
-
-        # --- Stage 13: Index search ---
-        IndexSearchStage().execute(ctx)
-
-        # --- Stage 14: Package release ---
-        PackageReleaseStage().execute(ctx)
-
-        bundle_dir = (
-            ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "export_site_bundle")
-            / "site_bundle"
-            / DOC_ID
-        )
-        return ctx, bundle_dir
-
-    def test_pipeline_completes(self, tmp_path: Path) -> None:
+    def test_pipeline_completes(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Full v3 pipeline runs without errors."""
-        ctx, _ = self._run_pipeline(tmp_path)
-        # Verify release manifest exists
-        from aeon_reader_pipeline.models.release_models import ReleaseManifest
-
+        ctx, _ = pipeline_result
         release = ctx.artifact_store.read_artifact(
             ctx.run_id, ctx.doc_id, "package_release", "release_manifest.json", ReleaseManifest
         )
         assert release.all_accepted
 
-    def test_hard_page_routes_non_semantic(self, tmp_path: Path) -> None:
+    def test_hard_page_routes_non_semantic(
+        self, pipeline_result: tuple[StageContext, Path]
+    ) -> None:
         """Page 2 (hard-page override) routes to hybrid or facsimile."""
-        ctx, _bundle_dir = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         p2 = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -301,9 +320,11 @@ class TestHardPageE2E:
             f"Hard page should route non-semantic, got {p2.render_mode}"
         )
 
-    def test_fallback_image_ref_set_for_hard_page(self, tmp_path: Path) -> None:
+    def test_fallback_image_ref_set_for_hard_page(
+        self, pipeline_result: tuple[StageContext, Path]
+    ) -> None:
         """Non-semantic pages must have fallback_image_ref set."""
-        ctx, _ = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         p2 = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -316,9 +337,11 @@ class TestHardPageE2E:
                 f"Page 2 with render_mode={p2.render_mode} must have fallback_image_ref"
             )
 
-    def test_semantic_pages_route_correctly(self, tmp_path: Path) -> None:
+    def test_semantic_pages_route_correctly(
+        self, pipeline_result: tuple[StageContext, Path]
+    ) -> None:
         """Pages 1 and 3 (real extraction, simple content) route as semantic."""
-        ctx, _ = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         for pn in (1, 3):
             bp = ctx.artifact_store.read_artifact(
                 ctx.run_id,
@@ -331,9 +354,11 @@ class TestHardPageE2E:
                 f"Page {pn} (simple content) expected semantic, got {bp.render_mode}"
             )
 
-    def test_all_page_json_present_in_bundle(self, tmp_path: Path) -> None:
+    def test_all_page_json_present_in_bundle(
+        self, pipeline_result: tuple[StageContext, Path]
+    ) -> None:
         """Every page has a corresponding JSON file in the exported bundle."""
-        ctx, bundle_dir = self._run_pipeline(tmp_path)
+        ctx, bundle_dir = pipeline_result
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -345,9 +370,9 @@ class TestHardPageE2E:
             page_path = bundle_dir / "pages" / f"p{pn:04d}.json"
             assert page_path.exists(), f"Missing bundle page JSON: {page_path}"
 
-    def test_bundle_manifest_valid(self, tmp_path: Path) -> None:
+    def test_bundle_manifest_valid(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Bundle manifest has correct metadata."""
-        ctx, _ = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -360,9 +385,11 @@ class TestHardPageE2E:
         assert manifest.has_search is True
         assert manifest.qa_accepted is True
 
-    def test_search_documents_cover_all_pages(self, tmp_path: Path) -> None:
+    def test_search_documents_cover_all_pages(
+        self, pipeline_result: tuple[StageContext, Path]
+    ) -> None:
         """Search documents exist and cover pages with content."""
-        ctx, _ = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         search = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -376,9 +403,9 @@ class TestHardPageE2E:
         assert 1 in pages_covered, "Page 1 missing from search documents"
         assert 3 in pages_covered, "Page 3 missing from search documents"
 
-    def test_search_index_manifest_valid(self, tmp_path: Path) -> None:
+    def test_search_index_manifest_valid(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Search index manifest records positive document count."""
-        ctx, _ = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         search_manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -389,9 +416,9 @@ class TestHardPageE2E:
         assert search_manifest.total_documents >= 1
         assert search_manifest.index_status == "search-data-validated"
 
-    def test_asset_refs_resolve(self, tmp_path: Path) -> None:
+    def test_asset_refs_resolve(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Every asset_ref in figure blocks points to an existing file or is empty."""
-        ctx, _bundle_dir = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -413,13 +440,11 @@ class TestHardPageE2E:
                 if asset_ref and asset_ref.startswith("/assets/"):
                     # Strip leading /assets/<doc_id>/ to get relative path
                     rel = asset_ref.split("/", 3)[-1] if asset_ref.count("/") >= 3 else asset_ref
-                    # Asset may not exist for synthetic pages — validate it's at
-                    # least a well-formed reference
                     assert rel, f"Empty asset_ref after prefix strip on page {pn}"
 
-    def test_bundle_synced_to_reader(self, tmp_path: Path) -> None:
+    def test_bundle_synced_to_reader(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Build reader stage syncs bundle to the generated directory."""
-        ctx, _ = self._run_pipeline(tmp_path)
+        ctx, _ = pipeline_result
         build_manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -439,17 +464,29 @@ class TestHardPageE2E:
         assert (generated_dir / "pages" / "p0002.json").exists()
         assert (generated_dir / "pages" / "p0003.json").exists()
 
-    def test_catalog_written(self, tmp_path: Path) -> None:
+    def test_catalog_written(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Catalog manifest is written to the reader generated root."""
-        _ctx, _ = self._run_pipeline(tmp_path)
-        catalog_path = tmp_path / "apps" / "reader" / "generated" / "catalog.json"
+        ctx, _ = pipeline_result
+        generated_root = Path(
+            ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "build_reader",
+                "build_manifest.json",
+                ReaderBuildManifest,
+            ).reader_generated_dir
+        ).parent
+        catalog_path = generated_root / "catalog.json"
         assert catalog_path.exists(), "catalog.json not written"
-        import orjson
-
         catalog = orjson.loads(catalog_path.read_bytes())
         assert catalog["total_documents"] >= 1
         doc_ids = [d["doc_id"] for d in catalog["documents"]]
         assert DOC_ID in doc_ids
+
+
+# ---------------------------------------------------------------------------
+# Reader build integration (requires pnpm)
+# ---------------------------------------------------------------------------
 
 
 def _pnpm_available() -> bool:
@@ -470,67 +507,27 @@ class TestReaderBuildIntegration:
 
     These verify the reader can build with pipeline-produced hard-page bundles.
     Skipped in environments without pnpm.
+
+    NOTE: This test temporarily replaces ``apps/reader/generated/`` in the real
+    project directory and restores it afterward.  Do not run in parallel with
+    other tests that modify that directory.
     """
-
-    @pytest.fixture()
-    def pipeline_bundle(self, tmp_path: Path) -> tuple[StageContext, Path]:
-        """Run the pipeline and return ctx + reader generated dir."""
-        pdf = tmp_path / "fixture.pdf"
-        _create_fixture_pdf(pdf)
-        ctx = _make_context(tmp_path, pdf)
-
-        IngestSourceStage().execute(ctx)
-        ExtractPrimitivesStage().execute(ctx)
-        CollectEvidenceStage().execute(ctx)
-        ResolvePageIRStage().execute(ctx)
-
-        from aeon_reader_pipeline.models.evidence_models import ResolvedPageIR
-
-        hard_resolved = ResolvedPageIR(
-            page_number=2,
-            doc_id=DOC_ID,
-            width_pt=612.0,
-            height_pt=792.0,
-            canonical_evidence_hash="forced-hard-page-hash",
-            render_mode="hybrid",
-            fallback_image_ref="p0002_fallback.png",
-            page_confidence=0.45,
-            confidence_reasons=["forced_hard_page_for_e2e_test"],
-        )
-        ctx.artifact_store.write_artifact(
-            ctx.run_id,
-            ctx.doc_id,
-            "resolve_page_ir",
-            "resolved/p0002.json",
-            hard_resolved,
-        )
-        NormalizeLayoutStage().execute(ctx)
-        ResolveAssetsSymbolsStage().execute(ctx)
-        PlanTranslationStage().execute(ctx)
-        ctx.llm_gateway = _MockGateway()
-        TranslateUnitsStage().execute(ctx)
-        MergeLocalizationStage().execute(ctx)
-        EnrichContentStage().execute(ctx)
-        EvaluateQAStage().execute(ctx)
-        ExportSiteBundleStage().execute(ctx)
-        BuildReaderStage().execute(ctx)
-        IndexSearchStage().execute(ctx)
-        PackageReleaseStage().execute(ctx)
-
-        generated_dir = tmp_path / "apps" / "reader" / "generated"
-        return ctx, generated_dir
 
     @pytest.mark.skipif(not _pnpm_available(), reason="pnpm not available")
     def test_reader_builds_with_hard_page_bundle(
-        self, pipeline_bundle: tuple[StageContext, Path], tmp_path: Path
+        self, pipeline_result: tuple[StageContext, Path]
     ) -> None:
-        """Verify the Next.js reader builds successfully with hard-page bundle data.
-
-        This test copies the pipeline-produced bundle into the real reader app's
-        generated directory, runs ``pnpm --filter reader build``, and checks that
-        the static output contains the expected page files.
-        """
-        _, generated_dir = pipeline_bundle
+        """Verify the Next.js reader builds successfully with hard-page bundle data."""
+        ctx, _ = pipeline_result
+        generated_dir = Path(
+            ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "build_reader",
+                "build_manifest.json",
+                ReaderBuildManifest,
+            ).reader_generated_dir
+        ).parent
 
         # Find the real project root (where apps/reader lives)
         project_root = Path(__file__).resolve().parent.parent.parent
