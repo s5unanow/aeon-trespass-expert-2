@@ -62,6 +62,34 @@ jobs:
           path: apps/reader/coverage/
       - run: pnpm --filter reader build
 
+  operator-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+      - run: pnpm install
+      - name: Sync fixture bundles
+        run: |
+          rm -rf apps/reader/generated
+          mkdir -p apps/reader/generated
+          cp -r tests/fixtures/site-bundles/* apps/reader/generated/
+      - name: Build static site
+        run: make site-build
+      - name: Build search index
+        run: make build-search
+      - name: Verify site output
+        run: |
+          test -d apps/reader/out || (echo "FAIL: out/ directory missing" && exit 1)
+          test -f apps/reader/out/index.html || (echo "FAIL: index.html missing" && exit 1)
+      - name: Verify search index
+        run: |
+          test -d apps/reader/out/pagefind || (echo "FAIL: pagefind/ directory missing" && exit 1)
+          test -f apps/reader/out/pagefind/pagefind.js || (echo "FAIL: pagefind.js missing" && exit 1)
+
   e2e:
     needs: frontend
     runs-on: ubuntu-latest

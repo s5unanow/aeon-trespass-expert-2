@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:search": "pagefind --site out --output-subdir pagefind"
   },
   "dependencies": {
     "@aeon-reader/contracts": "workspace:*",
@@ -31,6 +32,7 @@
     "eslint": "^9.0",
     "eslint-config-next": "^15.2",
     "jsdom": "^26.0",
+    "pagefind": "^1.4.0",
     "typescript": "^5.7",
     "vitest": "^3.0"
   }
