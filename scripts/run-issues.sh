@@ -30,7 +30,7 @@ COOLDOWN="${COOLDOWN:-5}"
 MAX_ISSUES=0  # 0 = unlimited
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-AUTOPILOT_LOG="$REPO_ROOT/.claude/skills/autopilot/data/autopilot.log"
+AUTOPILOT_LOG="${AUTOPILOT_LOG:-$REPO_ROOT/.claude/skills/autopilot/data/autopilot.log}"
 
 # ---------------------------------------------------------------------------
 # Argument parsing
@@ -98,7 +98,7 @@ latest_merged_pr() {
 reset_orphaned_issues() {
   log "Checking for orphaned In Progress issues..."
   local cleanup_prompt
-  cleanup_prompt="List all issues in Linear project ATE2 with state 'In Progress'. "
+  cleanup_prompt="List all issues in Linear team S5U with state 'In Progress'. "
   cleanup_prompt+="For each, check if a git branch exists (git branch -a | grep s5u-<number>) "
   cleanup_prompt+="and if an open PR exists (gh pr list --search 'S5U-<number>'). "
   cleanup_prompt+="If an issue has NO matching branch AND no open PR, reset it to Backlog "
@@ -110,6 +110,11 @@ reset_orphaned_issues() {
     --max-turns 10 \
     2>&1 | while IFS= read -r line; do log "  [orphan-check] $line"; done
 }
+
+# ---------------------------------------------------------------------------
+# Safety net: run orphan cleanup on any exit (normal, break, or signal)
+# ---------------------------------------------------------------------------
+trap reset_orphaned_issues EXIT
 
 # ---------------------------------------------------------------------------
 # Main loop
@@ -181,11 +186,6 @@ while true; do
     log "Issue run #$issue_count NOT verified (exit code: $exit_code, no merged PR or log entry)"
     failure_count=$((failure_count + 1))
     consecutive_failures=$((consecutive_failures + 1))
-
-    # Reset orphaned issues after 2+ consecutive failures to avoid expensive cleanup on every miss
-    if [[ "$consecutive_failures" -ge 2 ]]; then
-      reset_orphaned_issues
-    fi
 
     if [[ "$consecutive_failures" -ge "$MAX_CONSECUTIVE_FAILURES" ]]; then
       log "Hit $MAX_CONSECUTIVE_FAILURES consecutive failures. Stopping to avoid infinite loop."
