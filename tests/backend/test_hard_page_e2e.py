@@ -537,15 +537,16 @@ class TestReaderBuildIntegration:
         if not reader_dir.exists():
             pytest.skip("Reader app directory not found")
 
-        # Back up existing generated dir if present
+        # Back up existing generated dir if present and swap in test data
         backup = None
-        if real_generated.exists():
-            backup = real_generated.with_name("generated.bak")
-            if backup.exists():
-                shutil.rmtree(backup)
-            real_generated.rename(backup)
-
+        out_dir = reader_dir / "out"
         try:
+            if real_generated.exists():
+                backup = real_generated.with_name("generated.bak")
+                if backup.exists():
+                    shutil.rmtree(backup)
+                real_generated.rename(backup)
+
             # Copy pipeline-produced bundle to real reader location
             shutil.copytree(generated_dir, real_generated)
 
@@ -563,7 +564,6 @@ class TestReaderBuildIntegration:
             )
 
             # Verify static output was produced
-            out_dir = reader_dir / "out"
             assert out_dir.exists(), "Reader build did not produce out/ directory"
 
             # Check page routes exist
@@ -571,7 +571,9 @@ class TestReaderBuildIntegration:
                 page_route = out_dir / "docs" / DOC_ID / "page" / str(pn) / "index.html"
                 assert page_route.exists(), f"Missing page route: {page_route}"
         finally:
-            # Restore original generated dir
+            # Clean up build artifacts and restore original generated dir
+            if out_dir.exists():
+                shutil.rmtree(out_dir)
             if real_generated.exists():
                 shutil.rmtree(real_generated)
             if backup and backup.exists():
