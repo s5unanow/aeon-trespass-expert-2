@@ -1,0 +1,65 @@
+{
+  "furniture_candidates": [
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.01,
+        "y1": 0.04
+      },
+      "candidate_id": "furn:header:000",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "header",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "text",
+      "text_sample": "Aeon Trespass: Odyssey — Core Rulebook"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.45,
+        "x1": 0.55,
+        "y0": 0.96,
+        "y1": 0.99
+      },
+      "candidate_id": "furn:page_number:001",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "page_number",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "text",
+      "text_sample": "1"
+    }
+  ],
+  "templates": [
+    {
+      "description": "",
+      "furniture_ids": [
+        "furn:header:000",
+        "furn:page_number:001"
+      ],
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "template_id": "tpl:d53f2695"
+    }
+  ],
+  "total_pages_analyzed": 4
+}

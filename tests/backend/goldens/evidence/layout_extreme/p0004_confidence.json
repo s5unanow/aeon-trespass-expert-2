@@ -1,0 +1,11 @@
+{
+  "confidence": 0.56332,
+  "reasons": [
+    "region_confidence_min=0.35 (penalty=0.163)",
+    "reading_order_confidence_min=0.35 (penalty=0.163)",
+    "column_count=2 (penalty=0.045)",
+    "entity_density_penalty=0.60 (penalty=0.060)",
+    "furniture_fraction=0.53 (penalty=0.007)"
+  ],
+  "route": "hybrid"
+}
