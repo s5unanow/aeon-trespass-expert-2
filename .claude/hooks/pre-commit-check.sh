@@ -63,61 +63,67 @@ TOTAL=0
 if [ "$HAS_PYTHON" = true ]; then TOTAL=$((TOTAL + 4)); fi   # ruff check, ruff format, mypy, pytest
 if [ "$HAS_FRONTEND" = true ]; then TOTAL=$((TOTAL + 2)); fi # pnpm lint, tsc
 
+MAX_FAIL_LINES=30
+GATE_OUTPUT=$(mktemp)
+trap 'rm -f "$GATE_OUTPUT"' EXIT
+
+# ── run_gate: capture output, show summary on pass, truncated output on fail ──
+# Usage: run_gate "label" "fail_message" command [args...]
+run_gate() {
+  local label="$1" fail_msg="$2"
+  shift 2
+
+  GATE=$((GATE + 1))
+  echo "  [$GATE/$TOTAL] $label..."
+
+  if "$@" > "$GATE_OUTPUT" 2>&1; then
+    echo "  ✓ $label passed"
+  else
+    local total_lines
+    total_lines=$(wc -l < "$GATE_OUTPUT")
+    if [ "$total_lines" -gt "$MAX_FAIL_LINES" ]; then
+      head -n "$MAX_FAIL_LINES" "$GATE_OUTPUT"
+      echo "  ... ($((total_lines - MAX_FAIL_LINES)) more lines truncated)"
+    else
+      cat "$GATE_OUTPUT"
+    fi
+    echo ""
+    echo "❌ BLOCKED: $fail_msg"
+    exit 1
+  fi
+}
+
 # ── Python gates ──
 if [ "$HAS_PYTHON" = true ]; then
-  GATE=$((GATE + 1))
-  echo "  [$GATE/$TOTAL] ruff check..."
-  if ! uv run ruff check packages/pipeline/src/ tests/ 2>&1; then
-    echo ""
-    echo "❌ BLOCKED: ruff check failed. Fix lint errors before committing."
-    exit 1
-  fi
+  run_gate "ruff check" \
+    "ruff check failed. Fix lint errors before committing." \
+    uv run ruff check packages/pipeline/src/ tests/
 
-  GATE=$((GATE + 1))
-  echo "  [$GATE/$TOTAL] ruff format --check..."
-  if ! uv run ruff format --check packages/pipeline/src/ tests/ 2>&1; then
-    echo ""
-    echo "❌ BLOCKED: ruff format failed. Run 'ruff format' to fix."
-    exit 1
-  fi
+  run_gate "ruff format --check" \
+    "ruff format failed. Run 'ruff format' to fix." \
+    uv run ruff format --check packages/pipeline/src/ tests/
 
-  GATE=$((GATE + 1))
-  echo "  [$GATE/$TOTAL] mypy --strict..."
-  if ! uv run mypy --strict packages/pipeline/src/ 2>&1; then
-    echo ""
-    echo "❌ BLOCKED: mypy failed. Fix type errors before committing."
-    exit 1
-  fi
+  run_gate "mypy --strict" \
+    "mypy failed. Fix type errors before committing." \
+    uv run mypy --strict packages/pipeline/src/
 fi
 
 # ── Frontend gates ──
 if [ "$HAS_FRONTEND" = true ]; then
-  GATE=$((GATE + 1))
-  echo "  [$GATE/$TOTAL] pnpm lint..."
-  if ! (cd apps/reader && pnpm lint 2>&1); then
-    echo ""
-    echo "❌ BLOCKED: ESLint failed. Fix frontend lint errors before committing."
-    exit 1
-  fi
+  run_gate "pnpm lint" \
+    "ESLint failed. Fix frontend lint errors before committing." \
+    bash -c 'cd apps/reader && pnpm lint'
 
-  GATE=$((GATE + 1))
-  echo "  [$GATE/$TOTAL] tsc --noEmit..."
-  if ! (cd apps/reader && pnpm tsc --noEmit 2>&1); then
-    echo ""
-    echo "❌ BLOCKED: tsc failed. Fix TypeScript errors before committing."
-    exit 1
-  fi
+  run_gate "tsc --noEmit" \
+    "tsc failed. Fix TypeScript errors before committing." \
+    bash -c 'cd apps/reader && pnpm tsc --noEmit'
 fi
 
 # ── Python tests ──
 if [ "$HAS_PYTHON" = true ]; then
-  GATE=$((GATE + 1))
-  echo "  [$GATE/$TOTAL] pytest (fast)..."
-  if ! uv run pytest tests/ -x -q --timeout=60 -m "not slow" 2>&1; then
-    echo ""
-    echo "❌ BLOCKED: Tests failed. Fix failing tests before committing."
-    exit 1
-  fi
+  run_gate "pytest (fast)" \
+    "Tests failed. Fix failing tests before committing." \
+    uv run pytest tests/ -x -q --timeout=60 -m "not slow"
 fi
 
 echo "✅ All quality gates passed."
