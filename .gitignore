@@ -48,6 +48,7 @@ review/
 *.swo
 
 # Coverage
+.coverage
 coverage/
 coverage-html/
 
