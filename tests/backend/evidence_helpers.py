@@ -137,6 +137,10 @@ def run_evidence_pipeline(
         result.confidences[pn] = (confidence, reasons)
         result.routes[pn] = render_mode
 
+        fallback_ref: str | None = None
+        if render_mode != "semantic":
+            fallback_ref = f"p{pn:04d}_fallback.png"
+
         resolved = ResolvedPageIR(
             page_number=pn,
             doc_id=primitive.doc_id,
@@ -144,6 +148,7 @@ def run_evidence_pipeline(
             height_pt=primitive.height_pt,
             canonical_evidence_hash=hash_model(canonical),
             render_mode=render_mode,
+            fallback_image_ref=fallback_ref,
             page_confidence=confidence,
             confidence_reasons=reasons,
         )
