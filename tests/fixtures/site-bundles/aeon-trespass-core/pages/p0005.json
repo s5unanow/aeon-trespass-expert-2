@@ -29,8 +29,38 @@
       "content": [
         {
           "kind": "text",
-          "text": "Players take turns performing actions during the battle phase.",
-          "ru_text": "Игроки по очереди выполняют действия во время фазы сражения.",
+          "text": "Players take turns performing actions during the",
+          "ru_text": "Игроки по очереди выполняют действия во время",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        },
+        {
+          "kind": "glossary_ref",
+          "term_id": "battle-phase",
+          "surface_form": "battle phase",
+          "ru_surface_form": "фазы сражения"
+        },
+        {
+          "kind": "text",
+          "text": ". Each player rolls the",
+          "ru_text": ". Каждый игрок бросает",
+          "bold": false,
+          "italic": false,
+          "monospace": false
+        },
+        {
+          "kind": "symbol",
+          "symbol_id": "sym:action-die",
+          "alt_text": "Action Die",
+          "label": "Action Die",
+          "svg_data": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\"><rect width=\"14\" height=\"14\" x=\"1\" y=\"1\" rx=\"2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><circle cx=\"8\" cy=\"8\" r=\"2\" fill=\"currentColor\"/></svg>",
+          "anchor_type": "inline"
+        },
+        {
+          "kind": "text",
+          "text": "to determine available actions.",
+          "ru_text": "чтобы определить доступные действия.",
           "bold": false,
           "italic": false,
           "monospace": false
