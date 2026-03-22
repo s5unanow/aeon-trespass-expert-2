@@ -21,22 +21,24 @@ Priority order: Urgent > High > Normal > Low. Within same priority, pick from th
 
 If no Backlog issues remain, report to the user and stop.
 
-### 2. Set In Progress
-```
-mcp__linear__save_issue(id="S5U-XXX", state="In Progress")
-```
-
-### 3. Create Branch
-```bash
-git checkout main && git pull
-git checkout -b s5unanow/s5u-XXX-short-description
-```
-
-### 4. Verify Acceptance Criteria
+### 2. Verify Acceptance Criteria
 The issue **must** have an explicit "Acceptance Criteria" or "Definition of done" section before implementation begins.
 - If the issue lacks acceptance criteria, **stop and ask the user** to add them
 - Alternatively, draft acceptance criteria based on the issue description and present them for user approval before proceeding
 - Do not guess what "done" looks like — it must be written down
+- If acceptance criteria cannot be confirmed, **abandon the issue** (see Cleanup on Failure below) — do not claim it
+
+### 3. Set In Progress
+Only after confirming acceptance criteria exist and the issue is workable:
+```
+mcp__linear__save_issue(id="S5U-XXX", state="In Progress")
+```
+
+### 4. Create Branch
+```bash
+git checkout main && git pull
+git checkout -b s5unanow/s5u-XXX-short-description
+```
 
 ### 5. Implement
 - Read the issue description and acceptance criteria carefully
@@ -108,12 +110,38 @@ Defaults are in `.claude/skills/autopilot/data/config.json`. Edit to customize:
 
 ## Run Log
 
-Append each completed issue to `.claude/skills/autopilot/data/autopilot.log`:
+Append each completed or abandoned issue to `.claude/skills/autopilot/data/autopilot.log`:
 ```
 [2026-03-18T16:30:00Z] S5U-138 — DONE (PR #42, 1 CI attempt)
 [2026-03-18T17:45:00Z] S5U-139 — DONE (PR #43, 2 CI attempts)
 [2026-03-18T18:30:00Z] S5U-140 — BLOCKED (review found critical issues, user intervention needed)
+[2026-03-18T19:00:00Z] S5U-141 — SKIPPED (missing prerequisites: depends on S5U-135)
+[2026-03-18T19:05:00Z] S5U-142 — ABANDONED (max turns approaching, incomplete implementation)
 ```
+
+## Cleanup on Failure
+
+If at any point the current issue cannot be completed — blocking error, missing prerequisites, max turns approaching, or any unrecoverable situation — you **must** clean up before exiting:
+
+1. **Reset the issue to Backlog** (only if it was set to In Progress):
+   ```
+   mcp__linear__save_issue(id="S5U-XXX", state="Backlog")
+   ```
+
+2. **Log the outcome** to `.claude/skills/autopilot/data/autopilot.log` with status `SKIPPED` or `ABANDONED`:
+   - `SKIPPED` — issue could not be started (missing prerequisites, no acceptance criteria, depends on another issue)
+   - `ABANDONED` — work started but could not be finished (max turns, blocking error, review BLOCK that can't be resolved)
+   - Always include the reason in parentheses
+
+3. **Clean up any partial branch** if no commits were made:
+   ```bash
+   git checkout main
+   git branch -D s5unanow/s5u-XXX-short-description  # only if no commits pushed
+   ```
+
+4. **Report to the user** what happened and why the issue was abandoned
+
+This cleanup is **mandatory**. Never exit a session leaving an issue in "In Progress" with no branch, commits, or PR.
 
 ## Safety Rails
 
