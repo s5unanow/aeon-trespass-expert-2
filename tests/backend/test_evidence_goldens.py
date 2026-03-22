@@ -1,4 +1,4 @@
-"""Golden tests for Architecture 3 evidence pipeline end-to-end.
+"""Golden tests for evidence pipeline end-to-end.
 
 Runs synthetic multi-page fixtures through the full evidence pipeline
 (furniture detection → asset registry → region segmentation → reading

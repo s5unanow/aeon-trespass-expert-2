@@ -656,9 +656,7 @@ class NormalizeLayoutStage(BaseStage):
         ctx: StageContext,
         page_number: int,
     ) -> ResolvedPageIR | None:
-        """Load resolved page IR for render-mode routing (v3 only)."""
-        if ctx.pipeline_config.architecture != "v3":
-            return None
+        """Load resolved page IR for render-mode routing."""
         try:
             return ctx.artifact_store.read_artifact(
                 ctx.run_id,
@@ -680,9 +678,7 @@ class NormalizeLayoutStage(BaseStage):
         ctx: StageContext,
         page_number: int,
     ) -> list[RegionCandidate]:
-        """Load callout regions from canonical evidence (v3 only)."""
-        if ctx.pipeline_config.architecture != "v3":
-            return []
+        """Load callout regions from canonical evidence."""
         try:
             canonical = ctx.artifact_store.read_artifact(
                 ctx.run_id,

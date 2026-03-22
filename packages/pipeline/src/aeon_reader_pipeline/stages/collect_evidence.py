@@ -61,11 +61,6 @@ class CollectEvidenceStage(BaseStage):
     version = STAGE_VERSION
     description = "Build canonical page evidence from primitive evidence"
 
-    def should_skip(self, ctx: StageContext) -> bool:
-        if ctx.pipeline_config.architecture == "v2":
-            return True
-        return super().should_skip(ctx)
-
     def execute(self, ctx: StageContext) -> None:
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 import structlog
 import typer
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from aeon_reader_pipeline.models.config_models import ModelProfile
     from aeon_reader_pipeline.models.run_models import CostEstimate, PipelineConfig
     from aeon_reader_pipeline.stage_framework.context import StageContext
-    from aeon_reader_pipeline.utils.architecture_compare import PageComparisonResult
 
 logger = structlog.get_logger()
 
@@ -593,185 +592,6 @@ def generate_overlays(
                 typer.echo(f"  {out}")
 
     typer.echo(f"\nGenerated {written} overlay(s).")
-
-
-def _run_arch_pipeline(
-    *,
-    arch: Literal["v2", "v3"],
-    doc: str,
-    artifact_root: Path,
-    page_filter: list[int] | None,
-    store: ArtifactStore,
-    ctx_kwargs: dict[str, Any],
-) -> tuple[str, list[int]]:
-    """Run a pipeline for a specific architecture, return (run_id, target_pages)."""
-    from aeon_reader_pipeline.models.manifest_models import DocumentManifest
-    from aeon_reader_pipeline.stage_framework.runner import PipelineRunner
-    from aeon_reader_pipeline.utils.page_filter import pages_to_process
-
-    run_id = f"compare-{arch}-{datetime.now(UTC).strftime('%H%M%S')}"
-    store.create_run(run_id, [doc])
-
-    pipeline_config = _build_pipeline_config(
-        run_id=run_id,
-        doc_ids=[doc],
-        from_stage=None,
-        to_stage="normalize_layout",
-        cache_mode="read_write",
-        strict=False,
-        skip_qa_gate=True,
-        source_only=False,
-        dry_run=False,
-        concurrency=1,
-        artifact_root=artifact_root,
-        page_filter=page_filter,
-    )
-    pipeline_config.architecture = arch
-
-    from aeon_reader_pipeline.stage_framework.context import StageContext
-
-    ctx = StageContext(run_id=run_id, doc_id=doc, pipeline_config=pipeline_config, **ctx_kwargs)
-    typer.echo(f"\n--- Running {arch} pipeline for {doc} ---")
-    PipelineRunner().run(ctx)
-
-    manifest = store.read_artifact(
-        run_id,
-        doc,
-        "ingest_source",
-        "document_manifest.json",
-        DocumentManifest,
-    )
-    return run_id, pages_to_process(manifest.page_count, page_filter)
-
-
-def _print_comparison_report(
-    doc: str,
-    page_results: list[PageComparisonResult],
-) -> None:
-    """Print a formatted comparison table."""
-    from aeon_reader_pipeline.utils.architecture_compare import (
-        build_comparison_report,
-    )
-
-    report = build_comparison_report(doc, page_results)
-
-    typer.echo(f"\n{'=' * 80}")
-    typer.echo(f"Architecture Comparison: {doc}")
-    typer.echo(f"{'=' * 80}")
-    typer.echo(
-        f"{'Page':>6} | {'v2 blocks':>10} | {'v3 blocks':>10} | "
-        f"{'delta':>6} | {'v3 route':>10} | {'confidence':>10}"
-    )
-    sep = f"{'─' * 6}─+─{'─' * 10}─+─{'─' * 10}─+─{'─' * 6}─+─{'─' * 10}─+─{'─' * 10}"
-    typer.echo(sep)
-
-    for p in report.pages:
-        typer.echo(
-            f"{p.page_number:>6} | {p.v2_block_count:>10} | {p.v3_block_count:>10} | "
-            f"{p.block_count_delta:>+6} | {p.v3_render_mode:>10} | {p.v3_confidence:>10.3f}"
-        )
-
-    typer.echo(sep)
-    typer.echo(
-        f"{'avg':>6} | {report.avg_v2_blocks:>10.1f} | {report.avg_v3_blocks:>10.1f} | "
-        f"{report.avg_block_delta:>+6.1f} | {'':>10} | {report.avg_v3_confidence:>10.3f}"
-    )
-    typer.echo(f"\nv3 route distribution: {dict(report.v3_route_counts)}")
-
-
-@app.command("compare-architectures")
-def compare_architectures(
-    doc: str = typer.Option(..., help="Document ID to compare"),
-    configs: Path = typer.Option(Path("configs"), help="Config directory root"),  # noqa: B008
-    artifact_root: Path = typer.Option(  # noqa: B008
-        Path("artifacts"), help="Artifact output root"
-    ),
-    mock: bool = typer.Option(True, help="Use mock translation (no LLM calls)"),
-    pages: str | None = typer.Option(None, "--pages", help="Page filter (e.g. '1-5')"),
-) -> None:
-    """Compare v2 and v3 pipeline outputs for a document side-by-side."""
-    _import_stages()
-
-    from aeon_reader_pipeline.config.loader import (
-        load_document_config,
-        load_glossary_pack,
-        load_model_profile,
-        load_rule_profile,
-        load_symbol_pack,
-    )
-    from aeon_reader_pipeline.io.artifact_store import ArtifactStore
-    from aeon_reader_pipeline.models.ir_models import PageRecord
-    from aeon_reader_pipeline.utils.architecture_compare import compare_page_outputs
-
-    page_filter = _parse_pages_option(pages)
-    configs_root = configs.resolve()
-    doc_config = load_document_config(configs_root, doc)
-
-    store = ArtifactStore(artifact_root.resolve())
-    llm_gateway = _setup_gateway(mock=mock, dry_run=False)
-
-    ctx_kwargs = {
-        "document_config": doc_config,
-        "rule_profile": load_rule_profile(configs_root, doc_config.profiles.rules),
-        "model_profile": load_model_profile(configs_root, doc_config.profiles.models),
-        "symbol_pack": load_symbol_pack(configs_root, doc_config.profiles.symbols),
-        "glossary_pack": load_glossary_pack(configs_root, doc_config.profiles.glossary),
-        "patch_set": None,
-        "artifact_store": store,
-        "configs_root": configs_root,
-        "llm_gateway": llm_gateway,
-    }
-
-    v2_run_id, target_pages = _run_arch_pipeline(
-        arch="v2",
-        doc=doc,
-        artifact_root=artifact_root,
-        page_filter=page_filter,
-        store=store,
-        ctx_kwargs=ctx_kwargs,
-    )
-    v3_run_id, _ = _run_arch_pipeline(
-        arch="v3",
-        doc=doc,
-        artifact_root=artifact_root,
-        page_filter=page_filter,
-        store=store,
-        ctx_kwargs=ctx_kwargs,
-    )
-
-    page_results = []
-    for pn in target_pages:
-        v2_page = store.read_artifact(
-            v2_run_id,
-            doc,
-            "normalize_layout",
-            f"pages/p{pn:04d}.json",
-            PageRecord,
-        )
-        v3_page = store.read_artifact(
-            v3_run_id,
-            doc,
-            "normalize_layout",
-            f"pages/p{pn:04d}.json",
-            PageRecord,
-        )
-        v3_confidence = 1.0
-        try:
-            from aeon_reader_pipeline.models.evidence_models import ResolvedPageIR
-
-            resolved = store.read_artifact(
-                v3_run_id,
-                doc,
-                "resolve_page_ir",
-                f"p{pn:04d}.json",
-                ResolvedPageIR,
-            )
-            v3_confidence = resolved.page_confidence
-        except FileNotFoundError:
-            pass
-        page_results.append(compare_page_outputs(v2_page, v3_page, v3_confidence=v3_confidence))
-
-    _print_comparison_report(doc, page_results)
 
 
 if __name__ == "__main__":

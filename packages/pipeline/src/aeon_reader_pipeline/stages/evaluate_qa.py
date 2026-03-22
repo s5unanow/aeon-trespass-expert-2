@@ -37,8 +37,8 @@ def _build_default_engine(
 ) -> QAEngine:
     """Create engine with default rule set.
 
-    When *evidence* is provided (Architecture 3 runs), extraction-level
-    rules are registered alongside the standard translation/entity rules.
+    When *evidence* is provided, extraction-level rules are registered
+    alongside the standard translation/entity rules.
     """
     engine = QAEngine()
 
@@ -55,7 +55,7 @@ def _build_default_engine(
     engine.register(TableStructureRule())
     engine.register(CalloutStructureRule())
 
-    # Extraction rules (v3 only — need evidence artifacts)
+    # Extraction rules (need evidence artifacts)
     if evidence is not None:
         engine.register(RegionGraphValidityRule(evidence))
         engine.register(ReadingOrderValidityRule(evidence))
@@ -131,11 +131,9 @@ class EvaluateQAStage(BaseStage):
         except FileNotFoundError:
             ctx.logger.warning("navigation_not_found")
 
-        # Load evidence for v3 extraction rules
-        evidence: dict[int, CanonicalPageEvidence] | None = None
-        if ctx.pipeline_config.architecture == "v3":
-            evidence = _load_evidence(ctx, page_nums)
-            ctx.logger.info("evidence_loaded", pages_with_evidence=len(evidence))
+        # Load evidence for extraction rules
+        evidence = _load_evidence(ctx, page_nums)
+        ctx.logger.info("evidence_loaded", pages_with_evidence=len(evidence))
 
         # Run QA engine
         engine = _build_default_engine(evidence=evidence)

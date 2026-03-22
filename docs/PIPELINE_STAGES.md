@@ -9,6 +9,4 @@ Canonical order defined in `stage_framework/registry.py` (single source of truth
 12_build_reader → 13_index_search → 14_package_release
 ```
 
-Stages 02a and 02b are Architecture 3 only (`architecture: "v3"`) — they skip automatically on v2 (default).
-
 Stage implementations go in `packages/pipeline/src/aeon_reader_pipeline/stages/`.

@@ -43,7 +43,6 @@ class PipelineConfig(BaseModel):
     page_filter: list[int] | None = None
     release_channel: Literal["dev", "preview", "prod"] = "dev"
     baseline_run_ref: str | None = None
-    architecture: Literal["v2", "v3"] = "v2"
 
     # Translation stage constants (previously hardcoded)
     translation_max_retries: int = Field(default=3, ge=1)

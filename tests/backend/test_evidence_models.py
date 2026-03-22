@@ -1,4 +1,4 @@
-"""Tests for Architecture 3 evidence-layer contracts."""
+"""Tests for evidence-layer contracts."""
 
 from __future__ import annotations
 

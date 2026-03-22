@@ -1,4 +1,4 @@
-"""Evidence-layer contracts for Architecture 3.
+"""Evidence-layer contracts.
 
 These models define the intermediate representations between raw extraction
 (ExtractedPage) and semantic IR (PageRecord). They establish a provenance
