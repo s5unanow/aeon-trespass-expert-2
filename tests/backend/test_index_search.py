@@ -167,22 +167,11 @@ class TestIndexSearchStage:
         _create_pdf(pdf)
         ctx = _make_context(tmp_path, pdf)
 
-        # Only run through ingest so export artifacts don't exist
-        IngestSourceStage().execute(ctx)
-        ExtractPrimitivesStage().execute(ctx)
-        NormalizeLayoutStage().execute(ctx)
-        ResolveAssetsSymbolsStage().execute(ctx)
-        PlanTranslationStage().execute(ctx)
-        ctx.llm_gateway = MockGateway()
-        TranslateUnitsStage().execute(ctx)
-        MergeLocalizationStage().execute(ctx)
-        EnrichContentStage().execute(ctx)
-        EvaluateQAStage().execute(ctx)
-        # Skip export — no search_documents.json will exist
-        # But we need the stage dir to exist for artifact writes
-        ExportSiteBundleStage().execute(ctx)
+        # Run full pipeline including export, then delete search_documents.json
+        # to simulate a bundle that was exported without search data.
+        _run_through_export(ctx)
 
-        # Delete search documents to simulate missing data
+        # Remove search documents to simulate missing data
         export_dir = ctx.artifact_store.stage_dir(ctx.run_id, ctx.doc_id, "export_site_bundle")
         search_file = export_dir / "site_bundle" / ctx.doc_id / "search_documents.json"
         if search_file.exists():

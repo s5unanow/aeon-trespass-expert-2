@@ -55,8 +55,8 @@ site-release: site-build build-search ## Full operator path: build site + search
 e2e: ## Run end-to-end tests
 	pnpm --filter reader test:e2e
 
-deploy: site-build ## Full deploy: build static site (run pipeline first)
-	@echo "Static site built at apps/reader/out/"
+deploy: site-release ## Full deploy: build site + search (run pipeline first)
+	@echo "Static site with search built at apps/reader/out/"
 	@echo "Deploy by uploading apps/reader/out/ to your hosting provider."
 
 clean: ## Remove build artifacts and caches
