@@ -26,10 +26,11 @@ The issue **must** have an explicit "Acceptance Criteria" or "Definition of done
 - If the issue lacks acceptance criteria, **stop and ask the user** to add them
 - Alternatively, draft acceptance criteria based on the issue description and present them for user approval before proceeding
 - Do not guess what "done" looks like — it must be written down
-- If acceptance criteria cannot be confirmed, **abandon the issue** (see Cleanup on Failure below) — do not claim it
+- If the user does not respond or declines to add acceptance criteria, **abandon the issue** (see Cleanup on Failure below) — do not claim it or pick the next issue immediately
 
 ### 3. Set In Progress
-Only after confirming acceptance criteria exist and the issue is workable:
+Only after confirming acceptance criteria exist and the issue is workable.
+*(Note: CLAUDE.md sets In Progress immediately after picking. This skill intentionally defers it to prevent orphaned issues during autonomous operation.)*
 ```
 mcp__linear__save_issue(id="S5U-XXX", state="In Progress")
 ```
@@ -123,7 +124,7 @@ Append each completed or abandoned issue to `.claude/skills/autopilot/data/autop
 
 If at any point the current issue cannot be completed — blocking error, missing prerequisites, max turns approaching, or any unrecoverable situation — you **must** clean up before exiting:
 
-1. **Reset the issue to Backlog** (only if it was set to In Progress):
+1. **Reset the issue to Backlog** (skip this step if the issue was never moved to In Progress — e.g., abandoned during AC verification):
    ```
    mcp__linear__save_issue(id="S5U-XXX", state="Backlog")
    ```
