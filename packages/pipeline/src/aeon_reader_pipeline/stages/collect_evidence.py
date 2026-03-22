@@ -78,7 +78,7 @@ class CollectEvidenceStage(BaseStage):
         pages = pages_to_process(manifest.page_count, ctx.pipeline_config.page_filter)
         ctx.logger.info("collecting_evidence", page_count=len(pages))
 
-        # Pass 1: Load all primitive evidence
+        # Pass 1: Load all primitive evidence and persist for downstream stages
         all_primitives: list[PrimitivePageEvidence] = []
         for page_number in pages:
             primitive = ctx.artifact_store.read_artifact(
@@ -89,6 +89,15 @@ class CollectEvidenceStage(BaseStage):
                 PrimitivePageEvidence,
             )
             all_primitives.append(primitive)
+            # Persist primitive evidence in this stage's directory so downstream
+            # v3 stages (e.g. resolve_assets_symbols) can read it.
+            ctx.artifact_store.write_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                STAGE_NAME,
+                _primitive_filename(page_number),
+                primitive,
+            )
 
         # Cross-page furniture detection
         furniture_profile = detect_furniture(all_primitives)
