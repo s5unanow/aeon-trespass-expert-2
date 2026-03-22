@@ -1,0 +1,157 @@
+{
+  "furniture_candidates": [
+    {
+      "bbox_norm": {
+        "x0": 0.16,
+        "x1": 0.84,
+        "y0": 0.02,
+        "y1": 0.05
+      },
+      "candidate_id": "furn:header:000",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "header",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "text",
+      "text_sample": "Aeon Trespass: Odyssey — Core Rulebook"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.45,
+        "x1": 0.55,
+        "y0": 0.95,
+        "y1": 0.98
+      },
+      "candidate_id": "furn:page_number:001",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "page_number",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "text",
+      "text_sample": "1"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.0,
+        "x1": 0.15,
+        "y0": 0.0,
+        "y1": 1.0
+      },
+      "candidate_id": "furn:ornament:002",
+      "confidence": 1.0,
+      "content_hash": "border_left",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "image",
+      "text_sample": ""
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.85,
+        "x1": 1.0,
+        "y0": 0.0,
+        "y1": 1.0
+      },
+      "candidate_id": "furn:ornament:003",
+      "confidence": 1.0,
+      "content_hash": "border_right",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "image",
+      "text_sample": ""
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.0,
+        "x1": 1.0,
+        "y0": 0.0,
+        "y1": 0.13
+      },
+      "candidate_id": "furn:ornament:004",
+      "confidence": 1.0,
+      "content_hash": "header_panel",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "image",
+      "text_sample": ""
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.0,
+        "x1": 1.0,
+        "y0": 0.92,
+        "y1": 1.0
+      },
+      "candidate_id": "furn:ornament:005",
+      "confidence": 1.0,
+      "content_hash": "footer_panel",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "image",
+      "text_sample": ""
+    }
+  ],
+  "templates": [
+    {
+      "description": "",
+      "furniture_ids": [
+        "furn:header:000",
+        "furn:ornament:002",
+        "furn:ornament:003",
+        "furn:ornament:004",
+        "furn:ornament:005",
+        "furn:page_number:001"
+      ],
+      "page_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "template_id": "tpl:d7499690"
+    }
+  ],
+  "total_pages_analyzed": 4
+}

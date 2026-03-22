@@ -1,0 +1,139 @@
+{
+  "entries": [
+    {
+      "band_index": 0,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "flow_role": "main",
+      "kind_hint": "band",
+      "region_id": "reg:1:0",
+      "sequence_index": 0
+    },
+    {
+      "band_index": 1,
+      "column_index": 0,
+      "confidence": {
+        "reasons": [
+          "gutter_detected"
+        ],
+        "value": 0.85
+      },
+      "flow_role": "main",
+      "kind_hint": "column",
+      "region_id": "reg:1:2",
+      "sequence_index": 1
+    },
+    {
+      "band_index": 1,
+      "column_index": 1,
+      "confidence": {
+        "reasons": [
+          "gutter_detected"
+        ],
+        "value": 0.85
+      },
+      "flow_role": "main",
+      "kind_hint": "column",
+      "region_id": "reg:1:3",
+      "sequence_index": 2
+    },
+    {
+      "band_index": 2,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "flow_role": "main",
+      "kind_hint": "band",
+      "region_id": "reg:1:4",
+      "sequence_index": 3
+    },
+    {
+      "band_index": 2,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "image_primitive"
+        ],
+        "value": 0.8
+      },
+      "flow_role": "main",
+      "kind_hint": "figure",
+      "region_id": "reg:1:5",
+      "sequence_index": 4
+    },
+    {
+      "band_index": 2,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "drawing_encloses_text",
+          "multiple_text_blocks",
+          "dense_text_content",
+          "aside_placement"
+        ],
+        "value": 0.75
+      },
+      "flow_role": "aside",
+      "kind_hint": "callout",
+      "region_id": "reg:1:6",
+      "sequence_index": 5
+    },
+    {
+      "band_index": 3,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "flow_role": "main",
+      "kind_hint": "band",
+      "region_id": "reg:1:7",
+      "sequence_index": 6
+    },
+    {
+      "band_index": 3,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "table_primitive",
+          "strategy:stream",
+          "very_few_cells",
+          "high_text_overlap"
+        ],
+        "value": 0.35
+      },
+      "flow_role": "main",
+      "kind_hint": "table",
+      "region_id": "reg:1:8",
+      "sequence_index": 7
+    },
+    {
+      "band_index": 4,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "flow_role": "main",
+      "kind_hint": "band",
+      "region_id": "reg:1:9",
+      "sequence_index": 8
+    }
+  ],
+  "page_number": 1,
+  "total_regions": 10,
+  "unassigned_region_ids": []
+}

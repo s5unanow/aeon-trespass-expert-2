@@ -1,0 +1,35 @@
+{
+  "entries": [
+    {
+      "band_index": 0,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "flow_role": "main",
+      "kind_hint": "band",
+      "region_id": "reg:1:0",
+      "sequence_index": 0
+    },
+    {
+      "band_index": 0,
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "image_primitive"
+        ],
+        "value": 0.8
+      },
+      "flow_role": "main",
+      "kind_hint": "figure",
+      "region_id": "reg:1:1",
+      "sequence_index": 1
+    }
+  ],
+  "page_number": 1,
+  "total_regions": 2,
+  "unassigned_region_ids": []
+}

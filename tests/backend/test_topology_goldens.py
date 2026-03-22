@@ -18,28 +18,36 @@ import orjson
 import pytest
 
 from aeon_reader_pipeline.models.evidence_models import (
-    DocumentFurnitureProfile,
-    DrawingPrimitiveEvidence,
-    ImagePrimitiveEvidence,
-    NormalizedBBox,
     PageReadingOrder,
     PageRegionGraph,
     PrimitivePageEvidence,
-    TablePrimitiveEvidence,
-    TextPrimitiveEvidence,
 )
 from aeon_reader_pipeline.utils.furniture_detection import detect_furniture
 from aeon_reader_pipeline.utils.page_region_detection import segment_page_regions
 from aeon_reader_pipeline.utils.reading_order import compute_reading_order
+from tests.backend.builders import (
+    drawing as _drawing,
+)
+from tests.backend.builders import (
+    empty_furniture as _empty_furniture,
+)
+from tests.backend.builders import (
+    image as _image,
+)
+from tests.backend.builders import (
+    page as _page_builder,
+)
+from tests.backend.builders import (
+    table as _table,
+)
+from tests.backend.builders import (
+    text as _text,
+)
 
 GOLDENS_DIR = Path(__file__).parent / "goldens" / "topology"
 
 # Set to True to regenerate golden files (run once, then set back to False)
 _REGENERATE = False
-
-_DOC_ID = "topology-fixture"
-_PAGE_W = 612.0
-_PAGE_H = 792.0
 
 
 # ---------------------------------------------------------------------------
@@ -195,98 +203,26 @@ def _assert_bbox_approx(
 
 
 # ---------------------------------------------------------------------------
-# Primitive builders
+# Primitive builders (delegated to tests.backend.builders)
 # ---------------------------------------------------------------------------
-
-
-def _text(
-    pid_idx: int, page: int, x0: float, y0: float, x1: float, y1: float, text: str
-) -> TextPrimitiveEvidence:
-    return TextPrimitiveEvidence(
-        primitive_id=f"text:p{page:04d}:{pid_idx:03d}",
-        bbox_norm=NormalizedBBox(x0=x0, y0=y0, x1=x1, y1=y1),
-        text=text,
-        line_count=1,
-        font_name="Helvetica",
-        font_size=10.0,
-    )
-
-
-def _image(
-    pid_idx: int,
-    page: int,
-    x0: float,
-    y0: float,
-    x1: float,
-    y1: float,
-    *,
-    content_hash: str = "img_hash",
-) -> ImagePrimitiveEvidence:
-    return ImagePrimitiveEvidence(
-        primitive_id=f"image:p{page:04d}:{pid_idx:03d}",
-        bbox_norm=NormalizedBBox(x0=x0, y0=y0, x1=x1, y1=y1),
-        content_hash=content_hash,
-        width_px=200,
-        height_px=200,
-    )
-
-
-def _table(  # noqa: PLR0913
-    pid_idx: int,
-    page: int,
-    x0: float,
-    y0: float,
-    x1: float,
-    y1: float,
-    *,
-    rows: int = 3,
-    cols: int = 3,
-    strategy: str = "lines_strict",
-) -> TablePrimitiveEvidence:
-    return TablePrimitiveEvidence(
-        primitive_id=f"table:p{page:04d}:{pid_idx:03d}",
-        bbox_norm=NormalizedBBox(x0=x0, y0=y0, x1=x1, y1=y1),
-        rows=rows,
-        cols=cols,
-        cell_count=rows * cols,
-        extraction_strategy=strategy,
-        area_fraction=round((x1 - x0) * (y1 - y0), 4),
-    )
-
-
-def _drawing(
-    pid_idx: int, page: int, x0: float, y0: float, x1: float, y1: float
-) -> DrawingPrimitiveEvidence:
-    return DrawingPrimitiveEvidence(
-        primitive_id=f"drawing:p{page:04d}:{pid_idx:03d}",
-        bbox_norm=NormalizedBBox(x0=x0, y0=y0, x1=x1, y1=y1),
-        path_count=4,
-        is_decorative=False,
-    )
 
 
 def _page(
     page_number: int,
     *,
-    text: list[TextPrimitiveEvidence] | None = None,
-    images: list[ImagePrimitiveEvidence] | None = None,
-    tables: list[TablePrimitiveEvidence] | None = None,
-    drawings: list[DrawingPrimitiveEvidence] | None = None,
+    text: list[Any] | None = None,
+    images: list[Any] | None = None,
+    tables: list[Any] | None = None,
+    drawings: list[Any] | None = None,
 ) -> PrimitivePageEvidence:
-    return PrimitivePageEvidence(
-        page_number=page_number,
-        doc_id=_DOC_ID,
-        width_pt=_PAGE_W,
-        height_pt=_PAGE_H,
-        text_primitives=text or [],
-        image_primitives=images or [],
-        table_primitives=tables or [],
-        drawing_primitives=drawings or [],
+    """Thin wrapper preserving the original ``text=`` kwarg name."""
+    return _page_builder(
+        page_number,
+        text_prims=text,
+        images=images,
+        tables=tables,
+        drawings=drawings,
     )
-
-
-def _empty_furniture() -> DocumentFurnitureProfile:
-    return DocumentFurnitureProfile(doc_id=_DOC_ID, total_pages_analyzed=1)
 
 
 # ---------------------------------------------------------------------------

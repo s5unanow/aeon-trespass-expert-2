@@ -1,0 +1,72 @@
+{
+  "edges": [
+    {
+      "dst_region_id": "reg:2:1",
+      "edge_type": "contains",
+      "src_region_id": "reg:2:0"
+    }
+  ],
+  "furniture_ids_excluded": [
+    "furn:header:000",
+    "furn:page_number:001",
+    "furn:ornament:006",
+    "furn:ornament:007",
+    "furn:ornament:008",
+    "furn:ornament:009"
+  ],
+  "height_pt": 792.0,
+  "page_number": 2,
+  "regions": [
+    {
+      "band_index": 0,
+      "bbox": {
+        "x0": 0.15,
+        "x1": 0.85,
+        "y0": 0.4,
+        "y1": 0.62
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "horizontal_partition"
+        ],
+        "value": 0.9
+      },
+      "features": {
+        "column_count": 1,
+        "primitive_count": 2
+      },
+      "kind_hint": "band",
+      "parent_region_id": null,
+      "region_id": "reg:2:0",
+      "source_evidence_ids": [
+        "image:p0002:000",
+        "text:p0002:006"
+      ]
+    },
+    {
+      "band_index": 0,
+      "bbox": {
+        "x0": 0.15,
+        "x1": 0.85,
+        "y0": 0.4,
+        "y1": 0.56
+      },
+      "column_index": null,
+      "confidence": {
+        "reasons": [
+          "image_primitive"
+        ],
+        "value": 0.8
+      },
+      "features": {},
+      "kind_hint": "figure",
+      "parent_region_id": "reg:2:0",
+      "region_id": "reg:2:1",
+      "source_evidence_ids": [
+        "image:p0002:000"
+      ]
+    }
+  ],
+  "width_pt": 612.0
+}

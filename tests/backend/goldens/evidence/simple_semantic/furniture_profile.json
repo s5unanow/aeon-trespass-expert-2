@@ -1,0 +1,229 @@
+{
+  "furniture_candidates": [
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.01,
+        "y1": 0.04
+      },
+      "candidate_id": "furn:header:000",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "header",
+      "page_numbers": [
+        1,
+        2
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "text",
+      "text_sample": "Aeon Trespass: Odyssey — Core Rulebook"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.45,
+        "x1": 0.55,
+        "y0": 0.96,
+        "y1": 0.99
+      },
+      "candidate_id": "furn:page_number:001",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "page_number",
+      "page_numbers": [
+        1,
+        2
+      ],
+      "path_count": 0,
+      "repetition_rate": 1.0,
+      "source_primitive_kind": "text",
+      "text_sample": "1"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.08,
+        "y1": 0.12
+      },
+      "candidate_id": "furn:ornament:002",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Chapter 1: Introduction"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.14,
+        "y1": 0.2
+      },
+      "candidate_id": "furn:ornament:003",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Page 1 body paragraph one."
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.22,
+        "y1": 0.28
+      },
+      "candidate_id": "furn:ornament:004",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Page 1 body paragraph two."
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.3,
+        "y1": 0.36
+      },
+      "candidate_id": "furn:ornament:005",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        1
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Page 1 body paragraph three."
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.08,
+        "y1": 0.12
+      },
+      "candidate_id": "furn:ornament:006",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        2
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Chapter 2: Introduction"
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.14,
+        "y1": 0.2
+      },
+      "candidate_id": "furn:ornament:007",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        2
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Page 2 body paragraph one."
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.22,
+        "y1": 0.28
+      },
+      "candidate_id": "furn:ornament:008",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        2
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Page 2 body paragraph two."
+    },
+    {
+      "bbox_norm": {
+        "x0": 0.05,
+        "x1": 0.95,
+        "y0": 0.3,
+        "y1": 0.36
+      },
+      "candidate_id": "furn:ornament:009",
+      "confidence": 1.0,
+      "content_hash": "",
+      "furniture_type": "ornament",
+      "page_numbers": [
+        2
+      ],
+      "path_count": 0,
+      "repetition_rate": 0.5,
+      "source_primitive_kind": "text",
+      "text_sample": "Page 2 body paragraph three."
+    }
+  ],
+  "templates": [
+    {
+      "description": "",
+      "furniture_ids": [
+        "furn:header:000",
+        "furn:ornament:002",
+        "furn:ornament:003",
+        "furn:ornament:004",
+        "furn:ornament:005",
+        "furn:page_number:001"
+      ],
+      "page_numbers": [
+        1
+      ],
+      "template_id": "tpl:d7499690"
+    },
+    {
+      "description": "",
+      "furniture_ids": [
+        "furn:header:000",
+        "furn:ornament:006",
+        "furn:ornament:007",
+        "furn:ornament:008",
+        "furn:ornament:009",
+        "furn:page_number:001"
+      ],
+      "page_numbers": [
+        2
+      ],
+      "template_id": "tpl:87d51a25"
+    }
+  ],
+  "total_pages_analyzed": 2
+}
