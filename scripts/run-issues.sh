@@ -47,8 +47,8 @@ usage() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --max-issues)
-      if [[ -z "${2:-}" ]]; then
-        echo "Error: --max-issues requires a numeric argument"
+      if [[ -z "${2:-}" ]] || ! [[ "${2:-}" =~ ^[0-9]+$ ]]; then
+        echo "Error: --max-issues requires a positive integer"
         exit 1
       fi
       MAX_ISSUES="$2"
@@ -70,6 +70,8 @@ done
 issue_count=0
 success_count=0
 failure_count=0
+consecutive_failures=0
+MAX_CONSECUTIVE_FAILURES=3
 
 log() {
   echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*"
@@ -95,9 +97,10 @@ while true; do
   log "--- Starting issue run #$issue_count ---"
 
   output_file=$(mktemp)
-  trap 'rm -f "$output_file"' EXIT
 
   # Run /autopilot for one issue. Capture output for stop-condition detection.
+  # Each claude -p invocation is non-interactive: the autopilot skill picks one
+  # issue, implements it, merges the PR, and exits.
   claude -p "/autopilot" \
     --dangerously-skip-permissions \
     --max-turns "$MAX_TURNS" \
@@ -107,9 +110,17 @@ while true; do
   if [[ "$exit_code" -eq 0 ]]; then
     log "Issue run #$issue_count completed successfully"
     success_count=$((success_count + 1))
+    consecutive_failures=0
   else
     log "Issue run #$issue_count failed (exit code: $exit_code)"
     failure_count=$((failure_count + 1))
+    consecutive_failures=$((consecutive_failures + 1))
+
+    if [[ "$consecutive_failures" -ge "$MAX_CONSECUTIVE_FAILURES" ]]; then
+      log "Hit $MAX_CONSECUTIVE_FAILURES consecutive failures. Stopping to avoid infinite loop."
+      rm -f "$output_file"
+      break
+    fi
   fi
 
   # Detect when autopilot reports no remaining issues
