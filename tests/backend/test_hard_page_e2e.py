@@ -418,8 +418,8 @@ class TestHardPageE2E:
         assert search_manifest.index_status == "search-data-validated"
 
     def test_asset_refs_resolve(self, pipeline_result: tuple[StageContext, Path]) -> None:
-        """Every asset_ref in figure blocks points to an existing file or is empty."""
-        ctx, _ = pipeline_result
+        """Every asset_ref in figure blocks points to an existing file in the bundle."""
+        ctx, bundle_dir = pipeline_result
         manifest = ctx.artifact_store.read_artifact(
             ctx.run_id,
             ctx.doc_id,
@@ -427,6 +427,7 @@ class TestHardPageE2E:
             f"site_bundle/{DOC_ID}/bundle_manifest.json",
             SiteBundleManifest,
         )
+        manifest_asset_refs = {entry.asset_ref for entry in manifest.assets}
         for pn in range(1, manifest.page_count + 1):
             bp = ctx.artifact_store.read_artifact(
                 ctx.run_id,
@@ -439,9 +440,16 @@ class TestHardPageE2E:
                 block_data = block.model_dump()
                 asset_ref = block_data.get("asset_ref", "")
                 if asset_ref and asset_ref.startswith("/assets/"):
-                    # Strip leading /assets/<doc_id>/ to get relative path
+                    # Strip leading /assets/<doc_id>/ to get the filename
                     rel = asset_ref.split("/", 3)[-1] if asset_ref.count("/") >= 3 else asset_ref
                     assert rel, f"Empty asset_ref after prefix strip on page {pn}"
+                    asset_path = bundle_dir / "assets" / rel
+                    assert asset_path.exists(), (
+                        f"Asset {asset_ref} not found at {asset_path} on page {pn}"
+                    )
+                    assert rel in manifest_asset_refs, (
+                        f"Asset {rel} on page {pn} not listed in bundle manifest"
+                    )
 
     def test_bundle_synced_to_reader(self, pipeline_result: tuple[StageContext, Path]) -> None:
         """Build reader stage syncs bundle to the generated directory."""
