@@ -540,12 +540,11 @@ class TestReaderBuildIntegration:
 
         # Back up existing generated dir if present and swap in test data
         backup: Path | None = None
-        backup_tmp: str | None = None
         out_dir = reader_dir / "out"
         try:
             if real_generated.exists():
-                backup_tmp = tempfile.mkdtemp(prefix="generated_bak_")
-                backup = Path(backup_tmp) / "generated"
+                backup_tmp_dir = Path(tempfile.mkdtemp(prefix="generated_bak_", dir=reader_dir))
+                backup = backup_tmp_dir / "generated"
                 real_generated.rename(backup)
 
             # Copy pipeline-produced bundle to real reader location
@@ -579,5 +578,5 @@ class TestReaderBuildIntegration:
                 shutil.rmtree(real_generated)
             if backup and backup.exists():
                 backup.rename(real_generated)
-            if backup_tmp and Path(backup_tmp).exists():
-                shutil.rmtree(backup_tmp)
+            if backup and backup.parent.exists():
+                shutil.rmtree(backup.parent)
