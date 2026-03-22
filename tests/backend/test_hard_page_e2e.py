@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import tempfile
 from collections.abc import Generator
 from pathlib import Path
 
@@ -538,13 +539,13 @@ class TestReaderBuildIntegration:
             pytest.skip("Reader app directory not found")
 
         # Back up existing generated dir if present and swap in test data
-        backup = None
+        backup: Path | None = None
+        backup_tmp: str | None = None
         out_dir = reader_dir / "out"
         try:
             if real_generated.exists():
-                backup = real_generated.with_name("generated.bak")
-                if backup.exists():
-                    shutil.rmtree(backup)
+                backup_tmp = tempfile.mkdtemp(prefix="generated_bak_")
+                backup = Path(backup_tmp) / "generated"
                 real_generated.rename(backup)
 
             # Copy pipeline-produced bundle to real reader location
@@ -578,3 +579,5 @@ class TestReaderBuildIntegration:
                 shutil.rmtree(real_generated)
             if backup and backup.exists():
                 backup.rename(real_generated)
+            if backup_tmp and Path(backup_tmp).exists():
+                shutil.rmtree(backup_tmp)
