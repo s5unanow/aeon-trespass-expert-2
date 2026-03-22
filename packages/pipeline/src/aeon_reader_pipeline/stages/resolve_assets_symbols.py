@@ -223,15 +223,18 @@ class ResolveAssetsSymbolsStage(BaseStage):
             # Resolve symbol tokens in text
             record = _resolve_symbols_in_page(record, symbol_tokens)
 
-            # Consume pre-classified evidence candidates
-            page_cands = ctx.artifact_store.read_artifact(
-                ctx.run_id,
-                ctx.doc_id,
-                "collect_evidence",
-                f"evidence/p{page_num:04d}_symbol_candidates.json",
-                PageSymbolCandidates,
-            )
-            record = _apply_evidence_candidates(record, page_cands, min_confidence)
+            # Consume pre-classified evidence candidates (if available)
+            try:
+                page_cands = ctx.artifact_store.read_artifact(
+                    ctx.run_id,
+                    ctx.doc_id,
+                    "collect_evidence",
+                    f"evidence/p{page_num:04d}_symbol_candidates.json",
+                    PageSymbolCandidates,
+                )
+                record = _apply_evidence_candidates(record, page_cands, min_confidence)
+            except FileNotFoundError:
+                ctx.logger.debug("symbol_candidates_not_found", page=page_num)
 
             # Collect asset records from figures
             for block in record.blocks:
@@ -285,14 +288,18 @@ class ResolveAssetsSymbolsStage(BaseStage):
         record: PageRecord,
         page_num: int,
     ) -> PageFigureCaptionLinks:
-        """Link figures to captions using spatial evidence."""
-        canonical = ctx.artifact_store.read_artifact(
-            ctx.run_id,
-            ctx.doc_id,
-            "collect_evidence",
-            f"evidence/p{page_num:04d}_canonical.json",
-            CanonicalPageEvidence,
-        )
+        """Link figures to captions using spatial evidence when available."""
+        try:
+            canonical = ctx.artifact_store.read_artifact(
+                ctx.run_id,
+                ctx.doc_id,
+                "collect_evidence",
+                f"evidence/p{page_num:04d}_canonical.json",
+                CanonicalPageEvidence,
+            )
+        except FileNotFoundError:
+            return link_figures_captions_sequential(record)
+
         if canonical.region_graph is not None:
             primitive = ctx.artifact_store.read_artifact(
                 ctx.run_id,
