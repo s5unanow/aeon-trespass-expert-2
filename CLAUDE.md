@@ -58,6 +58,7 @@ All work tracked in **Linear** (project **ATE2**, team **S5U**). No exceptions.
 
 - **Commit prefixes**: `S5U-XXX:` referencing the Linear issue
 - **Path-scoped rules**: `.claude/rules/pipeline.md`, `reader.md`, `contracts.md` — loaded automatically by file path
+- **Context rules**: `.claude/rules/linear.md` — Linear issue creation standards
 
 ## Reference (read on demand)
 
