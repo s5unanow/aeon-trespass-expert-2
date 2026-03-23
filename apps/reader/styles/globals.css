@@ -550,7 +550,7 @@ h3.block-heading {
 }
 
 .block-table tbody tr:nth-child(even) td {
-  background: var(--color-bg-surface);
+  background: color-mix(in srgb, var(--color-fg) 3%, transparent);
 }
 
 /* Inline renderers */

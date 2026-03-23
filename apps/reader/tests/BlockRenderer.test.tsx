@@ -256,21 +256,23 @@ describe("BlockRenderer", () => {
   });
 
   describe("callout", () => {
-    it("renders an <aside> with role and callout_type class", () => {
-      const block: BundleCalloutBlock = {
-        kind: "callout",
-        block_id: "call-1",
-        callout_type: "warning",
-        content: [textNode("Watch out!")],
-      };
-      const { container } = render(<BlockRenderer block={block} />);
-      const aside = container.querySelector("aside#call-1");
-      expect(aside).not.toBeNull();
-      expect(aside!.getAttribute("role")).toBe("note");
-      expect(aside!.className).toContain("block-callout");
-      expect(aside!.className).toContain("block-callout-warning");
-      expect(aside!.textContent).toContain("Watch out!");
-    });
+    it.each(["note", "warning", "info", "tip"] as const)(
+      "renders %s variant with correct class",
+      (variant) => {
+        const block: BundleCalloutBlock = {
+          kind: "callout",
+          block_id: `call-${variant}`,
+          callout_type: variant,
+          content: [textNode("Content")],
+        };
+        const { container } = render(<BlockRenderer block={block} />);
+        const aside = container.querySelector(`aside#call-${variant}`);
+        expect(aside).not.toBeNull();
+        expect(aside!.getAttribute("role")).toBe("note");
+        expect(aside!.className).toContain("block-callout");
+        expect(aside!.className).toContain(`block-callout-${variant}`);
+      },
+    );
   });
 
   describe("divider", () => {
