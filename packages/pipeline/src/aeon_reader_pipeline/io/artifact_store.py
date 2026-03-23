@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from aeon_reader_pipeline.config.hashing import hash_file
 from aeon_reader_pipeline.io.json_io import read_json, read_jsonl, write_json, write_jsonl
-from aeon_reader_pipeline.models.run_models import RunManifest, StageManifest
+from aeon_reader_pipeline.models.run_models import RunManifest, RunSummary, StageManifest
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -75,6 +75,11 @@ class ArtifactStore:
         """Save/update a run manifest."""
         path = self.runs_root / manifest.run_id / "run_manifest.json"
         write_json(path, manifest)
+
+    def save_run_summary(self, run_id: str, summary: RunSummary) -> None:
+        """Save a consolidated run summary."""
+        path = self.runs_root / run_id / "run_summary.json"
+        write_json(path, summary)
 
     def save_stage_manifest(self, run_id: str, doc_id: str, manifest: StageManifest) -> None:
         """Save a stage manifest."""

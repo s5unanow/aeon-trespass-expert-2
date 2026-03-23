@@ -9,7 +9,13 @@ import structlog
 
 from aeon_reader_pipeline.cache.keys import stage_cache_key
 from aeon_reader_pipeline.config.hashing import hash_model
-from aeon_reader_pipeline.models.run_models import StageManifest, StageStatus
+from aeon_reader_pipeline.models.run_models import (
+    RunManifest,
+    RunSummary,
+    StageManifest,
+    StageStatus,
+    StageSummary,
+)
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.registry import (
@@ -48,15 +54,25 @@ class PipelineRunner:
         manifest.status = "running"
         ctx.artifact_store.save_run_manifest(manifest)
 
-        for stage_name in stages_to_run:
-            stage = get_stage(stage_name)
-            self._run_stage(ctx, stage, log)
+        try:
+            for stage_name in stages_to_run:
+                stage = get_stage(stage_name)
+                self._run_stage(ctx, stage, log)
+        except Exception:
+            manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
+            manifest.status = "failed"
+            manifest.completed_at = datetime.now(UTC)
+            ctx.artifact_store.save_run_manifest(manifest)
+            self._write_run_summary(ctx, manifest)
+            log.error("pipeline.failed")
+            raise
 
         # Mark run complete
         manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
         manifest.status = "completed"
         manifest.completed_at = datetime.now(UTC)
         ctx.artifact_store.save_run_manifest(manifest)
+        self._write_run_summary(ctx, manifest)
         log.info("pipeline.complete")
 
     def _should_skip(
@@ -224,3 +240,55 @@ class PipelineRunner:
         if cache_stat is not None:
             manifest.cache_stats[cache_stat] = manifest.cache_stats.get(cache_stat, 0) + 1
         ctx.artifact_store.save_run_manifest(manifest)
+
+    def _write_run_summary(self, ctx: StageContext, manifest: RunManifest) -> None:
+        """Build and persist a consolidated run summary."""
+        stage_summaries: list[StageSummary] = []
+        pages_processed = 0
+        pages_cached = 0
+        pages_failed = 0
+
+        for stage_status in manifest.stages:
+            sm = ctx.artifact_store.load_stage_manifest(
+                ctx.run_id, ctx.doc_id, stage_status.stage_name
+            )
+            duration_ms = 0
+            if sm is not None:
+                duration_ms = int(sm.metrics.get("duration_ms", 0))
+                for wu in sm.work_units:
+                    if wu.status == "completed":
+                        pages_processed += 1
+                    if wu.cache_hit:
+                        pages_cached += 1
+                    if wu.status == "failed":
+                        pages_failed += 1
+
+            stage_summaries.append(
+                StageSummary(
+                    name=stage_status.stage_name,
+                    status=stage_status.status,
+                    duration_ms=duration_ms,
+                )
+            )
+
+        duration_s = 0.0
+        if manifest.completed_at is not None:
+            duration_s = round((manifest.completed_at - manifest.started_at).total_seconds(), 1)
+
+        summary = RunSummary(
+            run_id=manifest.run_id,
+            document_id=ctx.doc_id,
+            status=manifest.status,
+            edition=ctx.document_config.edition,
+            pages_processed=pages_processed,
+            pages_cached=pages_cached,
+            pages_failed=pages_failed,
+            stages=stage_summaries,
+            cache_stats=manifest.cache_stats,
+            duration_s=duration_s,
+            started_at=manifest.started_at,
+            finished_at=manifest.completed_at,
+            git_commit=manifest.git_commit,
+        )
+
+        ctx.artifact_store.save_run_summary(ctx.run_id, summary)

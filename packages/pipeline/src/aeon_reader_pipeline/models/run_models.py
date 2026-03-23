@@ -124,6 +124,14 @@ class ResolvedRunPlan(BaseModel):
     config_snapshot: dict[str, Any] = Field(default_factory=dict)
 
 
+class StageSummary(BaseModel):
+    """Stage entry in run summary."""
+
+    name: str
+    status: Literal["pending", "running", "completed", "failed", "skipped"]
+    duration_ms: int = 0
+
+
 class StageStatus(BaseModel):
     """Stage status entry in run manifest."""
 
@@ -146,3 +154,21 @@ class RunManifest(BaseModel):
     cache_stats: dict[str, int] = Field(default_factory=lambda: {"hits": 0, "misses": 0})
     qa_acceptance: bool | None = None
     pipeline_config: PipelineConfig | None = None
+
+
+class RunSummary(BaseModel):
+    """Consolidated run summary written after each pipeline run."""
+
+    run_id: str
+    document_id: str
+    status: Literal["pending", "running", "completed", "failed"]
+    edition: str | None = None
+    pages_processed: int = 0
+    pages_cached: int = 0
+    pages_failed: int = 0
+    stages: list[StageSummary] = Field(default_factory=list)
+    cache_stats: dict[str, int] = Field(default_factory=dict)
+    duration_s: float = 0.0
+    started_at: datetime
+    finished_at: datetime | None = None
+    git_commit: str | None = None
