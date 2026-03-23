@@ -479,17 +479,41 @@ h3.block-heading {
 }
 
 .block-callout {
-  border-left: 3px solid var(--color-accent);
+  border-left: 3px solid var(--color-callout-note);
   padding: 0.75rem 1rem;
   margin: 1rem 0;
-  background: var(--color-accent-subtle);
+  background: var(--color-callout-note-bg);
   border-radius: 0 0.3rem 0.3rem 0;
+}
+
+.block-callout-warning {
+  border-left-color: var(--color-callout-warning);
+  background: var(--color-callout-warning-bg);
+}
+
+.block-callout-info {
+  border-left-color: var(--color-callout-info);
+  background: var(--color-callout-info-bg);
+}
+
+.block-callout-tip {
+  border-left-color: var(--color-callout-tip);
+  background: var(--color-callout-tip-bg);
 }
 
 .block-divider {
   border: none;
-  border-top: 1px solid var(--color-border);
-  margin: 2rem 0;
+  height: 1px;
+  margin: 2.5rem auto;
+  max-width: 12rem;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border) 20%,
+    var(--color-accent) 50%,
+    var(--color-border) 80%,
+    transparent
+  );
 }
 
 .block-table-placeholder {
@@ -520,8 +544,13 @@ h3.block-heading {
 }
 
 .block-table th {
-  background: var(--color-surface);
+  background: var(--color-accent-subtle);
   font-weight: 600;
+  color: var(--color-fg-heading);
+}
+
+.block-table tbody tr:nth-child(even) td {
+  background: var(--color-bg-surface);
 }
 
 /* Inline renderers */

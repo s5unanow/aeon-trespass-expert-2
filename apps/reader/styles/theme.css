@@ -17,6 +17,16 @@
   --font-body: "Georgia", "Palatino Linotype", "Book Antiqua", serif;
   --font-heading: system-ui, -apple-system, sans-serif;
   --content-max-width: 52rem;
+
+  /* Callout variant tokens */
+  --color-callout-note: #8b5e34;
+  --color-callout-note-bg: #f0e8dc;
+  --color-callout-warning: #b8522a;
+  --color-callout-warning-bg: #fdf0ea;
+  --color-callout-info: #2e7a9e;
+  --color-callout-info-bg: #ebf2f7;
+  --color-callout-tip: #4e7a30;
+  --color-callout-tip-bg: #eef4ea;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,5 +45,15 @@
     --color-sidebar-muted: #7a6e62;
     --color-sidebar-active: #d4a060;
     --color-sidebar-border: #2c2420;
+
+    /* Callout variant tokens — dark */
+    --color-callout-note: #d4a060;
+    --color-callout-note-bg: #2c2420;
+    --color-callout-warning: #d4784a;
+    --color-callout-warning-bg: #2c1e18;
+    --color-callout-info: #5aabcc;
+    --color-callout-info-bg: #1a2228;
+    --color-callout-tip: #7aaa5a;
+    --color-callout-tip-bg: #1e2418;
   }
 }
