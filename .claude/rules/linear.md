@@ -1,3 +1,7 @@
+---
+description: Linear issue creation standards — loaded when using Linear MCP tools
+---
+
 # Linear issue creation checklist
 
 When creating an issue via `mcp__linear__save_issue`, always provide these fields:
