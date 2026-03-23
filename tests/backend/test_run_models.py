@@ -7,8 +7,10 @@ from aeon_reader_pipeline.models.run_models import (
     PipelineConfig,
     ResolvedRunPlan,
     RunManifest,
+    RunSummary,
     StageManifest,
     StageSelector,
+    StageSummary,
     WorkUnitStatus,
 )
 
@@ -104,3 +106,35 @@ def test_resolved_run_plan():
 def test_stage_selector():
     sel = StageSelector(from_stage="extract_primitives", to_stage="normalize_layout")
     assert sel.from_stage == "extract_primitives"
+
+
+def test_run_summary_roundtrip():
+    from datetime import UTC, datetime
+
+    summary = RunSummary(
+        run_id="run-001",
+        document_id="doc-a",
+        status="completed",
+        edition="all",
+        pages_processed=10,
+        pages_cached=3,
+        pages_failed=0,
+        stages=[
+            StageSummary(name="extract_native", status="completed", duration_ms=1234),
+            StageSummary(name="collect_evidence", status="skipped", duration_ms=0),
+        ],
+        cache_stats={"hits": 3, "misses": 7},
+        duration_s=42.5,
+        started_at=datetime(2026, 3, 23, 10, 0, 0, tzinfo=UTC),
+        finished_at=datetime(2026, 3, 23, 10, 0, 42, tzinfo=UTC),
+        git_commit="abc1234",
+    )
+    data = summary.model_dump(mode="json")
+    loaded = RunSummary.model_validate(data)
+    assert loaded.run_id == "run-001"
+    assert loaded.document_id == "doc-a"
+    assert loaded.pages_processed == 10
+    assert len(loaded.stages) == 2
+    assert loaded.stages[0].name == "extract_native"
+    assert loaded.stages[1].duration_ms == 0
+    assert loaded.git_commit == "abc1234"

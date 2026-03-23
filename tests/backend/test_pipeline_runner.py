@@ -19,7 +19,7 @@ from aeon_reader_pipeline.models.config_models import (
     RuleProfile,
     SymbolPack,
 )
-from aeon_reader_pipeline.models.run_models import PipelineConfig
+from aeon_reader_pipeline.models.run_models import PipelineConfig, RunSummary
 from aeon_reader_pipeline.stage_framework.base import BaseStage
 from aeon_reader_pipeline.stage_framework.context import StageContext
 from aeon_reader_pipeline.stage_framework.runner import PipelineRunner
@@ -564,6 +564,134 @@ class TestInputHashesPopulated:
             assert "glossary_pack" in sm.input_hashes
             for v in sm.input_hashes.values():
                 assert len(v) == 64  # SHA-256 hex
+        finally:
+            for p in patches:
+                p.stop()
+
+
+def _load_run_summary(ctx: StageContext) -> RunSummary:
+    """Load the run_summary.json for the test run."""
+    from aeon_reader_pipeline.io.json_io import read_json
+
+    path = ctx.artifact_store.runs_root / ctx.run_id / "run_summary.json"
+    return read_json(path, RunSummary)
+
+
+class TestRunSummary:
+    """Verify run_summary.json is written after pipeline runs."""
+
+    def test_summary_written_on_success(self, tmp_path: Path) -> None:
+        stage = _DummyStage()
+        patches = _patch_registry(stage)
+        for p in patches:
+            p.start()
+        try:
+            ctx = _make_ctx(tmp_path)
+            PipelineRunner().run(ctx)
+
+            summary = _load_run_summary(ctx)
+            assert summary.run_id == "test-run"
+            assert summary.document_id == "test-doc"
+            assert summary.status == "completed"
+            assert summary.started_at is not None
+            assert summary.finished_at is not None
+            assert summary.duration_s >= 0.0
+            assert len(summary.stages) == 1
+            assert summary.stages[0].name == "resolve_run"
+            assert summary.stages[0].status == "completed"
+            assert summary.stages[0].duration_ms >= 0
+        finally:
+            for p in patches:
+                p.stop()
+
+    def test_summary_written_on_failure(self, tmp_path: Path) -> None:
+        stage = _DummyStage(fail=True)
+        patches = _patch_registry(stage)
+        for p in patches:
+            p.start()
+        try:
+            ctx = _make_ctx(tmp_path)
+            with pytest.raises(RuntimeError, match="stage failed on purpose"):
+                PipelineRunner().run(ctx)
+
+            summary = _load_run_summary(ctx)
+            assert summary.status == "failed"
+            assert summary.finished_at is not None
+            assert summary.stages[0].status == "failed"
+        finally:
+            for p in patches:
+                p.stop()
+
+    def test_run_manifest_failed_on_error(self, tmp_path: Path) -> None:
+        """Run manifest status is set to 'failed' when a stage raises."""
+        stage = _DummyStage(fail=True)
+        patches = _patch_registry(stage)
+        for p in patches:
+            p.start()
+        try:
+            ctx = _make_ctx(tmp_path)
+            with pytest.raises(RuntimeError):
+                PipelineRunner().run(ctx)
+
+            manifest = ctx.artifact_store.load_run_manifest("test-run")
+            assert manifest.status == "failed"
+            assert manifest.completed_at is not None
+        finally:
+            for p in patches:
+                p.stop()
+
+    def test_summary_aggregates_work_units(self, tmp_path: Path) -> None:
+        class _TrackingStage(_DummyStage):
+            def execute(self, ctx: StageContext) -> None:
+                self.executed = True
+                ctx.work_units.record("page-1", "completed")
+                ctx.work_units.record("page-2", "completed", cache_hit=True)
+                ctx.work_units.record("page-3", "failed", error="bad")
+
+        stage = _TrackingStage()
+        patches = _patch_registry(stage)
+        for p in patches:
+            p.start()
+        try:
+            ctx = _make_ctx(tmp_path)
+            PipelineRunner().run(ctx)
+
+            summary = _load_run_summary(ctx)
+            assert summary.pages_processed == 2
+            assert summary.pages_cached == 1
+            assert summary.pages_failed == 1
+        finally:
+            for p in patches:
+                p.stop()
+
+    def test_summary_includes_cache_stats(self, tmp_path: Path) -> None:
+        stage = _DummyStage()
+        patches = _patch_registry(stage)
+        for p in patches:
+            p.start()
+        try:
+            ctx = _make_ctx(tmp_path)
+            PipelineRunner().run(ctx)
+
+            summary = _load_run_summary(ctx)
+            assert "misses" in summary.cache_stats
+            assert summary.cache_stats["misses"] == 1
+        finally:
+            for p in patches:
+                p.stop()
+
+    def test_summary_edition_from_document_config(self, tmp_path: Path) -> None:
+        stage = _DummyStage()
+        patches = _patch_registry(stage)
+        for p in patches:
+            p.start()
+        try:
+            ctx = _make_ctx(tmp_path)
+            ctx.document_config.edition = "all"
+            PipelineRunner().run(ctx)
+
+            summary = _load_run_summary(ctx)
+            assert summary.edition == "all"
         finally:
             for p in patches:
                 p.stop()
