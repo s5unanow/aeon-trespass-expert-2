@@ -58,13 +58,16 @@ class PipelineRunner:
             for stage_name in stages_to_run:
                 stage = get_stage(stage_name)
                 self._run_stage(ctx, stage, log)
-        except Exception:
-            manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
-            manifest.status = "failed"
-            manifest.completed_at = datetime.now(UTC)
-            ctx.artifact_store.save_run_manifest(manifest)
-            self._write_run_summary(ctx, manifest)
-            log.error("pipeline.failed")
+        except Exception as exc:
+            try:
+                manifest = ctx.artifact_store.load_run_manifest(ctx.run_id)
+                manifest.status = "failed"
+                manifest.completed_at = datetime.now(UTC)
+                ctx.artifact_store.save_run_manifest(manifest)
+                self._write_run_summary(ctx, manifest)
+            except Exception:
+                log.exception("pipeline.failed_to_write_failure_summary")
+            log.error("pipeline.failed", error=str(exc))
             raise
 
         # Mark run complete
@@ -254,7 +257,7 @@ class PipelineRunner:
             )
             duration_ms = 0
             if sm is not None:
-                duration_ms = int(sm.metrics.get("duration_ms", 0))
+                duration_ms = int(sm.metrics.get("duration_ms", 0) or 0)
                 for wu in sm.work_units:
                     if wu.status == "completed":
                         pages_processed += 1
