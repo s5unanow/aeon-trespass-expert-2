@@ -1,5 +1,5 @@
 .PHONY: help bootstrap lint typecheck test test-backend test-frontend schemas \
-        site-dev site-build build-search site-release e2e clean security-lint deploy
+        site-dev site-build build-search site-release setup-e2e e2e clean security-lint deploy
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -52,7 +52,22 @@ site-release: site-build build-search ## Full operator path: build site + search
 	@test -d apps/reader/out/pagefind || (echo "ERROR: Pagefind index not found at apps/reader/out/pagefind/" && exit 1)
 	@echo "Site built with search index at apps/reader/out/"
 
-e2e: ## Run end-to-end tests
+setup-e2e: ## Set up fixtures and build for E2E tests
+	rm -rf apps/reader/generated
+	mkdir -p apps/reader/generated
+	cp -r tests/fixtures/site-bundles/* apps/reader/generated/
+	git checkout -- apps/reader/generated/.gitignore
+	rm -rf apps/reader/public/assets/*/
+	@for dir in tests/fixtures/site-bundles/*/assets; do \
+		if [ -d "$$dir" ]; then \
+			doc_id=$$(basename "$$(dirname "$$dir")"); \
+			mkdir -p "apps/reader/public/assets/$$doc_id"; \
+			cp -r "$$dir"/. "apps/reader/public/assets/$$doc_id/"; \
+		fi; \
+	done
+	pnpm --filter reader build
+
+e2e: setup-e2e ## Run end-to-end tests
 	pnpm --filter reader test:e2e
 
 deploy: site-release ## Full deploy: build site + search (run pipeline first)
